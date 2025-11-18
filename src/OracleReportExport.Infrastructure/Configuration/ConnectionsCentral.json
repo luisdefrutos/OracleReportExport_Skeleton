@@ -1,0 +1,10 @@
+{
+  "Connections": [
+    {
+      "Id": "CentralDatos",
+      "DisplayName": "Central de Datos",
+      "ConnectionString": "user id=CENTRALITV;password=CentralItv.-20;Data Source=(DESCRIPTION=(SDU=65535)(ADDRESS=(PROTOCOL=TCP)(HOST=10.108.206.3)(PORT=1521))(CONNECT_DATA=(SERVER=dedicated)(SERVICE_NAME=orclpr.snprivate.vcnatisae.oraclevcn.com)))",
+      "Type": "Central"
+    }
+  ]
+}
