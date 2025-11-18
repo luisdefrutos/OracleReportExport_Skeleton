@@ -1,0 +1,158 @@
+{
+  "Reports": [
+    {
+      "Id": "listado_motocicletas",
+      "Name": "Listado de Motocicletas",
+      "Category": "TipoDeVehiculo",
+      "Description": "Listado de vehículos tipo motocicletas por una fecha determinada",
+      "SourceType": "Estacion",
+      "SqlFileForStations": "Sql/ListadoMotocicletasPorCategoriayFechas.txt",
+      "SqlFileForCentral": null,
+      "SqlForStations": null,
+      "SqlForCentral": null,
+      "Parameters": [
+        {
+          "Name": "FechaDesde",
+          "Label": "Fecha desde",
+          "Type": "date",
+          "IsRequired": true
+        },
+        {
+          "Name": "FechaHasta",
+          "Label": "Fecha hasta",
+          "Type": "date",
+          "IsRequired": true
+        },
+        {
+          "Name": "TipoVehiculo1",
+          "Label": "Tipo vehículo 1",
+          "Type": "string",
+          "IsRequired": true
+        },
+        {
+          "Name": "TipoVehiculo2",
+          "Label": "Tipo vehículo 2",
+          "Type": "string",
+          "IsRequired": true
+        },
+        {
+          "Name": "Anulada",
+          "Label": "Anulada (0 = no anulada)",
+          "Type": "int",
+          "IsRequired": true
+        },
+        {
+          "Name": "Cat1",
+          "Label": "Categoría 1",
+          "Type": "string",
+          "IsRequired": true
+        },
+        {
+          "Name": "Cat2",
+          "Label": "Categoría 2",
+          "Type": "string",
+          "IsRequired": true
+        },
+        {
+          "Name": "Cat3",
+          "Label": "Categoría 3",
+          "Type": "string",
+          "IsRequired": true
+        },
+        {
+          "Name": "Cat4",
+          "Label": "Categoría 4",
+          "Type": "string",
+          "IsRequired": true
+        },
+        {
+          "Name": "Cat5",
+          "Label": "Categoría 5",
+          "Type": "string",
+          "IsRequired": true
+        }
+      ]
+
+    },
+    {
+      "Id": "Enac_NoPeriodicas",
+      "Name": "Enac No Periódicas",
+      "Category": "Inspecciones No Periódicas",
+      "Description": "Reporte de ejemplo para demostración",
+      "SourceType": "Estacion",
+      "SqlFileForStations": "SQL/ENAC_InspeccionesNoPeriodicas.txt",
+      "SqlFileForCentral": null,
+      "SqlForStations": null,
+      "SqlForCentral": null,
+      "Parameters": [
+        {
+          "Name": "Anulada",
+          "Label": "Anulada (0/1)",
+          "Type": "int",
+          "IsRequired": true
+        },
+        {
+          "Name": "FechaDesde",
+          "Label": "Fecha desde",
+          "Type": "date",
+          "IsRequired": true
+        },
+        {
+          "Name": "FechaHasta",
+          "Label": "Fecha hasta",
+          "Type": "date",
+          "IsRequired": true
+        },
+        {
+          "Name": "EsPeriodicaPura",
+          "Label": "Es periódica pura (S/N)",
+          "Type": "string",
+          "IsRequired": true
+        },
+        {
+          "Name": "CodTipo1",
+          "Label": "Tipo 1",
+          "Type": "string",
+          "IsRequired": true
+        },
+        {
+          "Name": "CodTipo2",
+          "Label": "Tipo 2",
+          "Type": "string",
+          "IsRequired": true
+        },
+        {
+          "Name": "CodTipo3",
+          "Label": "Tipo 3",
+          "Type": "string",
+          "IsRequired": true
+        },
+        {
+          "Name": "CodTipo4",
+          "Label": "Tipo 4",
+          "Type": "string",
+          "IsRequired": true
+        },
+        {
+          "Name": "CodTipo5",
+          "Label": "Tipo 5",
+          "Type": "string",
+          "IsRequired": true
+        },
+        {
+          "Name": "CodTipo6",
+          "Label": "Tipo 6",
+          "Type": "string",
+          "IsRequired": true
+        },
+        {
+          "Name": "CodTipo7",
+          "Label": "Tipo 7",
+          "Type": "string",
+          "IsRequired": true
+        }
+      ]
+
+    }
+  ]
+}

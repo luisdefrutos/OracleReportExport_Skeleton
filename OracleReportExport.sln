@@ -1,0 +1,54 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31912.275
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OracleReportExport.Domain", "src\OracleReportExport.Domain\OracleReportExport.Domain.csproj", "{460C993A-4930-40E8-97D0-16D20C26D4E0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OracleReportExport.Application", "src\OracleReportExport.Application\OracleReportExport.Application.csproj", "{4F759D1D-4DB0-4EA9-9C37-9FE38FA630E9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OracleReportExport.Infrastructure", "src\OracleReportExport.Infrastructure\OracleReportExport.Infrastructure.csproj", "{86727252-655B-431D-83B6-08DABC2E7B9A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OracleReportExport.Presentation.Desktop", "src\OracleReportExport.Presentation.Desktop\OracleReportExport.Presentation.Desktop.csproj", "{8B18C263-84EF-4605-8214-0DD89842C4E4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OracleReportExport.Domain.Tests", "tests\OracleReportExport.Domain.Tests\OracleReportExport.Domain.Tests.csproj", "{6FD36D8B-E4D9-470B-A535-1583605E42C8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OracleReportExport.Application.Tests", "tests\OracleReportExport.Application.Tests\OracleReportExport.Application.Tests.csproj", "{036DB0E6-320D-4B25-A905-C10BE61A9C40}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OracleReportExport.Infrastructure.Tests", "tests\OracleReportExport.Infrastructure.Tests\OracleReportExport.Infrastructure.Tests.csproj", "{6EE468EA-CBC0-4DA0-BE98-255D48B5BF31}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{460C993A-4930-40E8-97D0-16D20C26D4E0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{460C993A-4930-40E8-97D0-16D20C26D4E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{460C993A-4930-40E8-97D0-16D20C26D4E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{460C993A-4930-40E8-97D0-16D20C26D4E0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4F759D1D-4DB0-4EA9-9C37-9FE38FA630E9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4F759D1D-4DB0-4EA9-9C37-9FE38FA630E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4F759D1D-4DB0-4EA9-9C37-9FE38FA630E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4F759D1D-4DB0-4EA9-9C37-9FE38FA630E9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{86727252-655B-431D-83B6-08DABC2E7B9A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{86727252-655B-431D-83B6-08DABC2E7B9A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{86727252-655B-431D-83B6-08DABC2E7B9A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{86727252-655B-431D-83B6-08DABC2E7B9A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8B18C263-84EF-4605-8214-0DD89842C4E4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8B18C263-84EF-4605-8214-0DD89842C4E4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8B18C263-84EF-4605-8214-0DD89842C4E4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8B18C263-84EF-4605-8214-0DD89842C4E4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6FD36D8B-E4D9-470B-A535-1583605E42C8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6FD36D8B-E4D9-470B-A535-1583605E42C8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6FD36D8B-E4D9-470B-A535-1583605E42C8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{036DB0E6-320D-4B25-A905-C10BE61A9C40}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{036DB0E6-320D-4B25-A905-C10BE61A9C40}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{036DB0E6-320D-4B25-A905-C10BE61A9C40}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6EE468EA-CBC0-4DA0-BE98-255D48B5BF31}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6EE468EA-CBC0-4DA0-BE98-255D48B5BF31}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6EE468EA-CBC0-4DA0-BE98-255D48B5BF31}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

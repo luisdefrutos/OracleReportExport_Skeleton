@@ -1,0 +1,17 @@
+{
+  "Reports": [
+    {
+      "Id": "inspecciones_periodicas",
+      "Name": "Inspecciones periódicas",
+      "Category": "Periódicas",
+      "Description": "Listado de inspecciones periódicas por fecha y tipo de vehículo.",
+      "SourceType": "Estacion",
+      "SqlForStations": "SELECT I.FECHAINSPECCION AS FechaInspeccion, I.MATRICULA, I.RESULTADO FROM INSPECCION I WHERE I.FECHAINSPECCION BETWEEN :FechaDesde AND :FechaHasta",
+      "SqlForCentral": null,
+      "Parameters": [
+        { "Name": "FechaDesde", "Label": "Fecha desde", "Type": "date", "IsRequired": true },
+        { "Name": "FechaHasta", "Label": "Fecha hasta", "Type": "date", "IsRequired": true }
+      ]
+    }
+  ]
+}

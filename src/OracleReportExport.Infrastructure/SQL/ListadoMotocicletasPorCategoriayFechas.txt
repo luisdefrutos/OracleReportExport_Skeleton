@@ -1,0 +1,124 @@
+﻿SELECT I.CODINSPECCION,
+         I.FECHAINSPECCION,
+         I.MATRICULA,
+         I.FECHAMATRICULACION,
+         I.CODCATEGORIA AS CATEGORIA,
+         CONCAT (I.CODCONSTRUCCION, I.CODUTILIZACION) AS CLASIFICACION,
+         I.CHOMOLOGACION,
+         M.Ruido_Fondo,
+         M.Ruido_Limite,
+         M.Ruido_Limite_rpm,
+         M.Ruido_Medicion1,
+         M.Ruido_RPM_Med1,
+         M.Ruido_Medicion2,
+         M.Ruido_RPM_Med2,
+         M.Ruido_Medicion3,
+         M.Ruido_RPM_Med3,
+         M.Ruido_Medicion4,
+         M.Ruido_RPM_Med4,
+         M.Ruido_Medicion5,
+         M.Ruido_RPM_Med5,
+         M.Ruido_Medicion6,
+         M.Ruido_RPM_Med6,
+         I.Resultado,
+         CASE NVL (TO_NUMBER (I.RESULTADO), -1)
+            WHEN 0 THEN 'SIN_RESULTADO'
+            WHEN 1 THEN 'FAVORABLE'
+            WHEN 2 THEN 'FAVORABLE LEVE'
+            WHEN 3 THEN 'DESFAVORABLE'
+            WHEN 4 THEN 'NEGATIVO'
+            ELSE 'DESCONOCIDO'
+         END
+            AS DESCRIPCION_RESULTADO,
+         M.RUIDO,
+         M.RUIDO_RPM,
+         ----------------------------------------------------------------
+         -- LISTAGG
+         ----------------------------------------------------------------
+         LISTAGG (
+            CASE
+               --  solo concatena si hay defecto
+               WHEN D.INDDEFECTO IS NOT NULL
+               THEN
+                     'INDDEFECTO='
+                  || NVL (TO_CHAR (D.INDDEFECTO), '')
+                  || '; '
+                  || 'BLOQUE='
+                  || NVL (TO_CHAR (D.BLOQUE), '')
+                  || '; '
+                  || 'DEFECTO='
+                  || NVL (TO_CHAR (D.DEFECTO), '')
+                  || '; '
+                  || 'LETRA='
+                  || NVL (D.LETRA, '')
+                  || '; '
+                  || 'GRAVE='
+                  || NVL (TO_CHAR (D.GRAVE), '')
+                  || '; '
+                  || 'SUBDEFECTO='
+                  || NVL (TO_CHAR (D.SUBDEFECTO), '')
+                  || '; '
+                  || 'NUMERO='
+                  || NVL (TO_CHAR (D.NUMERO), '')
+                  || '; '
+                  || 'LEVE='
+                  || NVL (TO_CHAR (D.LEVE), '')
+                  || '; '
+                  || 'MUYGRAVE='
+                  || NVL (TO_CHAR (D.MUYGRAVE), '')
+                  || '; '
+                  || 'DETALLE='
+                  || NVL (D.DETALLE, '')
+               ELSE
+                  NULL
+            END,
+            ' || '                          -- separadorsi hay varios defectos
+                  )
+         WITHIN GROUP (ORDER BY
+                          D.BLOQUE,
+                          D.DEFECTO,
+                          D.SUBDEFECTO,
+                          D.NUMERO)
+            AS DEFECTOS_CONCAT
+    FROM INSPECCION I
+         INNER JOIN INSPECCION_MEDICIONES M
+            ON I.CODINSPECCION = M.CODINSPECCION
+         LEFT JOIN INSPECCION_DEFECTOS D ON I.CODINSPECCION = D.CODINSPECCION
+   WHERE   I.TIPOVEHICULO IN (:TipoVehiculo1, :TipoVehiculo2)
+            AND I.ANULADA = :Anulada
+            AND I.FECHAINSPECCION >= :FechaDesde
+            AND I.FECHAINSPECCION <= :FechaHasta
+            AND (
+                   I.CODCATEGORIA LIKE :Cat1
+                OR I.CODCATEGORIA LIKE :Cat2
+                OR I.CODCATEGORIA LIKE :Cat3
+                OR I.CODCATEGORIA LIKE :Cat4
+                OR I.CODCATEGORIA LIKE :Cat5
+                )
+GROUP BY I.CODINSPECCION,
+         I.FECHAINSPECCION,
+         I.MATRICULA,
+         I.FECHAMATRICULACION,
+         I.CODCATEGORIA,
+         I.CODCONSTRUCCION,
+         I.CODUTILIZACION,
+         I.CHOMOLOGACION,
+         M.Ruido_Fondo,
+         M.Ruido_Limite,
+         M.Ruido_Limite_rpm,
+         M.Ruido_Medicion1,
+         M.Ruido_RPM_Med1,
+         M.Ruido_Medicion2,
+         M.Ruido_RPM_Med2,
+         M.Ruido_Medicion3,
+         M.Ruido_RPM_Med3,
+         M.Ruido_Medicion4,
+         M.Ruido_RPM_Med4,
+         M.Ruido_Medicion5,
+         M.Ruido_RPM_Med5,
+         M.Ruido_Medicion6,
+         M.Ruido_RPM_Med6,
+         I.Resultado,
+         M.RUIDO,
+         M.RUIDO_RPM
+ORDER BY 2

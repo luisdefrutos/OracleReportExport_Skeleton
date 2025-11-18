@@ -1,0 +1,75 @@
+﻿  SELECT I.CODESTACION,
+         I.CODINSPECCION,
+         I.FECHAINSPECCION,
+         I.MATRICULA,
+         I.MARCA,
+         I.MODELO,
+         I.FECHAMATRICULACION,
+         I.CODCATEGORIA AS CATEGORIA,
+         CONCAT (I.CODCONSTRUCCION, I.CODUTILIZACION) AS CLASIFICACION,
+         I.CODSEPIVA AS COD_TIPO_INSPECCION,
+         S.DESSEPIVA AS TIPO_INSPECCION,
+         TE.CODTIPO_ENAC,
+         TE.DESCRIPCION AS DESCRIPOCION_ENAC,
+         LISTAGG (IR.CODREFORMA, ', ') WITHIN GROUP (ORDER BY IR.CODREFORMA)
+            AS REFORMA,
+         I.Resultado,
+         CASE NVL (TO_NUMBER (I.RESULTADO), -1)
+            WHEN 0 THEN 'SIN_RESULTADO'
+            WHEN 1 THEN 'FAVORABLE'
+            WHEN 2 THEN 'FAVORABLE LEVE'
+            WHEN 3 THEN 'DESFAVORABLE'
+            WHEN 4 THEN 'NEGATIVO'
+            ELSE 'DESCONOCIDO'
+         END
+            AS DESCRIPCION_RESULTADO,
+         I.INDICA12 AS FASES,
+         IT.Observaciones Observacion_Anverso,
+         IT.REFORMAS_DILIGENCIA Observacion_Reverso
+    FROM INSPECCION I
+         JOIN SEPIVA S ON I.CODSEPIVA = S.CODSEPIVA
+         JOIN SEPIVA_ENAC SE
+            ON     I.CODSEPIVA = SE.CODSEPIVA
+               AND (   I.REFORMACONPROYECTO = SE.REFORMACONPROYECTO
+                    OR SE.REFORMACONPROYECTO IS NULL)
+         JOIN TIPOINSPECCION_ENAC TE ON SE.CODTIPO_ENAC = TE.CODTIPO_ENAC
+         LEFT JOIN INSPECCION_REFORMAS IR ON I.CODINSPECCION = IR.CODINSPECCION
+         LEFT JOIN INSPECCION_TRAMITES IT ON I.CODINSPECCION = IT.CODINSPECCION
+         LEFT JOIN EMPLEADOS E ON I.CODINSPECTOR = E.CODINSPECTOR
+   WHERE     I.ANULADA = :Anulada
+         AND I.FECHAINSPECCION >= :FechaDesde
+         AND I.FECHAINSPECCION <= :FechaHasta
+         AND itv.ES_PERIODICA_PURA (S.CODSEPIVA) = :EsPeriodicaPura
+         AND TE.CODTIPO_ENAC IN ( :CodTipo1,
+                                 :CodTipo2,
+                                 :CodTipo3,
+                                 :CodTipo4,
+                                 :CodTipo5,
+                                 :CodTipo6,
+                                 :CodTipo7)
+GROUP BY I.CODINSPECCION,
+         I.CODESTACION,
+         I.FECHAINSPECCION,
+         I.MATRICULA,
+         I.MARCA,
+         I.MODELO,
+         I.FECHAMATRICULACION,
+         I.CODCATEGORIA,
+         CONCAT (I.CODCONSTRUCCION, I.CODUTILIZACION),
+         I.CODSEPIVA,
+         S.DESSEPIVA,
+         IT.Observaciones,
+         IT.REFORMAS_DILIGENCIA,
+         TE.CODTIPO_ENAC,
+         TE.DESCRIPCION,
+         I.Resultado,
+         CASE NVL (TO_NUMBER (I.RESULTADO), -1)
+            WHEN 0 THEN 'SIN_RESULTADO'
+            WHEN 1 THEN 'FAVORABLE'
+            WHEN 2 THEN 'FAVORABLE LEVE'
+            WHEN 3 THEN 'DESFAVORABLE'
+            WHEN 4 THEN 'NEGATIVO'
+            ELSE 'DESCONOCIDO'
+         END,
+         I.INDICA12
+ORDER BY TE.CODTIPO_ENAC, I.FECHAINSPECCION DESC
