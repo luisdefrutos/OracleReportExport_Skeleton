@@ -6,6 +6,9 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="MainForm - copia.cs" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\OracleReportExport.Application\OracleReportExport.Application.csproj" />

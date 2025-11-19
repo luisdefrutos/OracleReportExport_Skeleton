@@ -20,12 +20,10 @@ namespace OracleReportExport.Infrastructure.Data
         {
             var basePath = AppContext.BaseDirectory;
             var path = Path.Combine(basePath, "Configuration", "Reports.json");
-
             if (!File.Exists(path))
                 throw new FileNotFoundException($"No se encontró Reports.json en: {path}");
 
             var json = File.ReadAllText(path);
-
             var options = new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
@@ -34,22 +32,16 @@ namespace OracleReportExport.Infrastructure.Data
 
             var root = JsonSerializer.Deserialize<ReportDefinitionRoot>(json, options)
                        ?? new ReportDefinitionRoot();
-
             var processedReports = new List<ReportDefinition>();
-
             foreach (var r in root.Reports)
             {
                 var report = r;
-
                 if (!string.IsNullOrWhiteSpace(r.SqlFileForStations))
                 {
                     var sqlPath = Path.Combine(basePath, r.SqlFileForStations);
-
                     if (!File.Exists(sqlPath))
                         throw new FileNotFoundException($"No se encontró el archivo SQL: {sqlPath}");
-
                     var sqlText = File.ReadAllText(sqlPath);
-
                     // Creamos una nueva instancia con la SQL cargada
                     report = new ReportDefinition
                     {
@@ -62,19 +54,16 @@ namespace OracleReportExport.Infrastructure.Data
                         SqlForCentral = r.SqlForCentral,
                         SqlFileForStations = r.SqlFileForStations,
                         SqlFileForCentral = r.SqlFileForCentral,
-                        Parameters = r.Parameters
+                        Parameters = r.Parameters,
+                       TableMasterForParameters=r.TableMasterForParameters
                     };
                 }
                 else if (!string.IsNullOrWhiteSpace(r.SqlFileForCentral))
                 {
                     var sqlPath = Path.Combine(basePath, r.SqlFileForCentral);
-
                     if (!File.Exists(sqlPath))
                         throw new FileNotFoundException($"No se encontró el archivo SQL: {sqlPath}");
-
                     var sqlText = File.ReadAllText(sqlPath);
-
-                    // Creamos una nueva instancia con la SQL cargada
                     report = new ReportDefinition
                     {
                         Id = r.Id,
@@ -86,17 +75,14 @@ namespace OracleReportExport.Infrastructure.Data
                         SqlForCentral = sqlText,
                         SqlFileForStations = r.SqlFileForStations,
                         SqlFileForCentral = r.SqlFileForCentral,
-                        Parameters = r.Parameters
+                        Parameters = r.Parameters,
+                        TableMasterForParameters = r.TableMasterForParameters
                     };
-
                 }
-
                 processedReports.Add(report);
             }
-
             _reports = processedReports;
         }
-
 
         public Task<IReadOnlyList<ReportDefinition>> GetAllAsync(CancellationToken ct = default)
             => Task.FromResult<IReadOnlyList<ReportDefinition>>(_reports);
@@ -105,7 +91,6 @@ namespace OracleReportExport.Infrastructure.Data
         {
             var report = _reports
                 .FirstOrDefault(r => string.Equals(r.Id, id, StringComparison.OrdinalIgnoreCase));
-
             return Task.FromResult(report);
         }
     }

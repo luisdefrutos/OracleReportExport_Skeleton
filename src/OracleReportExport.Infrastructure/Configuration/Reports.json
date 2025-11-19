@@ -10,7 +10,8 @@
       "SqlFileForCentral": "SQL/ListadoEstacionesActivas.txt",
       "SqlForStations": null,
       "SqlForCentral": null,
-      "Parameters": [ ]
+      "TableMasterForParameters": null,
+      "Parameters": []
     },
     {
       "Id": "2",
@@ -22,86 +23,99 @@
       "SqlFileForCentral": null,
       "SqlForStations": null,
       "SqlForCentral": null,
-      "Parameters": [
+      "TableMasterForParameters": [
         {
-          "Name": "FechaDesde",
-          "Label": "Fecha desde",
-          "Type": "date",
-          "IsRequired": true
+          "Name": "TIPOSVEHICULO",
+          "Label": "Tipos de Vehiculo",
+          "Type": "ComboBox",
+          "IsRequired": true,
+          "Id": "CODTIPO",
+          "Text": "DESTIPO",
+          "ValuesRequired": [
+            "CI",
+            "M"
+          ],
+          "SqlQueryMaster": "SELECT CODTIPO, DESTIPO FROM TIPOSVEHICULO"
         },
         {
-          "Name": "FechaHasta",
-          "Label": "Fecha hasta",
-          "Type": "date",
-          "IsRequired": true
-        },
-        {
-          "Name": "TipoVehiculo1",
-          "Label": "Tipo vehículo 1",
-          "Type": "string",
-          "IsRequired": true
-        },
-        {
-          "Name": "TipoVehiculo2",
-          "Label": "Tipo vehículo 2",
-          "Type": "string",
-          "IsRequired": true
-        },
-        {
-          "Name": "Anulada",
-          "Label": "Anulada (0 = no anulada)",
-          "Type": "int",
-          "IsRequired": true
-        },
-        {
-          "Name": "Cat1",
-          "Label": "Categoría 1",
-          "Type": "string",
-          "IsRequired": true
-        },
-        {
-          "Name": "Cat2",
-          "Label": "Categoría 2",
-          "Type": "string",
-          "IsRequired": true
-        },
-        {
-          "Name": "Cat3",
-          "Label": "Categoría 3",
-          "Type": "string",
-          "IsRequired": true
-        },
-        {
-          "Name": "Cat4",
-          "Label": "Categoría 4",
-          "Type": "string",
-          "IsRequired": true
-        },
-        {
-          "Name": "Cat5",
-          "Label": "Categoría 5",
-          "Type": "string",
-          "IsRequired": true
+          "Name": "CATEGORIAS",
+          "Label": "Tipos de Categorias",
+          "Type": "ComboBox",
+          "IsRequired": true,
+          "Id": "CODCATEGORIA",
+          "Text": "DESCATEGORIA",
+          "ValuesRequired": [
+            "L1",
+            "L1e",
+            "L3",
+            "L3e",
+            "L4e"
+          ],
+
+          "SqlQueryMaster": "SELECT CODCATEGORIA, DESCATEGORIA FROM CATEGORIAS"
+
         }
-      ]
+      ],
+        "Parameters": [
+          {
+            "Name": "FechaDesde",
+            "Label": "Fecha desde",
+            "Type": "date",
+            "IsRequired": true
+          },
+          {
+            "Name": "FechaHasta",
+            "Label": "Fecha hasta",
+            "Type": "date",
+            "IsRequired": true
+          },
+          {
+            "Name": "Anulada",
+            "Label": "Anulada (0 = no anulada)",
+            "Type": "bool",
+            "IsRequired": false
+          }
+        ]
 
     },
     {
       "Id": "3",
       "Name": "Enac No Periódicas",
       "Category": "Inspecciones No Periódicas",
-      "Description": "Reporte de ejemplo para demostración",
+      "Description": "Reporte de inspecciones no periódicas",
       "SourceType": "Estacion",
       "SqlFileForStations": "SQL/ENAC_InspeccionesNoPeriodicas.txt",
       "SqlFileForCentral": null,
       "SqlForStations": null,
       "SqlForCentral": null,
+      "TableMasterForParameters": [
+        {
+          "Name": "CATEGORIAS",
+          "Label": "Tipos de Inspección",
+          "Type": "ComboBox",
+          "IsRequired": true,
+          "Id": "CODTIPO_ENAC",
+          "Text": "DESCRIPCION",
+          "ValuesRequired": [
+            "RC",
+            "RS",
+            "PU",
+            "PM",
+            "DP",
+            "CS",
+            "OT"
+          ],
+
+          "SqlQueryMaster": "SELECT CODTIPO_ENAC, DESCRIPCION FROM TIPOINSPECCION_ENAC"
+
+        }
+      ],
       "Parameters": [
         {
           "Name": "Anulada",
-          "Label": "Anulada (0/-1)",
-          "Type": "int",
-          "IsRequired": true
+          "Label": "Anulada",
+          "Type": "bool",
+          "IsRequired": false
         },
         {
           "Name": "FechaDesde",
@@ -118,50 +132,18 @@
         {
           "Name": "EsPeriodicaPura",
           "Label": "Es periódica pura (S/N)",
-          "Type": "string",
-          "IsRequired": true
-        },
-        {
-          "Name": "CodTipo1",
-          "Label": "Tipo 1",
-          "Type": "string",
-          "IsRequired": true
-        },
-        {
-          "Name": "CodTipo2",
-          "Label": "Tipo 2",
-          "Type": "string",
-          "IsRequired": true
-        },
-        {
-          "Name": "CodTipo3",
-          "Label": "Tipo 3",
-          "Type": "string",
-          "IsRequired": true
-        },
-        {
-          "Name": "CodTipo4",
-          "Label": "Tipo 4",
-          "Type": "string",
-          "IsRequired": true
-        },
-        {
-          "Name": "CodTipo5",
-          "Label": "Tipo 5",
-          "Type": "string",
-          "IsRequired": true
-        },
-        {
-          "Name": "CodTipo6",
-          "Label": "Tipo 6",
-          "Type": "string",
-          "IsRequired": true
-        },
-        {
-          "Name": "CodTipo7",
-          "Label": "Tipo 7",
-          "Type": "string",
-          "IsRequired": true
+          "Type": "funcion",
+          "Values": [
+            {
+              "Key": 1,
+              "Value": "S"
+            },
+            {
+              "Key": 0,
+              "Value": "N"
+            }
+          ],
+          "IsRequired": false
         }
       ]
 

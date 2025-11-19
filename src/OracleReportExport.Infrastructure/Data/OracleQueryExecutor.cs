@@ -1,13 +1,14 @@
 ﻿using Oracle.ManagedDataAccess.Client;
+using OracleReportExport.Application.Models;
 using OracleReportExport.Infrastructure.Interfaces;
 using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Linq;
  
 
 namespace OracleReportExport.Infrastructure.Data
@@ -24,7 +25,7 @@ namespace OracleReportExport.Infrastructure.Data
         public async Task<DataTable> ExecuteQueryAsync(
             string sql,
             IReadOnlyDictionary<string, object?> parameters,
-            string connectionId,
+             ConnectionInfo  connectionInfo,
             string reportId,
             CancellationToken ct = default)
         {
@@ -33,7 +34,7 @@ namespace OracleReportExport.Infrastructure.Data
 
             var result = new DataTable();
 
-            await using var conn = _connectionFactory.CreateConnection(connectionId) as OracleConnection
+            await using var conn = _connectionFactory.CreateConnection(connectionInfo.Id) as OracleConnection
                                    ?? throw new InvalidOperationException("La conexión devuelta no es OracleConnection.");
 
             await conn.OpenAsync(ct);
@@ -61,7 +62,7 @@ namespace OracleReportExport.Infrastructure.Data
 
             var debugSql = BuildDebugSql(cmd);
 
-            Log.Information($"Ejecutando SQL de '{reportId}' en {connectionId}:\n{debugSql}");
+            Log.Information($"Ejecutando SQL de '{reportId}' en {connectionInfo.ToString()}:\n{debugSql}");
 
             using var reader = await cmd.ExecuteReaderAsync(ct);
             result.Load(reader);

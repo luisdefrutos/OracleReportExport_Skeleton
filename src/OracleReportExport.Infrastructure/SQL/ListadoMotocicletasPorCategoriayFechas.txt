@@ -35,66 +35,40 @@
          ----------------------------------------------------------------
          -- LISTAGG
          ----------------------------------------------------------------
-         LISTAGG (
-            CASE
-               --  solo concatena si hay defecto
-               WHEN D.INDDEFECTO IS NOT NULL
-               THEN
-                     'INDDEFECTO='
-                  || NVL (TO_CHAR (D.INDDEFECTO), '')
-                  || '; '
-                  || 'BLOQUE='
-                  || NVL (TO_CHAR (D.BLOQUE), '')
-                  || '; '
-                  || 'DEFECTO='
-                  || NVL (TO_CHAR (D.DEFECTO), '')
-                  || '; '
-                  || 'LETRA='
-                  || NVL (D.LETRA, '')
-                  || '; '
-                  || 'GRAVE='
-                  || NVL (TO_CHAR (D.GRAVE), '')
-                  || '; '
-                  || 'SUBDEFECTO='
-                  || NVL (TO_CHAR (D.SUBDEFECTO), '')
-                  || '; '
-                  || 'NUMERO='
-                  || NVL (TO_CHAR (D.NUMERO), '')
-                  || '; '
-                  || 'LEVE='
-                  || NVL (TO_CHAR (D.LEVE), '')
-                  || '; '
-                  || 'MUYGRAVE='
-                  || NVL (TO_CHAR (D.MUYGRAVE), '')
-                  || '; '
-                  || 'DETALLE='
-                  || NVL (D.DETALLE, '')
-               ELSE
-                  NULL
-            END,
-            ' || '                          -- separadorsi hay varios defectos
-                  )
-         WITHIN GROUP (ORDER BY
-                          D.BLOQUE,
-                          D.DEFECTO,
-                          D.SUBDEFECTO,
-                          D.NUMERO)
-            AS DEFECTOS_CONCAT
+        LISTAGG (
+               CASE
+                  WHEN D.INDDEFECTO IS NOT NULL
+                  THEN
+                        'INDDEFECTO=' || NVL (TO_CHAR (D.INDDEFECTO), '') || '; '
+                     || 'BLOQUE='     || NVL (TO_CHAR (D.BLOQUE), '')     || '; '
+                     || 'DEFECTO='    || NVL (TO_CHAR (D.DEFECTO), '')    || '; '
+                     || 'LETRA='      || NVL (D.LETRA, '')               || '; '
+                     || 'GRAVE='      || NVL (TO_CHAR (D.GRAVE), '')      || '; '
+                     || 'SUBDEFECTO=' || NVL (TO_CHAR (D.SUBDEFECTO), '') || '; '
+                     || 'NUMERO='     || NVL (TO_CHAR (D.NUMERO), '')     || '; '
+                     || 'LEVE='       || NVL (TO_CHAR (D.LEVE), '')       || '; '
+                     || 'MUYGRAVE='   || NVL (TO_CHAR (D.MUYGRAVE), '')   || '; '
+                     || 'DETALLE='    || NVL (D.DETALLE, '')
+                  ELSE
+                     NULL
+               END,
+               ' || ' ON OVERFLOW TRUNCATE ' ...' WITHOUT COUNT
+            )
+            WITHIN GROUP (ORDER BY
+               D.BLOQUE,
+               D.DEFECTO,
+               D.SUBDEFECTO,
+               D.NUMERO
+            ) AS DEFECTOS_CONCAT
     FROM INSPECCION I
          INNER JOIN INSPECCION_MEDICIONES M
             ON I.CODINSPECCION = M.CODINSPECCION
          LEFT JOIN INSPECCION_DEFECTOS D ON I.CODINSPECCION = D.CODINSPECCION
-   WHERE   I.TIPOVEHICULO IN (:TipoVehiculo1, :TipoVehiculo2)
+   WHERE   I.TIPOVEHICULO IN ({TiposVehiculoList})
             AND I.ANULADA = :Anulada
             AND I.FECHAINSPECCION >= :FechaDesde
             AND I.FECHAINSPECCION <= :FechaHasta
-            AND (
-                   I.CODCATEGORIA LIKE :Cat1
-                OR I.CODCATEGORIA LIKE :Cat2
-                OR I.CODCATEGORIA LIKE :Cat3
-                OR I.CODCATEGORIA LIKE :Cat4
-                OR I.CODCATEGORIA LIKE :Cat5
-                )
+              AND I.CODCATEGORIA IN ({CategoriasList})
 GROUP BY I.CODINSPECCION,
          I.FECHAINSPECCION,
          I.MATRICULA,

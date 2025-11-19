@@ -16,6 +16,9 @@ public sealed class ReportDefinition
     public string? SqlFileForStations { get; init; }
     public string? SqlFileForCentral { get; init; }
 
+    public IReadOnlyList<TableMasterParameterDefinition>? TableMasterForParameters { get; set; }
+        = Array.Empty<TableMasterParameterDefinition>();
+
     public IReadOnlyList<ReportParameterDefinition> Parameters { get; init; }
         = Array.Empty<ReportParameterDefinition>();
 }

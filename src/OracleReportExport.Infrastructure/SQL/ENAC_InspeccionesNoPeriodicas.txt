@@ -40,13 +40,7 @@
          AND I.FECHAINSPECCION >= :FechaDesde
          AND I.FECHAINSPECCION <= :FechaHasta
          AND itv.ES_PERIODICA_PURA (S.CODSEPIVA) = :EsPeriodicaPura
-         AND TE.CODTIPO_ENAC IN ( :CodTipo1,
-                                 :CodTipo2,
-                                 :CodTipo3,
-                                 :CodTipo4,
-                                 :CodTipo5,
-                                 :CodTipo6,
-                                 :CodTipo7)
+         AND TE.CODTIPO_ENAC IN ( {CategoriasList})
 GROUP BY I.CODINSPECCION,
          I.CODESTACION,
          I.FECHAINSPECCION,

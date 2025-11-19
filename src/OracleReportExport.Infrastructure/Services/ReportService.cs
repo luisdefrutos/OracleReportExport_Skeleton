@@ -1,11 +1,13 @@
-﻿using System;
+﻿using Oracle.ManagedDataAccess.Client;
+using OracleReportExport.Application.Interfaces;
+using OracleReportExport.Application.Models;
+using OracleReportExport.Domain.Models;
+using OracleReportExport.Infrastructure.Interfaces;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
-using OracleReportExport.Application.Interfaces;
-using OracleReportExport.Domain.Models;
-using OracleReportExport.Infrastructure.Interfaces;
 
 namespace OracleReportExport.Infrastructure.Services
 {
@@ -26,33 +28,84 @@ namespace OracleReportExport.Infrastructure.Services
             CancellationToken ct = default)
             => _definitions.GetAllAsync(ct);
 
-        public async Task<DataTable> ExecuteReportAsync(
-            string reportId,
-            IReadOnlyDictionary<string, object?> parameterValues,
-            IReadOnlyList<string> targetConnectionIds,
-            CancellationToken ct = default)
+
+        public async Task<DataTable> ExecuteReportAsync(ReportDefinition report,
+                        IReadOnlyDictionary<string, object?> parameterValues,
+                       List<ConnectionInfo> targetConnection,
+                        CancellationToken ct = default)
         {
-            var def = await _definitions.GetByIdAsync(reportId, ct);
+            if (report == null)
+                throw new ArgumentNullException(nameof(report));
+
+            var def = await _definitions.GetByIdAsync(report.Id);
 
             if (def is null)
                 throw new InvalidOperationException(
-                    $"No se encontró la definición del informe '{reportId}'.");
+                    $"No se encontró la definición del informe '{report.Id}'.");
 
-            var sql = def.SqlForStations ?? def.SqlForCentral;
+            if (string.IsNullOrWhiteSpace(report.SqlFileForStations) &&
+                string.IsNullOrWhiteSpace(report.SqlForStations) &&
+                string.IsNullOrEmpty(report.SqlForCentral) &&
+                string.IsNullOrEmpty(report.SqlForStations))
+                throw new InvalidOperationException("El informe no tiene SQL configurada.");
 
-            if (string.IsNullOrWhiteSpace(sql))
-                throw new InvalidOperationException(
-                    $"El informe '{reportId}' no tiene SQL configurada.");
+            string sql=String.Empty;
+            switch (report.SourceType)
+            {
+                case OracleReportExport.Domain.Enums.ReportSourceType.Central:
+                    if (!string.IsNullOrWhiteSpace(report.SqlFileForCentral))
+                    {
+                        // asume ruta relativa dentro de tu Configuration/SQL...
+                        var basePath = AppContext.BaseDirectory;
+                        var pathSql = Path.Combine(basePath, report.SqlFileForCentral);
+                        if (!File.Exists(pathSql))
+                            throw new FileNotFoundException($"No se encontró el fichero SQL: {pathSql}");
+                        sql = await File.ReadAllTextAsync(pathSql);
+                    }
+                    else
+                    {
+                        sql = report.SqlForCentral ?? string.Empty;
+                    }
+                    break;
+                case OracleReportExport.Domain.Enums.ReportSourceType.Estacion:
+                    if (!string.IsNullOrWhiteSpace(report.SqlFileForStations))
+                    {
+                        var basePath = AppContext.BaseDirectory;
+                        var pathSql = Path.Combine(basePath, report.SqlFileForStations);
+
+                        if (!File.Exists(pathSql))
+                            throw new FileNotFoundException($"No se encontró el fichero SQL: {pathSql}");
+
+                        sql = await File.ReadAllTextAsync(pathSql);
+                    }
+                    else
+                    {
+                        sql = report.SqlForStations ?? string.Empty;
+                    }
+                    break;
+            }
+                //  Sustituir tokens del txt de  {TiposVehiculoList} y {CategoriasList}
+                if (parameterValues.TryGetValue("TiposVehiculoList", out var tvListObj) &&
+                    tvListObj is string tvList)
+                {
+                    sql = sql.Replace("{TiposVehiculoList}", tvList);
+                }
+
+                if (parameterValues.TryGetValue("CategoriasList", out var catListObj) &&
+                    catListObj is string catList)
+                {
+                    sql = sql.Replace("{CategoriasList}", catList);
+                }
 
             DataTable? combined = null;
-
-            foreach (var connectionId in targetConnectionIds)
+            foreach (var connectionId in targetConnection.ToList())
             {
+                
                 var table = await _queryExecutor.ExecuteQueryAsync(
                     sql,
                     parameterValues,
                     connectionId,
-                    reportId,
+                    report.Id,
                     ct);
 
                 if (combined is null)
@@ -70,13 +123,13 @@ namespace OracleReportExport.Infrastructure.Services
                         newRow[col.ColumnName] = row[col];
                     }
 
-                    newRow["CONEXION_ID"] = connectionId;
+                    newRow["CONEXION_ID"] = connectionId.ToString();
                     combined.Rows.Add(newRow);
                 }
             }
-
             return combined ?? new DataTable();
         }
-    }
+
+   }
 }
 
