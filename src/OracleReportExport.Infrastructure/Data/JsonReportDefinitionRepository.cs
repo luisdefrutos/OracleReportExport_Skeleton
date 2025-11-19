@@ -65,6 +65,31 @@ namespace OracleReportExport.Infrastructure.Data
                         Parameters = r.Parameters
                     };
                 }
+                else if (!string.IsNullOrWhiteSpace(r.SqlFileForCentral))
+                {
+                    var sqlPath = Path.Combine(basePath, r.SqlFileForCentral);
+
+                    if (!File.Exists(sqlPath))
+                        throw new FileNotFoundException($"No se encontró el archivo SQL: {sqlPath}");
+
+                    var sqlText = File.ReadAllText(sqlPath);
+
+                    // Creamos una nueva instancia con la SQL cargada
+                    report = new ReportDefinition
+                    {
+                        Id = r.Id,
+                        Name = r.Name,
+                        Category = r.Category,
+                        Description = r.Description,
+                        SourceType = r.SourceType,
+                        SqlForStations = r.SqlForStations,
+                        SqlForCentral = sqlText,
+                        SqlFileForStations = r.SqlFileForStations,
+                        SqlFileForCentral = r.SqlFileForCentral,
+                        Parameters = r.Parameters
+                    };
+
+                }
 
                 processedReports.Add(report);
             }

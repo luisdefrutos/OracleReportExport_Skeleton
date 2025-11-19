@@ -1,7 +1,19 @@
 {
   "Reports": [
     {
-      "Id": "listado_motocicletas",
+      "Id": "1",
+      "Name": "Listado Estaciones Activas",
+      "Category": "Central",
+      "Description": "Listado de estaciones fijas activas.",
+      "SourceType": "Central",
+      "SqlFileForStations": null,
+      "SqlFileForCentral": "SQL/ListadoEstacionesActivas.txt",
+      "SqlForStations": null,
+      "SqlForCentral": null,
+      "Parameters": [ ]
+    },
+    {
+      "Id": "2",
       "Name": "Listado de Motocicletas",
       "Category": "TipoDeVehiculo",
       "Description": "Listado de vehículos tipo motocicletas por una fecha determinada",
@@ -75,7 +87,7 @@
 
     },
     {
-      "Id": "Enac_NoPeriodicas",
+      "Id": "3",
       "Name": "Enac No Periódicas",
       "Category": "Inspecciones No Periódicas",
       "Description": "Reporte de ejemplo para demostración",
@@ -87,7 +99,7 @@
       "Parameters": [
         {
           "Name": "Anulada",
-          "Label": "Anulada (0/1)",
+          "Label": "Anulada (0/-1)",
           "Type": "int",
           "IsRequired": true
         },
