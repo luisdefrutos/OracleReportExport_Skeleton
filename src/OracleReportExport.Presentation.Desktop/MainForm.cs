@@ -74,6 +74,7 @@ namespace OracleReportExport.Presentation.Desktop
             Text = "Oracle Report Export";
             Width = 1200;
             Height = 800;
+            ////StartPosition = FormStartPosition.CenterScreen;
 
             _tabControl.Dock = DockStyle.Fill;
 
