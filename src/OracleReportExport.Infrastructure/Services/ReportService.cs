@@ -3,6 +3,8 @@ using OracleReportExport.Application.Interfaces;
 using OracleReportExport.Application.Models;
 using OracleReportExport.Domain.Models;
 using OracleReportExport.Infrastructure.Interfaces;
+using Serilog;
+using Serilog.Core;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -29,7 +31,7 @@ namespace OracleReportExport.Infrastructure.Services
             => _definitions.GetAllAsync(ct);
 
 
-        public async Task<DataTable> ExecuteReportAsync(ReportDefinition report,
+        public async Task<ReportQueryResult> ExecuteReportAsync(ReportDefinition report,
                         IReadOnlyDictionary<string, object?> parameterValues,
                        List<ConnectionInfo> targetConnection,
                         CancellationToken ct = default)
@@ -98,36 +100,52 @@ namespace OracleReportExport.Infrastructure.Services
                 }
 
             DataTable? combined = null;
+            var timeoutConnections = new List<string>();
             foreach (var connectionId in targetConnection.ToList())
             {
-                
-                var table = await _queryExecutor.ExecuteQueryAsync(
-                    sql,
-                    parameterValues,
-                    connectionId,
-                    report.Id,
-                    ct);
-
-                if (combined is null)
+                try
                 {
-                    combined = table.Clone();
-                    combined.Columns.Add("CONEXION_ID", typeof(string));
-                }
+                    var table = await _queryExecutor.ExecuteQueryAsync(
+                                sql,
+                                parameterValues,
+                                connectionId,
+                                report.Id,
+                                ct);
 
-                foreach (DataRow row in table.Rows)
-                {
-                    var newRow = combined.NewRow();
-
-                    foreach (DataColumn col in table.Columns)
+                    if (combined is null)
                     {
-                        newRow[col.ColumnName] = row[col];
+                        combined = table.Clone();
+                        combined.Columns.Add("CONEXION_ID", typeof(string));
                     }
 
-                    newRow["CONEXION_ID"] = connectionId.ToString();
-                    combined.Rows.Add(newRow);
+                    foreach (DataRow row in table.Rows)
+                    {
+                        var newRow = combined.NewRow();
+
+                        foreach (DataColumn col in table.Columns)
+                        {
+                            newRow[col.ColumnName] = row[col];
+                        }
+
+                        newRow["CONEXION_ID"] = connectionId.ToString();
+                        combined.Rows.Add(newRow);
+                    }
+                }
+                catch (OracleException ex) when (ex.Number == 50000) //Timeout
+                {
+                    Log.Warning(ex,
+                        "Timeout en la conexión {ConnectionId} para el informe {ReportId}",
+                        connectionId, report.Id);
+                    timeoutConnections.Add(connectionId.ToString());
                 }
             }
-            return combined ?? new DataTable();
+
+            return new ReportQueryResult
+            {
+                Data = combined ?? new DataTable(),
+                TimeoutConnections = timeoutConnections
+            };
+
         }
 
    }

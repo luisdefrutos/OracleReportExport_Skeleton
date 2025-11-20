@@ -8,7 +8,7 @@ public interface IReportService
 {
     Task<IReadOnlyList<ReportDefinition>> GetAvailableReportsAsync(CancellationToken ct = default);
 
-      Task<DataTable> ExecuteReportAsync(
+      Task<ReportQueryResult> ExecuteReportAsync(
         ReportDefinition report,
         IReadOnlyDictionary<string, object?> parameterValues,
         List<ConnectionInfo> targetConnection,

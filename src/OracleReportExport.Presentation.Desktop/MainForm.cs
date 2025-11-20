@@ -19,7 +19,7 @@ namespace OracleReportExport.Presentation.Desktop
     public class MainForm : Form
     {
         private readonly TabControl _tabControl = new();
-
+        private Label lblCountRows;
 
         private readonly DataGridView _grid = new()
         {
@@ -112,12 +112,15 @@ namespace OracleReportExport.Presentation.Desktop
         private readonly IReportDefinitionRepository _reportDefinitionRepository;
         private readonly IQueryExecutor _queryExecutor;
         private readonly IOracleConnectionFactory _connectionFactory;
+        private TabPage tabPredefinidos;
+        
 
         // Informe actual
         private ReportDefinition? _currentReport;
 
         public MainForm()
         {
+            //lblCountRow=new Label();
             Text = "Oracle Report Export";
 
             WindowState = FormWindowState.Maximized;
@@ -126,7 +129,7 @@ namespace OracleReportExport.Presentation.Desktop
 
             _tabControl.Dock = DockStyle.Fill;
 
-            var tabPredefinidos = new TabPage("Informes predefinidos");
+             tabPredefinidos = new TabPage("Informes predefinidos");
             var tabAdHoc = new TabPage("SQL avanzada");
 
             // Inicializar servicios
@@ -260,6 +263,8 @@ namespace OracleReportExport.Presentation.Desktop
             {
                 CargarConexiones();
                 this._grid.DataSource = null;
+                if(this.lblCountRows!=null)
+                this.lblCountRows.Text = String.Empty;
                 _currentReport = report;
                 RenderParameters(report);
             }
@@ -696,14 +701,49 @@ namespace OracleReportExport.Presentation.Desktop
                 Enabled = false;
                 Cursor = Cursors.WaitCursor;
 
-                var table = await _reportService.ExecuteReportAsync(
+                var resultReport = await _reportService.ExecuteReportAsync(
                     report,
                     parametros,
                     listConnectionsActive);
 
-                _grid.DataSource = table;
+                  _grid.DataSource = resultReport.Data;  
+                  var parent = _grid.Parent;
+
+                 var lblCountRowsExist = parent.Controls.OfType<Label>()
+                    .FirstOrDefault(l => l.Name == "lblCountRows");
+
+                if (lblCountRowsExist == null)
+                {
+                    this.lblCountRows = new Label
+                    {
+                        Name = "lblCountRows",
+                        AutoSize = true,
+                        ForeColor = SystemColors.GrayText,
+                        BackColor = Color.Transparent,
+                        Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                        Margin = new Padding(4)
+                    };
+
+                    parent.Controls.Add(lblCountRows);
+                }
+
+                lblCountRows.Text = $"Registros encontrados: {resultReport.Data.Rows.Count}";
+                lblCountRows.Top = _grid.Top - lblCountRows.Height - 4;
+                lblCountRows.Left = parent.ClientSize.Width - lblCountRows.Width - 10;
+                lblCountRows.BringToFront();
+                if (resultReport.TimeoutConnections.Any())
+                {
+                    var estaciones = string.Join(", ", resultReport.TimeoutConnections);
+
+                    MessageBox.Show(
+                        $"No se ha podido obtener información de las siguientes conexiones (timeout):{Environment.NewLine}{estaciones}",
+                        "Aviso de Oracle",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                }
+
             }
-            catch (OracleException ex) when (ex.Number == 942) // ORA-00942
+            catch (OracleException ex) when (ex.Number == 942)
             {
                 MessageBox.Show(
                     "La tabla o vista no existe en la base de datos.Verifique que esta ejecutando " +
