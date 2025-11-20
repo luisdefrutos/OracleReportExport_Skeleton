@@ -115,7 +115,7 @@ namespace OracleReportExport.Infrastructure.Services
                     if (combined is null)
                     {
                         combined = table.Clone();
-                        combined.Columns.Add("CONEXION_ID", typeof(string));
+                        combined.Columns.Add("CONEXION_ESTACION", typeof(string));
                     }
 
                     foreach (DataRow row in table.Rows)
@@ -127,7 +127,7 @@ namespace OracleReportExport.Infrastructure.Services
                             newRow[col.ColumnName] = row[col];
                         }
 
-                        newRow["CONEXION_ID"] = connectionId.ToString();
+                        newRow["CONEXION_ESTACION"] = connectionId.ToString();
                         combined.Rows.Add(newRow);
                     }
                 }
