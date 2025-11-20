@@ -8,11 +8,14 @@ using OracleReportExport.Infrastructure.Interfaces;
 using OracleReportExport.Infrastructure.Services;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Drawing.Configuration;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using ClosedXML.Excel;
 
 namespace OracleReportExport.Presentation.Desktop
 {
@@ -20,6 +23,7 @@ namespace OracleReportExport.Presentation.Desktop
     {
         private readonly TabControl _tabControl = new();
         private Label lblCountRows;
+        private Button btnExcel;
 
         private readonly DataGridView _grid = new()
         {
@@ -263,7 +267,9 @@ namespace OracleReportExport.Presentation.Desktop
             {
                 CargarConexiones();
                 this._grid.DataSource = null;
-                if(this.lblCountRows!=null)
+                if (this.btnExcel != null)
+                    this.btnExcel.Visible = false;
+                if (this.lblCountRows!=null)
                 this.lblCountRows.Text = String.Empty;
                 _currentReport = report;
                 RenderParameters(report);
@@ -731,6 +737,48 @@ namespace OracleReportExport.Presentation.Desktop
                 lblCountRows.Top = _grid.Top - lblCountRows.Height - 4;
                 lblCountRows.Left = parent.ClientSize.Width - lblCountRows.Width - 10;
                 lblCountRows.BringToFront();
+
+                // ---------- BOTÓN ICONO EXCEL A LA IZQUIERDA ----------
+                var btnExcelExist = parent.Controls.OfType<Button>()
+                    .FirstOrDefault(b => b.Name == "btnExportExcel");
+
+                if (btnExcelExist == null)
+                {
+                    btnExcel = new Button
+                    {
+                        Name = "btnExportExcel",
+                        Size = new Size(24, 24),
+                        FlatStyle = FlatStyle.Flat,
+                        TabStop = false,
+                        Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                        Visible=true
+                    };
+
+                    // quita el borde feo
+                    btnExcel.FlatAppearance.BorderSize = 0;
+
+                    // TODO: pon aquí tu icono de Excel en recursos
+                    // (cambia 'Excel16' por el nombre real del recurso)
+                    var resources = new ComponentResourceManager(typeof(MainForm));
+                    var iconObj = resources.GetObject("Excel_24");
+                    if (iconObj is Icon excelIcon)
+                    {
+                        btnExcel.Image = excelIcon.ToBitmap();   // ✔ convertir a Image (bitmap)
+                    }
+                    //btnExcel.Image = resources.GetObject("Excel_24");
+                    btnExcel.Click += ExportGridWithClosedXML;
+
+                    parent.Controls.Add(btnExcel);
+                }
+
+                // Alinear verticalmente con el label y a su izquierda
+                btnExcel.Top = lblCountRows.Top-3 + (lblCountRows.Height - btnExcel.Height) / 2;
+                btnExcel.Left = lblCountRows.Left - btnExcel.Width - 6;
+
+                btnExcel.Visible = resultReport.Data.Rows.Count > 0;
+                btnExcel.BringToFront();
+
+
                 if (resultReport.TimeoutConnections.Any())
                 {
                     var estaciones = string.Join(", ", resultReport.TimeoutConnections);
@@ -779,8 +827,72 @@ namespace OracleReportExport.Presentation.Desktop
 
         #endregion
 
-        #region Form de carga
-        private sealed class LoadingForm : Form
+ 
+
+private void ExportGridWithClosedXML(Object sender ,EventArgs e)
+    {
+            try
+            {
+                using var sfd = new SaveFileDialog
+                {
+                    Filter = "Excel (*.xlsx)|*.xlsx",
+                    FileName = ((ReportDefinition)_cmbReports.SelectedItem).Name + ".xlsx"
+                };
+
+                if (sfd.ShowDialog() != DialogResult.OK)
+                    return;
+
+                using var wb = new XLWorkbook();
+                var ws = wb.Worksheets.Add(((ReportDefinition)_cmbReports.SelectedItem).Category);
+
+                // Cabeceras
+                for (int col = 0; col < _grid.Columns.Count; col++)
+                {
+                    ws.Cell(1, col + 1).Value = _grid.Columns[col].HeaderText;
+                    ws.Cell(1, col + 1).Style.Font.Bold = true;
+
+                }
+
+                // Datos
+                for (int row = 0; row < _grid.Rows.Count; row++)
+                {
+                    if (_grid.Rows[row].IsNewRow) continue;
+
+                    for (int col = 0; col < _grid.Columns.Count; col++)
+                    {
+                        var value = _grid.Rows[row].Cells[col].Value;
+
+                        // Normalizar nulos
+                        var safeValue = value == null ? "" : value.ToString();
+
+                        ws.Cell(row + 2, col + 1).Value = safeValue;
+                    }
+                }
+
+
+                ws.Columns().AdjustToContents();
+                foreach (var sheet in wb.Worksheets)
+                    sheet.Columns().AdjustToContents();
+                var nameExcel = String.Concat(Path.GetDirectoryName(sfd.FileName),"\\", Path.GetFileNameWithoutExtension(sfd.FileName), "_", DateTime.Now.ToString("yyyyMMdd_HHmmss"), ".xlsx");
+                wb.SaveAs(nameExcel);
+
+            
+            MessageBox.Show($"Exportación realizada correctamente en : \n\r {nameExcel}", $"Exportación informe",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Information);
+            }
+            catch (System.IO.IOException ex)
+            {
+                MessageBox.Show($"El archivo puede estar abierto.Por favor cierrelo para poder guardar el archivo Excel", $"Error Exportación Excel",
+                                                MessageBoxButtons.OK,
+                                                MessageBoxIcon.Error);
+
+            }
+        }
+
+
+    #region Form de carga
+    private sealed class LoadingForm : Form
         {
             public LoadingForm(string message)
             {

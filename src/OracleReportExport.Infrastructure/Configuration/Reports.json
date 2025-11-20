@@ -147,6 +147,38 @@
         }
       ]
 
+    },
+    {
+      "Id": "4",
+      "Name": "Expedientes con reforma",
+      "Category": "Expedientes con reforma",
+      "Description": "Listado de vehículos tipo motocicletas por una fecha determinada",
+      "SourceType": "Estacion",
+      "SqlFileForStations": "Sql/ExpedientesConReforma.txt",
+      "SqlFileForCentral": null,
+      "SqlForStations": null,
+      "SqlForCentral": null,
+      "TableMasterForParameters": [],
+      "Parameters": [
+        {
+          "Name": "FechaDesde",
+          "Label": "Fecha desde",
+          "Type": "date",
+          "IsRequired": true
+        },
+        {
+          "Name": "FechaHasta",
+          "Label": "Fecha hasta",
+          "Type": "date",
+          "IsRequired": true
+        },
+        {
+          "Name": "Anulada",
+          "Label": "Anulada (0 = no anulada)",
+          "Type": "bool",
+          "IsRequired": false
+        }
+      ]
     }
   ]
 }
