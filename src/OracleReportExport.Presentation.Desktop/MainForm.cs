@@ -1,6 +1,9 @@
-﻿using Oracle.ManagedDataAccess.Client;
+﻿using ClosedXML.Excel;
+using DocumentFormat.OpenXml.Bibliography;
+using Oracle.ManagedDataAccess.Client;
 using OracleReportExport.Application.Interfaces;
 using OracleReportExport.Application.Models;
+using OracleReportExport.Domain.Enums;
 using OracleReportExport.Domain.Models;
 using OracleReportExport.Infrastructure.Configuration;
 using OracleReportExport.Infrastructure.Data;
@@ -13,9 +16,10 @@ using System.Data;
 using System.Drawing;
 using System.Drawing.Configuration;
 using System.Linq;
+using System.Runtime.ConstrainedExecution;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using ClosedXML.Excel;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.TextBox;
 
 namespace OracleReportExport.Presentation.Desktop
 {
@@ -24,6 +28,7 @@ namespace OracleReportExport.Presentation.Desktop
         private readonly TabControl _tabControl = new();
         private Label lblCountRows;
         private Button btnExcel;
+        //private Button btnVerConsulta;
 
         private readonly DataGridView _grid = new()
         {
@@ -50,25 +55,36 @@ namespace OracleReportExport.Presentation.Desktop
         private readonly Button _btnSelectAll = new()
         {
             Text = "Marcar todas",
-            AutoSize = true
+            AutoSize = true,
+            Visible = true
         };
 
         private readonly Button _btnUnselectAll = new()
         {
             Text = "Desmarcar",
-            AutoSize = true
+            AutoSize = true,
+            Visible = true
         };
 
         private readonly Button _btnExport = new()
         {
             Text = "Exportar a Excel",
-            AutoSize = true
+            AutoSize = true,
+            Visible = true
         };
 
         private readonly Button _btnRunReport = new()
         {
             Text = "Ejecutar informe",
-            AutoSize = true
+            AutoSize = true,
+            Visible = true
+        };
+
+        private readonly Button btnVerConsulta = new()
+        {
+            Text = "Ver Consulta",
+            AutoSize = true,
+            Visible = true
         };
 
         // Combo de informes
@@ -146,6 +162,8 @@ namespace OracleReportExport.Presentation.Desktop
             _reportService = new ReportService(_reportDefinitionRepository, _queryExecutor);
 
 
+            
+
 
             // Cargar conexiones
             CargarConexiones();
@@ -201,12 +219,15 @@ namespace OracleReportExport.Presentation.Desktop
 
             _topPanel.Controls.Add(_cmbReports);
             _topPanel.Controls.Add(_btnRunReport);
+            _topPanel.Controls.Add(btnVerConsulta);
+
 
             // Eventos
             _btnSelectAll.Click += (_, __) => SetAllConnectionsChecked(true);
             _btnUnselectAll.Click += (_, __) => SetAllConnectionsChecked(false);
             // Export lo dejamos para más adelante
             _btnRunReport.Click += BtnRunReport_Click;
+            btnVerConsulta.Click += BtnVerConsulta_Click;
             _cmbReports.SelectedIndexChanged += CmbReports_SelectedIndexChanged;
         }
         private void SetAllConnectionsChecked(bool isChecked)
@@ -254,6 +275,31 @@ namespace OracleReportExport.Presentation.Desktop
             if (reports.Any())
             {
                 _cmbReports.SelectedIndex = 0;
+                //todo
+                // ----------BOTÓN VER CONSULTA BBDD----------
+                ////var btnVerConsultaExist = parent.Controls.OfType<Button>()
+                //// .FirstOrDefault(b => b.Name == "btnVerConsultaBbdd");
+
+                ////if (btnVerConsultaExist == null)
+                ////{
+                ////    btnVerConsulta = new Button
+                ////    {
+                ////        Name = "btnVerConsultaBbdd",
+                ////        Text = "Ver consulta BBDD",
+                ////        AutoSize = true,
+                ////        Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                ////        Visible = true
+                ////    };
+
+                ////    btnVerConsulta.Click += BtnVerConsulta_Click;
+                ////    parent.Controls.Add(btnVerConsulta);
+                ////}
+
+                ////int right = parent.ClientSize.Width - 10;
+
+                ////// botón Ver consulta (el más a la derecha)
+                ////btnVerConsulta.Top = lblCountRows.Top - 25;    // ~10 px por encima
+                ////btnVerConsulta.Left = right - btnVerConsulta.Width;
             }
         }
 
@@ -267,6 +313,8 @@ namespace OracleReportExport.Presentation.Desktop
             {
                 CargarConexiones();
                 this._grid.DataSource = null;
+                //if (this.btnVerConsulta != null)
+                //    this.btnVerConsulta.Visible = false;
                 if (this.btnExcel != null)
                     this.btnExcel.Visible = false;
                 if (this.lblCountRows!=null)
@@ -520,6 +568,36 @@ namespace OracleReportExport.Presentation.Desktop
         }
 
 
+
+
+        private void BtnVerConsulta_Click(object? sender, EventArgs e)
+        {
+            if (_currentReport == null)
+            {
+                MessageBox.Show("No hay informe seleccionado.", "Ver consulta",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            //      private List<ConnectionInfo> GetSelectedConnection()
+            //{
+            //    return _chkConnections.CheckedItems
+            //        .OfType<ConnectionInfo>().ToList();
+
+            //}
+
+            var initialConnection= _connectionCatalog
+          .GetAllConnections()
+          .FirstOrDefault(x => x.Type.ToUpper().Contains(_currentReport.SourceType.ToString().ToUpper()));
+
+           var con= _connectionFactory.CreateConnection(initialConnection.Id);
+       
+
+            using (var frm = new SqlPreviewForm(_currentReport, con))
+            {
+                frm.ShowDialog(this);// modal
+            }
+        }
         private Dictionary<string, object?> BuildParametersFromUI()
         {
             var result = new Dictionary<string, object?>();
@@ -661,6 +739,8 @@ namespace OracleReportExport.Presentation.Desktop
                  
         }
 
+        
+
         private async void BtnRunReport_Click(object? sender, EventArgs e)
         {
             var listConnectionsActive = GetSelectedConnection();
@@ -686,7 +766,7 @@ namespace OracleReportExport.Presentation.Desktop
             }
 
             _currentReport = report;
-
+ 
             var parametros = BuildParametersFromUI();
             // Si la validación devolvió un diccionario vacío porque faltan requeridos, salimos.
             if (_currentReport.Parameters != null &&
@@ -734,7 +814,7 @@ namespace OracleReportExport.Presentation.Desktop
                 }
 
                 lblCountRows.Text = $"Registros encontrados: {resultReport.Data.Rows.Count}";
-                lblCountRows.Top = _grid.Top - lblCountRows.Height - 4;
+                lblCountRows.Top = _grid.Top - lblCountRows.Height -8 ;
                 lblCountRows.Left = parent.ClientSize.Width - lblCountRows.Width - 10;
                 lblCountRows.BringToFront();
 
@@ -771,12 +851,19 @@ namespace OracleReportExport.Presentation.Desktop
                     parent.Controls.Add(btnExcel);
                 }
 
+                
+
                 // Alinear verticalmente con el label y a su izquierda
                 btnExcel.Top = lblCountRows.Top-3 + (lblCountRows.Height - btnExcel.Height) / 2;
                 btnExcel.Left = lblCountRows.Left - btnExcel.Width - 6;
 
                 btnExcel.Visible = resultReport.Data.Rows.Count > 0;
+                //btnVerConsulta.Visible= true;
+                lblCountRows.BringToFront();
                 btnExcel.BringToFront();
+
+
+
 
 
                 if (resultReport.TimeoutConnections.Any())
@@ -833,10 +920,11 @@ private void ExportGridWithClosedXML(Object sender ,EventArgs e)
     {
             try
             {
+                var UniqueIdTime = DateTime.Now.ToString("yyyyMMdd_HHmmss");
                 using var sfd = new SaveFileDialog
                 {
                     Filter = "Excel (*.xlsx)|*.xlsx",
-                    FileName = ((ReportDefinition)_cmbReports.SelectedItem).Name + ".xlsx"
+                    FileName = String.Concat(((ReportDefinition)_cmbReports.SelectedItem).Name, UniqueIdTime, ".xlsx")
                 };
 
                 if (sfd.ShowDialog() != DialogResult.OK)
@@ -873,11 +961,11 @@ private void ExportGridWithClosedXML(Object sender ,EventArgs e)
                 ws.Columns().AdjustToContents();
                 foreach (var sheet in wb.Worksheets)
                     sheet.Columns().AdjustToContents();
-                var nameExcel = String.Concat(Path.GetDirectoryName(sfd.FileName),"\\", Path.GetFileNameWithoutExtension(sfd.FileName), "_", DateTime.Now.ToString("yyyyMMdd_HHmmss"), ".xlsx");
-                wb.SaveAs(nameExcel);
+                //var nameExcel = String.Concat(Path.GetDirectoryName(sfd.FileName),"\\", Path.GetFileNameWithoutExtension(sfd.FileName), "_", DateTime.Now.ToString("yyyyMMdd_HHmmss"), ".xlsx");
+                wb.SaveAs(sfd.FileName);
 
             
-            MessageBox.Show($"Exportación realizada correctamente en : \n\r {nameExcel}", $"Exportación informe",
+            MessageBox.Show($"Exportación realizada correctamente en : \n\r {sfd.FileName}", $"Exportación informe",
                                 MessageBoxButtons.OK,
                                 MessageBoxIcon.Information);
             }
