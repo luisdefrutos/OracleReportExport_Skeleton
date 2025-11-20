@@ -93,16 +93,16 @@ namespace OracleReportExport.Presentation.Desktop
             Padding = new Padding(8, 18, 8, 8)
         };
 
-        // Tabla donde se colocan dinámicamente los parámetros (Label + Control)
-        private readonly TableLayoutPanel _paramsTable = new()
+        private readonly FlowLayoutPanel _paramsPanel = new()
         {
             Dock = DockStyle.Fill,
             AutoSize = true,
             AutoSizeMode = AutoSizeMode.GrowAndShrink,
-            ColumnCount = 2,
-            Padding = new Padding(4),
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = true,
+            Padding = new Padding(8),
+            Margin = new Padding(0),
         };
-
         // Mapa NombreParametro -> Control generado
         private readonly Dictionary<string, Control> _parameterControls = new();
 
@@ -212,9 +212,9 @@ namespace OracleReportExport.Presentation.Desktop
 
         private void ConfigureParametrosGroup()
         {
-            _grpParametros.Controls.Add(_paramsTable);
-            _paramsTable.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));   // Label
-            _paramsTable.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100)); // Control
+            _grpParametros.Controls.Clear();
+            _grpParametros.Controls.Add(_paramsPanel);
+            _grpParametros.Height = 160;
         }
 
         #endregion
@@ -268,24 +268,15 @@ namespace OracleReportExport.Presentation.Desktop
         private void RenderParameters(ReportDefinition report)
         {
             _parameterControls.Clear();
+            _paramsPanel.SuspendLayout();
+            _paramsPanel.Controls.Clear();
 
-            _paramsTable.SuspendLayout();
-
-            // Limpiamos todo UNA sola vez
-            _paramsTable.Controls.Clear();
-            _paramsTable.RowStyles.Clear();
-            _paramsTable.ColumnStyles.Clear();
-            _paramsTable.ColumnCount = 2;
-            _paramsTable.RowCount = 0;
-
-            // Caso: sin ningún tipo de parámetro
             bool hasMaster = report.TableMasterForParameters != null && report.TableMasterForParameters.Count > 0;
             bool hasParams = report.Parameters != null && report.Parameters.Count > 0;
 
+            // --- Caso sin parámetros ---
             if (!hasMaster && !hasParams)
             {
-                _grpParametros.Height = 70;
-
                 var lbl = new Label
                 {
                     Text = "Este informe no requiere parámetros.",
@@ -294,84 +285,119 @@ namespace OracleReportExport.Presentation.Desktop
                     Margin = new Padding(4, 8, 4, 4)
                 };
 
-                _paramsTable.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-                _paramsTable.RowCount = 1;
-                _paramsTable.Controls.Add(lbl, 0, 0);
-                _paramsTable.SetColumnSpan(lbl, 2);
-
-                _paramsTable.ResumeLayout();
+                _paramsPanel.Controls.Add(lbl);
+                _grpParametros.Height = 100;
+                _paramsPanel.ResumeLayout();
                 return;
             }
 
+            // Helper: bloque horizontal Label + Control
+            FlowLayoutPanel CreateParamBlock(string labelText, Control input)
+            {
+                var block = new FlowLayoutPanel
+                {
+                    AutoSize = true,
+                    AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                    FlowDirection = FlowDirection.LeftToRight,
+                    WrapContents = false,
+                    Margin = new Padding(8, 4, 8, 4),
+                    Padding = new Padding(0),
+                };
+                var lbl = new Label
+                {
+                    Text = labelText,
+                    AutoSize = true,
+                    Margin = new Padding(0, 6, 8, 0)
+                };
 
-            int row = 0;
+                input.Margin = new Padding(0, 2, 0, 0);
+                block.Controls.Add(lbl);
+                block.Controls.Add(input);
+                return block;
+            }
 
-            //  Primero pintamos los TableMasterForParameters (combos)
+            FlowLayoutPanel? lastMasterBlock = null;
+            int masterCount = 0;
+
+            // --------------------------------------------------------------------
+            // 1) MASTER TABLES (CheckedListBox / combos)
+            //    → Se colocan 2 por fila. Cuando hay dos, se hace FlowBreak.
+            // --------------------------------------------------------------------
             if (hasMaster)
             {
                 foreach (var p in report.TableMasterForParameters!)
                 {
-                    _paramsTable.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-                    _paramsTable.RowCount = row + 1;
-
-                    var label = new Label
-                    {
-                        Text = p.Label ?? string.Empty,
-                        AutoSize = true,
-                        Margin = new Padding(4, 6, 4, 4)
-                    };
-
                     Control? input = CreateControlForTableMasterParameter(p);
+                    if (input == null) continue;
 
-                    if (input != null)
+                    if (input is ListBox or CheckedListBox)
                     {
-                        _paramsTable.Controls.Add(label, 0, row);
-                        _paramsTable.Controls.Add(input, 1, row);
-
-                        _parameterControls[p.Name] = input;
-                        row++;
+                        input.Width = 420;
+                        input.Height = 140;
+                    }
+                    var block = CreateParamBlock(p.Label ?? p.Name, input);
+                    _paramsPanel.Controls.Add(block);
+                    masterCount++;
+                    lastMasterBlock = block;
+                    _parameterControls[p.Name] = input;
+                    // Cada 2 masters, forzamos salto de línea
+                        if (masterCount % 2 == 0)
+                        {
+                            input.Margin = new Padding(
+                            input.Margin.Left,
+                            input.Margin.Top,
+                            input.Margin.Right,
+                            10
+                        );
+                    _paramsPanel.SetFlowBreak(block, true);
                     }
                 }
+                // IMPORTANTE: si el siguiente control NO es master (Parameters normales),
+                // queremos que empiece SIEMPRE en la línea siguiente,
+                // así que marcamos FlowBreak en el último bloque master.
+                if (lastMasterBlock != null)
+                {
+                    lastMasterBlock.Margin = new Padding(
+                              lastMasterBlock.Margin.Left,
+                              lastMasterBlock.Margin.Top,
+                              lastMasterBlock.Margin.Right,
+                              10 
+                          );
+                    _paramsPanel.SetFlowBreak(lastMasterBlock, true);
+                }
             }
-
-            // Luego pintamos los Parameters “normales” (fechas, anulada, etc.)
+            // --------------------------------------------------------------------
+            // 2) PARAMETERS NORMALES (fechas, anulada, etc.)
+            //    → Se añaden uno detrás de otro; el salto de línea ya se ha
+            //      forzado justo después del último master.
+            // --------------------------------------------------------------------
             if (hasParams)
             {
                 foreach (var p in report.Parameters!)
                 {
-                    _paramsTable.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-                    _paramsTable.RowCount = row + 1;
-
-                    var label = new Label
-                    {
-                        Text = p.Label ?? p.Name,
-                        AutoSize = true,
-                        Margin = new Padding(4, 6, 4, 4)
-                    };
-
                     Control? input = CreateControlForParameter(p);
+                    if (input == null) continue;
 
-                    if (input != null)
-                    {
-                        _paramsTable.Controls.Add(label, 0, row);
-                        _paramsTable.Controls.Add(input, 1, row);
-
-                        _parameterControls[p.Name] = input;
-                        row++;
-                    }
+                    if (input is DateTimePicker)
+                        input.Width = 110;
+                    else if (input is TextBox)
+                        input.Width = 160;
+                    var block = CreateParamBlock(p.Label ?? p.Name, input);
+                    _paramsPanel.Controls.Add(block);
+                    _parameterControls[p.Name] = input;
                 }
             }
-            _paramsTable.ResumeLayout();
-            _grpParametros.Height =
-                _paramsTable.Controls
-                            .Cast<Control>()
-                            .Sum(c => c.Height)
-                + 15;
 
+            _paramsPanel.ResumeLayout();
+            if (_paramsPanel.Controls.Count > 0)
+            {
+                int maxBottom = _paramsPanel.Controls.Cast<Control>().Max(c => c.Bottom);
+                _grpParametros.Height = Math.Max(250, maxBottom + 30);
+            }
+            else
+                _grpParametros.Height = 100;
         }
-
-
-        private Control? CreateControlForParameter(ReportParameterDefinition parameter)
+       private Control? CreateControlForParameter(ReportParameterDefinition parameter)
         {
             var type = (parameter.Type ?? "string").ToLowerInvariant();
 
@@ -405,7 +431,6 @@ namespace OracleReportExport.Presentation.Desktop
             }
         }
 
-
         private Control? CreateControlForTableMasterParameter(TableMasterParameterDefinition parameter)
         {
             var type = (parameter.Type ?? "string").ToLowerInvariant();
@@ -419,7 +444,6 @@ namespace OracleReportExport.Presentation.Desktop
                     return null;
             }
         }
-
         private Control LoadTableMasterDataIntoControl(TableMasterParameterDefinition parameter)
         {
             var initialConnection = _connectionCatalog
