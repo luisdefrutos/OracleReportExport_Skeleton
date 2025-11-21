@@ -270,19 +270,26 @@ namespace OracleReportExport.Presentation.Desktop
 
             _chkConnections.Items.Clear();
 
-            var connectionStation = conexiones.Where(x => x.DisplayName.Contains("I.T.V.")).ToList();
-            foreach (ConnectionInfo c in connectionStation)
+            var connectionCentral = conexiones.Where(x => !string.IsNullOrEmpty(x.DisplayName) &&
+                x.DisplayName.IndexOf("Central", StringComparison.OrdinalIgnoreCase) >= 0).ToList();
+            foreach (ConnectionInfo c in connectionCentral)
             {
+                c.DisplayName = c.DisplayName!.ToUpperInvariant().Trim();
                 _chkConnections.Items.Add(c, false);
-                _chkConnections.AutoAdjustWidth();
             }
 
-            var connectionUma = conexiones.Where(x => x.DisplayName.Contains("U.M.A.")).ToList();
-            foreach (ConnectionInfo c in connectionUma)
-            {
+            var connectionStation = conexiones.Where(x => !string.IsNullOrEmpty(x.DisplayName) &&
+                x.DisplayName.IndexOf("I.T.V.", StringComparison.OrdinalIgnoreCase) >= 0).ToList(); 
+            foreach (ConnectionInfo c in connectionStation)
                 _chkConnections.Items.Add(c, false);
-                _chkConnections.AutoAdjustWidth();
-            }
+
+            var connectionUma = conexiones.Where(x => !string.IsNullOrEmpty(x.DisplayName) &&
+                x.DisplayName.IndexOf("U.M.A.", StringComparison.OrdinalIgnoreCase) >= 0).ToList();
+            foreach (ConnectionInfo c in connectionUma)
+                _chkConnections.Items.Add(c, false);
+
+            _chkConnections.AutoAdjustWidth();
+           
         }
 
         private async Task LoadReportsAsync()
