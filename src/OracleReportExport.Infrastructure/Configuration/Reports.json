@@ -71,7 +71,7 @@
           },
           {
             "Name": "Anulada",
-            "Label": "Anulada (0 = no anulada)",
+            "Label": "Anulada (desmarcada = no anulada)",
             "Type": "bool",
             "IsRequired": false
           }
@@ -131,7 +131,7 @@
         },
         {
           "Name": "EsPeriodicaPura",
-          "Label": "Es periódica pura (S/N)",
+          "Label": "Es periódica (desmarcada no periódicas)",
           "Type": "funcion",
           "Values": [
             {
@@ -174,8 +174,73 @@
         },
         {
           "Name": "Anulada",
-          "Label": "Anulada (0 = no anulada)",
+          "Label": "Anulada (desmarcada = no anulada)",
           "Type": "bool",
+          "IsRequired": false
+        }
+      ]
+    },
+    {
+      "Id": "5",
+      "Name": "Empleados con firma en vigor",
+      "Category": "Empleados",
+      "Description": "Empleados activos con firma en vigor",
+      "SourceType": "Central",
+      "SqlFileForStations": null,
+      "SqlFileForCentral": "SQL/EmpleadosConFirmaEnVigor.txt",
+      "SqlForStations": null,
+      "SqlForCentral": null,
+      "TableMasterForParameters": [
+        {
+          "Name": "TIPOSVEHICULO",
+          "Label": "Tipos de Permiso",
+          "Type": "ComboBox",
+          "IsRequired": true,
+          "Id": "CODPERMISO",
+          "Text": "DESPERMISO",
+          "ValuesRequired": [
+            "PLA_VAL"
+          ],
+          "SqlQueryMaster": "SELECT CODPERMISO,DESPERMISO,DESCRIPCION FROM TIPOS_PERMISOS WHERE ACTIVO=-1"
+        }
+      ],
+      "Parameters": []
+
+    },
+    {
+      "Id": "6",
+      "Name": "Inspecciones por número de equipo frenómetro",
+      "Category": "Inspecciones por número de equipo frenómetro",
+      "Description": "Listado de Inspecciones de un número de equipo especificado",
+      "SourceType": "Estacion",
+      "SqlFileForStations": "Sql/InspeccinesPorNumeroEquipo.txt",
+      "SqlFileForCentral": null,
+      "SqlForStations": null,
+      "SqlForCentral": null,
+      "TableMasterForParameters": [],
+      "Parameters": [
+        {
+          "Name": "FechaDesde",
+          "Label": "Fecha desde",
+          "Type": "date",
+          "IsRequired": true
+        },
+        {
+          "Name": "FechaHasta",
+          "Label": "Fecha hasta",
+          "Type": "date",
+          "IsRequired": true
+        },
+        {
+          "Name": "Anulada",
+          "Label": "Anulada (desmarcada = no anulada)",
+          "Type": "bool",
+          "IsRequired": false
+        },
+        {
+          "Name": "NumeroEquipo",
+          "Label": "Número de Equipo Frenómetro",
+          "Type": "text",
           "IsRequired": false
         }
       ]

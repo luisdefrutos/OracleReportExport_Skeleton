@@ -1,0 +1,32 @@
+﻿  SELECT DISTINCT empleado_centro.codestacion,
+                  estaciones.desestacion,
+                  empleado_centro.codempleado_estacion AS codigo_empleado,
+                  empleado.nombre,
+                  empleado.apellidos,
+                  empleado.usuario_login_ad AS usuario_ad,
+                  empleado.usuario_login_interno,
+                  --empleado.firma_identificador,
+                  empleado.firma_fecha_expiracion AS vencimiento_certificado,
+                  empleado_permisos.codpermiso,
+                  tipos_permisos.despermiso
+    FROM empleado
+         INNER JOIN empleado_centro
+            ON empleado.id_empleado = empleado_centro.id_empleado
+         INNER JOIN empleado_permisos
+            ON     empleado.id_empleado = empleado_permisos.id_empleado
+               AND empleado_centro.codestacion = empleado_permisos.codestacion
+               AND empleado_centro.de_baja = 0
+               AND EMPLEADO.DE_BAJA = 0
+         INNER JOIN estaciones
+            ON empleado_centro.codestacion = estaciones.codestacion
+         INNER JOIN tipos_permisos
+            ON     tipos_permisos.codpermiso = empleado_permisos.codpermiso
+               AND (    empleado.firma_identificador IS NOT NULL
+                    AND LENGTH (TRIM (empleado.firma_identificador)) > 0)
+               AND empleado_permisos.activo = -1
+               AND estaciones.desestacion NOT LIKE '%S.O.S%'
+               and empleado.firma_fecha_expiracion >= TRUNC(SYSDATE)
+               and empleado_permisos.codpermiso IN ({TiposVehiculoList}) 
+ORDER BY empleado_centro.codestacion,
+         empleado_centro.codempleado_estacion,
+         empleado_permisos.codpermiso

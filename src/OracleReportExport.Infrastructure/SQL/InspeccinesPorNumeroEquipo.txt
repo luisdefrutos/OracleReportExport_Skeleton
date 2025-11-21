@@ -1,0 +1,400 @@
+﻿SELECT DISTINCT
+
+         INSPECCION.CODESTACION,
+         INSPECCION.CODINSPECCION AS INFORME,
+         INSPECCION.FECHAINSPECCION,
+         CONCAT (INSPECCION.CODCONSTRUCCION, INSPECCION.CODUTILIZACION)
+            AS CLASIFICACION,
+         INSPECCION.MATRICULA,
+         INSPECCION.NUMBASTIDOR,
+         INSPECCION.FECHAMATRICULACION,
+         INSPECCION_MEDICIONES.FRENOMETRO AS NUMERO_EQUIPO,
+         ExtrapolacionPresionEje1,
+         ExtrapolacionPresionEje2,
+         ExtrapolacionPresionEje3,
+         ExtrapolacionPresionEje4,
+         ExtrapolacionPresionP1Eje1,
+         ExtrapolacionPresionP1Eje2,
+         ExtrapolacionPresionP1Eje3,
+         ExtrapolacionPresionP1Eje4,
+         ExtrapolacionPresionPrEje1,
+         ExtrapolacionPresionPrEje2,
+         ExtrapolacionPresionPrEje3,
+         ExtrapolacionPresionPrEje4,
+         ExtrapolacionSensorEje1,
+         ExtrapolacionSensorEje2,
+         ExtrapolacionSensorEje3,
+         ExtrapolacionSensorEje4,       
+        TO_NUMBER (TRIM (REGEXP_SUBSTR (NVL (ExtrapolacionFinalEje1, ''),
+                                         '[^/]+',
+                                         1,
+                                         1)))
+          AS EXTRAPOLACIONFINAL_EJE1_IZQ,
+         TO_NUMBER (TRIM (REGEXP_SUBSTR (NVL (ExtrapolacionFinalEje1, ''),
+                                         '[^/]+',
+                                         1,
+                                         2)))
+            AS EXTRAPOLACIONFINAL_EJE1_DERECHO,
+         TO_NUMBER (TRIM (REGEXP_SUBSTR (NVL (ExtrapolacionFinalEje2, ''),
+                                         '[^/]+',
+                                         1,
+                                         1)))
+            AS EXTRAPOLACIONFINAL_EJE2_IZQ,
+         TO_NUMBER (TRIM (REGEXP_SUBSTR (NVL (ExtrapolacionFinalEje2, ''),
+                                         '[^/]+',
+                                         1,
+                                         2)))
+            AS EXTRAPOLACIONFINAL_EJE2_DERECHO,
+         TO_NUMBER (TRIM (REGEXP_SUBSTR (NVL (ExtrapolacionFinalEje3, ''),
+                                         '[^/]+',
+                                         1,
+                                         1)))
+            AS EXTRAPOLACIONFINAL_EJE3_IZQ,
+         TO_NUMBER (TRIM (REGEXP_SUBSTR (NVL (ExtrapolacionFinalEje3, ''),
+                                         '[^/]+',
+                                         1,
+                                         2)))
+            AS EXTRAPOLACIONFINAL_EJE3_DERECHO,
+         TO_NUMBER (TRIM (REGEXP_SUBSTR (NVL (ExtrapolacionFinalEje4, ''),
+                                         '[^/]+',
+                                         1,
+                                         1)))
+            AS EXTRAPOLACIONFINAL_EJE4_IZQ,
+         TO_NUMBER (TRIM (REGEXP_SUBSTR (NVL (ExtrapolacionFinalEje4, ''),
+                                         '[^/]+',
+                                         1,
+                                         2)))
+            AS EXTRAPOLACIONFINAL_EJE4_DERECHO ,
+          -- EJE 1
+          CASE WHEN ExtrapolacionFuerzaEje1 IS NULL OR TRIM(ExtrapolacionFuerzaEje1) IS NULL THEN ''
+               ELSE  TRIM(REGEXP_SUBSTR(ExtrapolacionFuerzaEje1,'[^/]+',1,1))  END AS EXTRAPOLACIONFUERZA_EJE1_IZQ,
+          CASE WHEN ExtrapolacionFuerzaEje1 IS NULL OR TRIM(ExtrapolacionFuerzaEje1) IS NULL THEN ''
+               ELSE  TRIM(REGEXP_SUBSTR(ExtrapolacionFuerzaEje1,'[^/]+',1,2))  END AS EXTRAPOLACIONFUERZA_EJE1_DERECHO,
+          -- EJE 2
+          CASE WHEN ExtrapolacionFuerzaEje2 IS NULL OR TRIM(ExtrapolacionFuerzaEje2) IS NULL THEN ''
+               ELSE  TRIM(REGEXP_SUBSTR(ExtrapolacionFuerzaEje2,'[^/]+',1,1))  END AS EXTRAPOLACIONFUERZA_EJE2_IZQ,
+          CASE WHEN ExtrapolacionFuerzaEje2 IS NULL OR TRIM(ExtrapolacionFuerzaEje2) IS NULL THEN ''
+               ELSE  TRIM(REGEXP_SUBSTR(ExtrapolacionFuerzaEje2,'[^/]+',1,2))  END AS EXTRAPOLACIONFUERZA_EJE2_DERECHO,
+          -- EJE 3
+          CASE WHEN ExtrapolacionFuerzaEje3 IS NULL OR TRIM(ExtrapolacionFuerzaEje3) IS NULL THEN ''
+               ELSE  TRIM(REGEXP_SUBSTR(ExtrapolacionFuerzaEje3,'[^/]+',1,1))  END AS EXTRAPOLACIONFUERZA_EJE3_IZQ,
+          CASE WHEN ExtrapolacionFuerzaEje3 IS NULL OR TRIM(ExtrapolacionFuerzaEje3) IS NULL THEN ''
+               ELSE  TRIM(REGEXP_SUBSTR(ExtrapolacionFuerzaEje3,'[^/]+',1,2))  END AS EXTRAPOLACIONFUERZA_EJE3_DERECHO,
+          -- EJE 4
+          CASE WHEN ExtrapolacionFuerzaEje4 IS NULL OR TRIM(ExtrapolacionFuerzaEje4) IS NULL THEN ''
+               ELSE  TRIM(REGEXP_SUBSTR(ExtrapolacionFuerzaEje4,'[^/]+',1,1))  END AS EXTRAPOLACIONFUERZA_EJE4_IZQ,
+          CASE WHEN ExtrapolacionFuerzaEje4 IS NULL OR TRIM(ExtrapolacionFuerzaEje4) IS NULL THEN ''
+               ELSE  TRIM(REGEXP_SUBSTR(ExtrapolacionFuerzaEje4,'[^/]+',1,2))  END AS EXTRAPOLACIONFUERZA_EJE4_DERECHO,  
+               
+                       
+            TO_NUMBER (TRIM (REGEXP_SUBSTR (NVL (FrenoEstacionamiento, ''),
+                                         '[^/]+',
+                                         1,
+                                         1)))
+            AS FRENOESTACIONAMIENTO_EJE1_IZQ,
+         TO_NUMBER (TRIM (REGEXP_SUBSTR (NVL (FrenoEstacionamiento, ''),
+                                         '[^/]+',
+                                         1,
+                                         2)))
+            AS FRENOESTACIONAMIENTO_EJE1_DERECHO,
+         TO_NUMBER (TRIM (REGEXP_SUBSTR (NVL (FrenoEstacionamiento2, ''),
+                                         '[^/]+',
+                                         1,
+                                         1)))
+            AS FRENOESTACIONAMIENTO_EJE2_IZQ,
+         TO_NUMBER (TRIM (REGEXP_SUBSTR (NVL (FrenoEstacionamiento2, ''),
+                                         '[^/]+',
+                                         1,
+                                         2)))
+            AS FRENOESTACIONAMIENTO_EJE2_DERECHO,
+         TO_NUMBER (TRIM (REGEXP_SUBSTR (NVL (FrenoEstacionamiento3, ''),
+                                         '[^/]+',
+                                         1,
+                                         1)))
+            AS FRENOESTACIONAMIENTO_EJE3_IZQ,
+         TO_NUMBER (TRIM (REGEXP_SUBSTR (NVL (FrenoEstacionamiento3, ''),
+                                         '[^/]+',
+                                         1,
+                                         2)))
+            AS FRENOESTACIONAMIENTO_EJE3_DERECHO,
+         TO_NUMBER (TRIM (REGEXP_SUBSTR (NVL (FrenoEstacionamiento4, ''),
+                                         '[^/]+',
+                                         1,
+                                         1)))
+            AS FRENOESTACIONAMIENTO_EJE4_IZQ,
+         TO_NUMBER (TRIM (REGEXP_SUBSTR (NVL (FrenoEstacionamiento4, ''),
+                                         '[^/]+',
+                                         1,
+                                         2)))
+            AS FRENOESTACIONAMIENTO_EJE4_DERECHO,
+           --FRENO SERVICIO
+         CASE
+            WHEN INSPECCION_MEDICIONES.FRENOSERVICIOEJE1 IS NULL
+            THEN
+               ''
+            ELSE
+               TRIM (REGEXP_SUBSTR (INSPECCION_MEDICIONES.FRENOSERVICIOEJE1,
+                                    '[^/]+',
+                                    1,
+                                    1))
+         END
+            AS FRENO_DE_SERVICIO_INFORME_EJE1_IZQ,
+         CASE
+            WHEN INSPECCION_MEDICIONES.FRENOSERVICIOEJE1 IS NULL
+            THEN
+               ''
+            ELSE
+               TRIM (REGEXP_SUBSTR (INSPECCION_MEDICIONES.FRENOSERVICIOEJE1,
+                                    '[^/]+',
+                                    1,
+                                    2))
+         END
+            AS FRENO_DE_SERVICIO_INFORME_EJE1_DERECHO,
+         CASE
+            WHEN INSPECCION_MEDICIONES.FRENOSERVICIOEJE2 IS NULL
+            THEN
+               ''
+            ELSE
+               TRIM (REGEXP_SUBSTR (INSPECCION_MEDICIONES.FRENOSERVICIOEJE2,
+                                    '[^/]+',
+                                    1,
+                                    1))
+         END
+            AS FRENO_DE_SERVICIO_INFORME_EJE2_IZQ,
+         CASE
+            WHEN INSPECCION_MEDICIONES.FRENOSERVICIOEJE2 IS NULL
+            THEN
+               ''
+            ELSE
+               TRIM (REGEXP_SUBSTR (INSPECCION_MEDICIONES.FRENOSERVICIOEJE2,
+                                    '[^/]+',
+                                    1,
+                                    2))
+         END
+            AS FRENO_DE_SERVICIO_INFORME_EJE2_DERECHO,
+         CASE
+            WHEN INSPECCION_MEDICIONES.FRENOSERVICIOEJE3 IS NULL
+            THEN
+               ''
+            ELSE
+               TRIM (REGEXP_SUBSTR (INSPECCION_MEDICIONES.FRENOSERVICIOEJE3,
+                                    '[^/]+',
+                                    1,
+                                    1))
+         END
+            AS FRENO_DE_SERVICIO_INFORME_EJE3_IZQ,
+         CASE
+            WHEN INSPECCION_MEDICIONES.FRENOSERVICIOEJE3 IS NULL
+            THEN
+               ''
+            ELSE
+               TRIM (REGEXP_SUBSTR (INSPECCION_MEDICIONES.FRENOSERVICIOEJE3,
+                                    '[^/]+',
+                                    1,
+                                    2))
+         END
+            AS FRENO_DE_SERVICIO_INFORME_EJE3_DERECHO,
+         CASE
+            WHEN INSPECCION_MEDICIONES.FRENOSERVICIOEJE4 IS NULL
+            THEN
+               ''
+            ELSE
+               TRIM (REGEXP_SUBSTR (INSPECCION_MEDICIONES.FRENOSERVICIOEJE4,
+                                    '[^/]+',
+                                    1,
+                                    1))
+         END
+            AS FRENO_DE_SERVICIO_INFORME_EJE4_IZQ,
+         CASE
+            WHEN INSPECCION_MEDICIONES.FRENOSERVICIOEJE4 IS NULL
+            THEN
+               ''
+            ELSE
+               TRIM (REGEXP_SUBSTR (INSPECCION_MEDICIONES.FRENOSERVICIOEJE4,
+                                    '[^/]+',
+                                    1,
+                                    2))
+         END
+            AS FRENO_DE_SERVICIO_INFORME_EJE4_DERECHO,
+           --NUEVOS
+            TO_NUMBER (TRIM (REGEXP_SUBSTR (NVL (FrenoServicioEje1, ''),
+                                         '[^/]+',
+                                         1,
+                                         1)))
+            AS FRENOSERVICIO_EJE1_IZQ,
+            TO_NUMBER (TRIM (REGEXP_SUBSTR (NVL (FrenoServicioEje1, ''),
+                                         '[^/]+',
+                                         1,
+                                         2)))
+            AS FRENOSERVICIO_EJE1_DERECHO,
+            TO_NUMBER (TRIM (REGEXP_SUBSTR (NVL (FrenoServicioEje2, ''),
+                                         '[^/]+',
+                                         1,
+                                         1)))
+            AS FRENOSERVICIO_EJE2_IZQ,
+            TO_NUMBER (TRIM (REGEXP_SUBSTR (NVL (FrenoServicioEje2, ''),
+                                         '[^/]+',
+                                         1,
+                                         2)))
+            AS FRENOSERVICIO_EJE2_DERECHO,
+           TO_NUMBER (TRIM (REGEXP_SUBSTR (NVL (FrenoServicioEje3, ''),
+                                         '[^/]+',
+                                         1,
+                                         1)))
+            AS FRENOSERVICIO_EJE3_IZQ,
+           TO_NUMBER (TRIM (REGEXP_SUBSTR (NVL (FrenoServicioEje3, ''),
+                                         '[^/]+',
+                                         1,
+                                         2)))
+            AS FRENOSERVICIO_EJE3_DERECHO,
+           TO_NUMBER (TRIM (REGEXP_SUBSTR (NVL (FrenoServicioEje4, ''),
+                                         '[^/]+',
+                                         1,
+                                         1)))
+            AS FRENOSERVICIO_EJE4_IZQ,
+           TO_NUMBER (TRIM (REGEXP_SUBSTR (NVL (FrenoServicioEje4, ''),
+                                         '[^/]+',
+                                         1,
+                                         2)))
+            AS FRENOSERVICIO_EJE4_DERECHO,        
+         
+         ValorEficaciaFrenado (
+            TO_NUMBER (TRIM (REGEXP_SUBSTR (NVL (FRENOSERVICIOEJE1, '0'),
+                                            '[^/]+',
+                                            1,
+                                            1))),
+            TO_NUMBER (TRIM (REGEXP_SUBSTR (NVL (FRENOSERVICIOEJE1, '0'),
+                                            '[^/]+',
+                                            1,
+                                            2))),
+            TO_NUMBER (TRIM (REGEXP_SUBSTR (NVL (FRENOSERVICIOEJE2, '0'),
+                                            '[^/]+',
+                                            1,
+                                            1))),
+            TO_NUMBER (TRIM (REGEXP_SUBSTR (NVL (FRENOSERVICIOEJE2, '0'),
+                                            '[^/]+',
+                                            1,
+                                            2))),
+            TO_NUMBER (TRIM (REGEXP_SUBSTR (NVL (FRENOSERVICIOEJE3, '0'),
+                                            '[^/]+',
+                                            1,
+                                            1))),
+            TO_NUMBER (TRIM (REGEXP_SUBSTR (NVL (FRENOSERVICIOEJE3, '0'),
+                                            '[^/]+',
+                                            1,
+                                            2))),
+            TO_NUMBER (TRIM (REGEXP_SUBSTR (NVL (FRENOSERVICIOEJE4, '0'),
+                                            '[^/]+',
+                                            1,
+                                            1))),
+            TO_NUMBER (TRIM (REGEXP_SUBSTR (NVL (FRENOSERVICIOEJE4, '0'),
+                                            '[^/]+',
+                                            1,
+                                            2))),
+            CASE
+               WHEN INSPECCION.MMA > 3500 THEN INSPECCION.MMA_REAL
+               ELSE INSPECCION.PESO_TOTAL
+            END)
+            AS PORCENTAJE_EFICACIA_FRENOSERVICIO,         
+         ValorEficaciaFrenado (
+            TO_NUMBER (TRIM (REGEXP_SUBSTR (NVL (FrenoEstacionamiento, '0'),
+                                            '[^/]+',
+                                            1,
+                                            1))),
+            TO_NUMBER (TRIM (REGEXP_SUBSTR (NVL (FrenoEstacionamiento, '0'),
+                                            '[^/]+',
+                                            1,
+                                            2))),
+            TO_NUMBER (TRIM (REGEXP_SUBSTR (NVL (FrenoEstacionamiento2, '0'),
+                                            '[^/]+',
+                                            1,
+                                            1))),
+            TO_NUMBER (TRIM (REGEXP_SUBSTR (NVL (FrenoEstacionamiento2, '0'),
+                                            '[^/]+',
+                                            1,
+                                            2))),
+            TO_NUMBER (TRIM (REGEXP_SUBSTR (NVL (FrenoEstacionamiento3, '0'),
+                                            '[^/]+',
+                                            1,
+                                            1))),
+            TO_NUMBER (TRIM (REGEXP_SUBSTR (NVL (FrenoEstacionamiento3, '0'),
+                                            '[^/]+',
+                                            1,
+                                            2))),
+            TO_NUMBER (TRIM (REGEXP_SUBSTR (NVL (FrenoEstacionamiento4, '0'),
+                                            '[^/]+',
+                                            1,
+                                            1))),
+            TO_NUMBER (TRIM (REGEXP_SUBSTR (NVL (FrenoEstacionamiento4, '0'),
+                                            '[^/]+',
+                                            1,
+                                            2))),
+            NVL (INSPECCION.PESO_TOTAL, 0) + NVL (INSPECCION.PESO_REMOLQUE, 0))
+            AS PORCENTAJE_EFICACIA_FRENO_ESTACIONAMIENTO,        
+        --FRENO ESTACIONAMIENTO 
+  
+            
+         INSPECCION.CODCATEGORIA AS CATEGORIA,
+         
+         PESO_1 AS TARA_EJE1,
+         PESO_2 AS TARA_EJE2,
+         PESO_3 AS TARA_EJE3,
+         PESO_4 AS TARA_EJE4,
+         (NVL(PESO_1,0) + NVL(PESO_2,0) + NVL(PESO_3,0) + NVL(PESO_4,0)) AS TARA_TOTAL,
+         
+         MMA_1 AS MMA_EJE1,
+         MMA_2 AS MMA_EJE2,
+         MMA_3 AS MMA_EJE3,
+         MMA_4 AS MMA_EJE4,
+         INSPECCION.MMA_REAL AS MMA_TOTAL,
+         
+         
+         --INSPECCION.MMA AS TARA,
+        
+         
+         INSPECCION.RESULTADO,
+         CASE NVL (TO_NUMBER (INSPECCION.RESULTADO), -1)
+            WHEN 0 THEN 'SIN_RESULTADO'
+            WHEN 1 THEN 'FAVORABLE'
+            WHEN 2 THEN 'FAVORABLE LEVE'
+            WHEN 3 THEN 'DESFAVORABLE'
+            WHEN 4 THEN 'NEGATIVO'
+            ELSE 'DESCONOCIDO'
+         END
+            AS DESCRIPCION_RESULTADO,
+         (  SELECT LISTAGG (
+                         TRIM (TO_CHAR (BLOQUE - 10, '00'))
+                      || '.'
+                      || DEFECTO
+                      || '.'
+                      || SUBDEFECTO
+                      || '.'
+                      || NUMERO
+                      || DECODE (LEVE, -1, 'L ', DECODE (GRAVE, -1, 'G ', 'MG ')),
+                      '')
+                   WITHIN GROUP (ORDER BY
+                                       TRIM (TO_CHAR (BLOQUE - 10, '00'))
+                                    || '.'
+                                    || DEFECTO
+                                    || '.'
+                                    || SUBDEFECTO
+                                    || '.'
+                                    || NUMERO
+                                    || DECODE (LEVE,
+                                               -1, 'L ',
+                                               DECODE (GRAVE, -1, 'G ', 'MG ')))
+                      LISTA_DEFECTOS
+              FROM INSPECCION_DEFECTOS IDEF
+             WHERE     INSPECCION.CODINSPECCION = IDEF.CODINSPECCION
+          GROUP BY CODINSPECCION)
+            AS CODIGOS_DEFECTO  
+             
+    FROM INSPECCION
+         INNER JOIN INSPECCION_MEDICIONES
+            ON     INSPECCION.CODINSPECCION =INSPECCION_MEDICIONES.CODINSPECCION
+   WHERE     INSPECCION.ANULADA = :Anulada
+    AND INSPECCION_MEDICIONES.FRENOMETRO LIKE :NumeroEquipo
+    AND INSPECCION.FECHAINSPECCION >=:FechaDesde
+    AND INSPECCION.FECHAINSPECCION <=:FechaHasta
+ORDER BY CODESTACION, INFORME, FECHAINSPECCION
+

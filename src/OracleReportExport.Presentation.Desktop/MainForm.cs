@@ -1,5 +1,4 @@
 ﻿using ClosedXML.Excel;
-using DocumentFormat.OpenXml.Bibliography;
 using Oracle.ManagedDataAccess.Client;
 using OracleReportExport.Application.Interfaces;
 using OracleReportExport.Application.Models;
@@ -11,106 +10,116 @@ using OracleReportExport.Infrastructure.Interfaces;
 using OracleReportExport.Infrastructure.Services;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
 using System.Drawing;
-using System.Drawing.Configuration;
 using System.Linq;
-using System.Runtime.ConstrainedExecution;
+using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.TextBox;
 
 namespace OracleReportExport.Presentation.Desktop
 {
     public class MainForm : Form
     {
+        #region Campos privados
+
         private readonly TabControl _tabControl = new();
-        private Label lblCountRows;
-        private Button btnExcel;
-        //private Button btnVerConsulta;
+        private TabPage _tabPredefinidos;
 
         private readonly DataGridView _grid = new()
         {
-             Dock = DockStyle.Fill,
-             ReadOnly = true,
-             AllowUserToAddRows = false,
-             AllowUserToResizeColumns = false,
-             AllowUserToResizeRows = false,
-             ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing,
-             RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.DisableResizing,
+            Dock = DockStyle.Fill,
+            ReadOnly = true,
+            AllowUserToAddRows = false,
+            AllowUserToResizeColumns = false,
+            AllowUserToResizeRows = false,
+            ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing,
+            RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.DisableResizing,
             AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells,
-            ScrollBars = ScrollBars.Both
+            ScrollBars = ScrollBars.Both 
+             
+             
         };
 
-        // Lista de conexiones (Central + estaciones)
         private readonly CheckedListBox _chkConnections = new()
         {
             Dock = DockStyle.Left,
             Width = 260,
-            CheckOnClick = true
+            CheckOnClick = true,
+
         };
 
-        // Botones de acciones de la barra superior
         private readonly Button _btnSelectAll = new()
         {
             Text = "Marcar todas",
             AutoSize = true,
-            Visible = true
+            Visible = true,
+ 
         };
 
         private readonly Button _btnUnselectAll = new()
         {
             Text = "Desmarcar",
             AutoSize = true,
-            Visible = true
+            Visible = true,
+
+             
         };
 
         private readonly Button _btnExport = new()
         {
             Text = "Exportar a Excel",
             AutoSize = true,
-            Visible = true
+            Visible = true,
+             
+             
         };
 
         private readonly Button _btnRunReport = new()
         {
             Text = "Ejecutar informe",
             AutoSize = true,
-            Visible = true
+            Visible = true,
+             
+             
         };
 
-        private readonly Button btnVerConsulta = new()
+        private readonly Button _btnVerConsulta = new()
         {
             Text = "Ver Consulta",
             AutoSize = true,
-            Visible = true
+            Visible = true,
+             
+             
         };
 
-        // Combo de informes
         private readonly ComboBox _cmbReports = new()
         {
             DropDownStyle = ComboBoxStyle.DropDownList,
-            Width = 260
+            Width = 260,
+             
+             
         };
 
-        // Panel superior
         private readonly FlowLayoutPanel _topPanel = new()
         {
             Dock = DockStyle.Top,
             Height = 42,
             FlowDirection = FlowDirection.LeftToRight,
             WrapContents = false,
-            Padding = new Padding(5, 5, 5, 0)
+            Padding = new Padding(5, 5, 5, 0),
+             
+             
         };
 
-        // Grupo de parámetros
         private readonly GroupBox _grpParametros = new()
         {
             Text = "Parámetros",
             Dock = DockStyle.Top,
             Height = 120,
-            Padding = new Padding(8, 18, 8, 8)
+            Padding = new Padding(8, 18, 8, 8),
+             
+             
         };
 
         private readonly FlowLayoutPanel _paramsPanel = new()
@@ -122,90 +131,100 @@ namespace OracleReportExport.Presentation.Desktop
             WrapContents = true,
             Padding = new Padding(8),
             Margin = new Padding(0),
+             
+             
         };
-        // Mapa NombreParametro -> Control generado
+
         private readonly Dictionary<string, Control> _parameterControls = new();
 
-        // Servicios
+        private Label? _lblCountRows;
+        private Button? _btnExcel;
+
         private readonly ConnectionCatalogService _connectionCatalog;
         private readonly IReportService _reportService;
         private readonly IReportDefinitionRepository _reportDefinitionRepository;
         private readonly IQueryExecutor _queryExecutor;
         private readonly IOracleConnectionFactory _connectionFactory;
-        private TabPage tabPredefinidos;
-        
 
-        // Informe actual
         private ReportDefinition? _currentReport;
+
+        #endregion
+
+        #region Constructor y carga inicial
 
         public MainForm()
         {
-            //lblCountRow=new Label();
             Text = "Oracle Report Export";
-
             WindowState = FormWindowState.Maximized;
             MaximizeBox = false;
-            FormBorderStyle = FormBorderStyle.FixedSingle;  // o FixedDialog
+            FormBorderStyle = FormBorderStyle.FixedSingle;
 
             _tabControl.Dock = DockStyle.Fill;
 
-             tabPredefinidos = new TabPage("Informes predefinidos");
+            _tabPredefinidos = new TabPage("Informes predefinidos");
             var tabAdHoc = new TabPage("SQL avanzada");
 
-            // Inicializar servicios
             _connectionCatalog = new ConnectionCatalogService();
-
             _connectionFactory = new OracleConnectionFactory();
             _queryExecutor = new OracleQueryExecutor(_connectionFactory);
-
             _reportDefinitionRepository = new JsonReportDefinitionRepository();
             _reportService = new ReportService(_reportDefinitionRepository, _queryExecutor);
 
-
-            
-
-
-            // Cargar conexiones
             CargarConexiones();
+            ConfigurarTopPanel();
+            ConfigurarGrupoParametros();
 
-            // Configurar diseño
-            ConfigureTopPanel();
-            ConfigureParametrosGroup();
+            _tabPredefinidos.Controls.Add(_grid);
+            _tabPredefinidos.Controls.Add(_chkConnections);
+            _tabPredefinidos.Controls.Add(_grpParametros);
+            _tabPredefinidos.Controls.Add(_topPanel);
 
-            // Orden en la pestaña de informes:
-            // 1) Grid (Fill)
-            // 2) Lista conexiones (Left)
-            // 3) Grupo de parámetros (Top)
-            // 4) Panel botones (Top)
-            tabPredefinidos.Controls.Add(_grid);
-            tabPredefinidos.Controls.Add(_chkConnections);
-            tabPredefinidos.Controls.Add(_grpParametros);
-            tabPredefinidos.Controls.Add(_topPanel);
-
-            _tabControl.TabPages.Add(tabPredefinidos);
+            _tabControl.TabPages.Add(_tabPredefinidos);
             _tabControl.TabPages.Add(tabAdHoc);
 
             Controls.Add(_tabControl);
 
-            // Al cargar el formulario, rellenar combo de informes
-            Load += async (_, __) => await LoadReportsAsync();
+            Load += MainForm_LoadAsync;
+          
         }
 
-        #region Diseño
 
+        private void RecursiveEnableControlsForm(Control control,bool changeStated)
+        {
+            if (control == null)
+                return;
+          
+            foreach (Control child in control.Controls)
+            {
+                if(child.HasChildren)
+                RecursiveEnableControlsForm(child,changeStated);
+                else
+                    child.Enabled = changeStated;
+            }
+        }
 
-  
-        private void ConfigureTopPanel()
+        private async void MainForm_LoadAsync(object? sender, EventArgs e)
+        {
+            await LoadReportsAsync();
+        }
+
+        #endregion
+
+        #region Inicialización de diseño
+
+        private void ConfigurarTopPanel()
         {
             _topPanel.Controls.Add(_btnSelectAll);
             _topPanel.Controls.Add(_btnUnselectAll);
-            _topPanel.Controls.Add(_btnExport);
+           // _topPanel.Controls.Add(_btnExport);
 
             var sep = new Label
             {
                 AutoSize = true,
                 Margin = new Padding(20, 10, 0, 0),
-                Text = "|"
+                Text = "|",
+                 
+                 
             };
             _topPanel.Controls.Add(sep);
 
@@ -213,32 +232,24 @@ namespace OracleReportExport.Presentation.Desktop
             {
                 Text = "Informe:",
                 AutoSize = true,
-                Margin = new Padding(20, 10, 0, 0)
+                Margin = new Padding(20, 10, 0, 0),
+                 
+                 
             };
             _topPanel.Controls.Add(lblInforme);
 
             _topPanel.Controls.Add(_cmbReports);
             _topPanel.Controls.Add(_btnRunReport);
-            _topPanel.Controls.Add(btnVerConsulta);
+            _topPanel.Controls.Add(_btnVerConsulta);
 
-
-            // Eventos
-            _btnSelectAll.Click += (_, __) => SetAllConnectionsChecked(true);
-            _btnUnselectAll.Click += (_, __) => SetAllConnectionsChecked(false);
-            // Export lo dejamos para más adelante
+            _btnSelectAll.Click += BtnSelectAll_Click;
+            _btnUnselectAll.Click += BtnUnselectAll_Click;
             _btnRunReport.Click += BtnRunReport_Click;
-            btnVerConsulta.Click += BtnVerConsulta_Click;
+            _btnVerConsulta.Click += BtnVerConsulta_Click;
             _cmbReports.SelectedIndexChanged += CmbReports_SelectedIndexChanged;
         }
-        private void SetAllConnectionsChecked(bool isChecked)
-        {
-            for (int i = 0; i < _chkConnections.Items.Count; i++)
-            {
-                _chkConnections.SetItemChecked(i, isChecked);
-            }
-        }
 
-        private void ConfigureParametrosGroup()
+        private void ConfigurarGrupoParametros()
         {
             _grpParametros.Controls.Clear();
             _grpParametros.Controls.Add(_paramsPanel);
@@ -247,7 +258,7 @@ namespace OracleReportExport.Presentation.Desktop
 
         #endregion
 
-        #region Carga de datos inicial
+        #region Carga de datos
 
         private void CargarConexiones()
         {
@@ -275,52 +286,249 @@ namespace OracleReportExport.Presentation.Desktop
             if (reports.Any())
             {
                 _cmbReports.SelectedIndex = 0;
-                //todo
-                // ----------BOTÓN VER CONSULTA BBDD----------
-                ////var btnVerConsultaExist = parent.Controls.OfType<Button>()
-                //// .FirstOrDefault(b => b.Name == "btnVerConsultaBbdd");
-
-                ////if (btnVerConsultaExist == null)
-                ////{
-                ////    btnVerConsulta = new Button
-                ////    {
-                ////        Name = "btnVerConsultaBbdd",
-                ////        Text = "Ver consulta BBDD",
-                ////        AutoSize = true,
-                ////        Anchor = AnchorStyles.Top | AnchorStyles.Right,
-                ////        Visible = true
-                ////    };
-
-                ////    btnVerConsulta.Click += BtnVerConsulta_Click;
-                ////    parent.Controls.Add(btnVerConsulta);
-                ////}
-
-                ////int right = parent.ClientSize.Width - 10;
-
-                ////// botón Ver consulta (el más a la derecha)
-                ////btnVerConsulta.Top = lblCountRows.Top - 25;    // ~10 px por encima
-                ////btnVerConsulta.Left = right - btnVerConsulta.Width;
             }
         }
 
         #endregion
 
-        #region Parámetros dinámicos
+        #region Eventos de UI
+
+        private void BtnSelectAll_Click(object? sender, EventArgs e)
+        {
+            SetAllConnectionsChecked(true);
+        }
+
+        private void BtnUnselectAll_Click(object? sender, EventArgs e)
+        {
+            SetAllConnectionsChecked(false);
+        }
 
         private void CmbReports_SelectedIndexChanged(object? sender, EventArgs e)
         {
-            if (_cmbReports.SelectedItem is ReportDefinition report)
+            if (_cmbReports.SelectedItem is not ReportDefinition report)
+                return;
+
+            CargarConexiones();
+            _grid.DataSource = null;
+
+            if (_btnExcel != null)
+                _btnExcel.Visible = false;
+
+            if (_lblCountRows != null)
+                _lblCountRows.Text = string.Empty;
+
+            _currentReport = report;
+            RenderParameters(report);
+        }
+
+        private async void BtnRunReport_Click(object? sender, EventArgs e)
+        {
+            var listConnectionsActive = GetSelectedConnections();
+
+            if (listConnectionsActive == null || listConnectionsActive.Count == 0)
             {
-                CargarConexiones();
-                this._grid.DataSource = null;
-                //if (this.btnVerConsulta != null)
-                //    this.btnVerConsulta.Visible = false;
-                if (this.btnExcel != null)
-                    this.btnExcel.Visible = false;
-                if (this.lblCountRows!=null)
-                this.lblCountRows.Text = String.Empty;
-                _currentReport = report;
-                RenderParameters(report);
+                MessageBox.Show(
+                    "Selecciona al menos una conexión para ejecutar el informe.",
+                    "Sin selección",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (_cmbReports.SelectedItem is not ReportDefinition report)
+            {
+                MessageBox.Show(
+                    "Selecciona un informe en el combo.",
+                    "Informe no seleccionado",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+                return;
+            }
+
+            _currentReport = report;
+
+            var parametros = BuildParametersFromUI();
+
+            if (_currentReport.Parameters != null &&
+                _currentReport.Parameters.Count > 0 &&
+                parametros.Count == 0)
+            {
+                return;
+            }
+
+            using var loading = new LoadingForm("Cargando datos...");
+
+            try
+            {
+                loading.Owner = this;
+                loading.Show();
+                loading.Refresh();
+
+                Enabled = false;
+                Cursor = Cursors.WaitCursor;
+
+                var resultReport = await _reportService.ExecuteReportAsync(
+                    report,
+                    parametros,
+                    listConnectionsActive);
+
+                _grid.DataSource = resultReport.Data;
+
+                var parent = _grid.Parent;
+
+                var lblCountRowsExist = parent.Controls.OfType<Label>()
+                    .FirstOrDefault(l => l.Name == "lblCountRows");
+
+                if (lblCountRowsExist == null)
+                {
+                    _lblCountRows = new Label
+                    {
+                        Name = "lblCountRows",
+                        AutoSize = true,
+                        ForeColor = SystemColors.GrayText,
+                        BackColor = Color.Transparent,
+                        Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                        Margin = new Padding(4)
+                    };
+
+                    parent.Controls.Add(_lblCountRows);
+                }
+                else
+                {
+                    _lblCountRows = lblCountRowsExist;
+                }
+
+                _lblCountRows.Text = $"Registros encontrados: {resultReport.Data.Rows.Count}";
+                _lblCountRows.Top = _grid.Top - _lblCountRows.Height - 8;
+                _lblCountRows.Left = parent.ClientSize.Width - _lblCountRows.Width - 10;
+                _lblCountRows.BringToFront();
+
+                var btnExcelExist = parent.Controls.OfType<Button>()
+                    .FirstOrDefault(b => b.Name == "btnExportExcel");
+
+                if (btnExcelExist == null)
+                {
+                    _btnExcel = new Button
+                    {
+                        Name = "btnExportExcel",
+                        Size = new Size(24, 24),
+                        FlatStyle = FlatStyle.Flat,
+                        TabStop = false,
+                        Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                        Visible = true
+                    };
+
+                    _btnExcel.FlatAppearance.BorderSize = 0;
+
+                    var resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
+                    var iconObj = resources.GetObject("Excel_24");
+                    if (iconObj is Icon excelIcon)
+                    {
+                        _btnExcel.Image = excelIcon.ToBitmap();
+                    }
+
+                    _btnExcel.Click += ExportGridWithClosedXml;
+                    parent.Controls.Add(_btnExcel);
+                }
+                else
+                {
+                    _btnExcel = btnExcelExist;
+                }
+
+                _btnExcel.Top = _lblCountRows.Top - 3 + (_lblCountRows.Height - _btnExcel.Height) / 2;
+                _btnExcel.Left = _lblCountRows.Left - _btnExcel.Width - 6;
+                _btnExcel.Visible = resultReport.Data.Rows.Count > 0;
+
+                _lblCountRows.BringToFront();
+                _btnExcel.BringToFront();
+
+                if (resultReport.TimeoutConnections.Any())
+                {
+                    var estaciones = string.Join(", ", resultReport.TimeoutConnections);
+
+                    MessageBox.Show(
+                        $"No se ha podido obtener información de las siguientes conexiones (timeout):{Environment.NewLine}{estaciones}",
+                        "Aviso de Oracle",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                }
+            }
+            catch (OracleException ex) when (ex.Number == 942)
+            {
+                MessageBox.Show(
+                    "La tabla o vista no existe en la base de datos. Verifique que está ejecutando " +
+                    "el informe correcto en la base de datos seleccionada.\n\n" +
+                    "Revise la consulta mediante el botón \"Ver consulta\" \n" +
+                    "Está ejecutando " +
+                    $"un informe de {_currentReport?.SourceType}.",
+                    "Error de base de datos",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+                _grid.DataSource = null;
+            }
+            catch (OracleException ex)
+            {
+                MessageBox.Show(
+                    $"Error de Oracle: {ex.Message}",
+                    "Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+                _grid.DataSource = null;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Error ejecutando el informe:{Environment.NewLine}{ex.Message}",
+                    "Error en informe",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+                _grid.DataSource = null;
+            }
+            finally
+            {
+                Cursor = Cursors.Default;
+                loading.Close();
+                Enabled = true;
+            }
+        }
+
+        private void BtnVerConsulta_Click(object? sender, EventArgs e)
+        {
+            if (_currentReport == null)
+            {
+                MessageBox.Show("No hay informe seleccionado.", "Ver consulta",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            var initialConnection = _connectionCatalog
+                .GetAllConnections()
+                .FirstOrDefault(x => x.Type.ToUpper().Contains(_currentReport.SourceType.ToString().ToUpper()));
+
+            if (initialConnection == null)
+            {
+                MessageBox.Show("No se encontró una conexión adecuada para ver la consulta.",
+                    "Ver consulta", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            using var con = _connectionFactory.CreateConnection(initialConnection.Id);
+
+            using (var frm = new SqlPreviewForm(_currentReport, con))
+            {
+                frm.ShowDialog(this);
+            }
+        }
+
+        #endregion
+
+        #region Métodos privados de ayuda
+
+        private void SetAllConnectionsChecked(bool isChecked)
+        {
+            for (int i = 0; i < _chkConnections.Items.Count; i++)
+            {
+                _chkConnections.SetItemChecked(i, isChecked);
             }
         }
 
@@ -333,14 +541,12 @@ namespace OracleReportExport.Presentation.Desktop
             bool hasMaster = report.TableMasterForParameters != null && report.TableMasterForParameters.Count > 0;
             bool hasParams = report.Parameters != null && report.Parameters.Count > 0;
 
-            // --- Caso sin parámetros ---
             if (!hasMaster && !hasParams)
             {
                 var lbl = new Label
                 {
                     Text = "Este informe no requiere parámetros.",
                     AutoSize = true,
-                    ForeColor = SystemColors.GrayText,
                     Margin = new Padding(4, 8, 4, 4)
                 };
 
@@ -350,7 +556,6 @@ namespace OracleReportExport.Presentation.Desktop
                 return;
             }
 
-            // Helper: bloque horizontal Label + Control
             FlowLayoutPanel CreateParamBlock(string labelText, Control input)
             {
                 var block = new FlowLayoutPanel
@@ -362,14 +567,19 @@ namespace OracleReportExport.Presentation.Desktop
                     Margin = new Padding(8, 4, 8, 4),
                     Padding = new Padding(0),
                 };
+
                 var lbl = new Label
                 {
                     Text = labelText,
                     AutoSize = true,
-                    Margin = new Padding(0, 6, 8, 0)
+                    Margin = new Padding(0, 6, 8, 0),
+                     
+                     
                 };
 
                 input.Margin = new Padding(0, 2, 0, 0);
+                if(input is CheckBox)
+                    input.Margin = new Padding(0, 6, 0, 0);
                 block.Controls.Add(lbl);
                 block.Controls.Add(input);
                 return block;
@@ -378,15 +588,11 @@ namespace OracleReportExport.Presentation.Desktop
             FlowLayoutPanel? lastMasterBlock = null;
             int masterCount = 0;
 
-            // --------------------------------------------------------------------
-            // 1) MASTER TABLES (CheckedListBox / combos)
-            //    → Se colocan 2 por fila. Cuando hay dos, se hace FlowBreak.
-            // --------------------------------------------------------------------
             if (hasMaster)
             {
                 foreach (var p in report.TableMasterForParameters!)
                 {
-                    Control? input = CreateControlForTableMasterParameter(p);
+                    Control? input = CreateControlForTableMasterParameter(p, report.SourceType);
                     if (input == null) continue;
 
                     if (input is ListBox or CheckedListBox)
@@ -394,42 +600,35 @@ namespace OracleReportExport.Presentation.Desktop
                         input.Width = 420;
                         input.Height = 140;
                     }
+
                     var block = CreateParamBlock(p.Label ?? p.Name, input);
                     _paramsPanel.Controls.Add(block);
                     masterCount++;
                     lastMasterBlock = block;
                     _parameterControls[p.Name] = input;
-                    // Cada 2 masters, forzamos salto de línea
-                        if (masterCount % 2 == 0)
-                        {
-                            input.Margin = new Padding(
+
+                    if (masterCount % 2 == 0)
+                    {
+                        input.Margin = new Padding(
                             input.Margin.Left,
                             input.Margin.Top,
                             input.Margin.Right,
-                            10
-                        );
-                    _paramsPanel.SetFlowBreak(block, true);
+                            10);
+                        _paramsPanel.SetFlowBreak(block, true);
                     }
                 }
-                // IMPORTANTE: si el siguiente control NO es master (Parameters normales),
-                // queremos que empiece SIEMPRE en la línea siguiente,
-                // así que marcamos FlowBreak en el último bloque master.
+
                 if (lastMasterBlock != null)
                 {
                     lastMasterBlock.Margin = new Padding(
-                              lastMasterBlock.Margin.Left,
-                              lastMasterBlock.Margin.Top,
-                              lastMasterBlock.Margin.Right,
-                              10 
-                          );
+                        lastMasterBlock.Margin.Left,
+                        lastMasterBlock.Margin.Top,
+                        lastMasterBlock.Margin.Right,
+                        10);
                     _paramsPanel.SetFlowBreak(lastMasterBlock, true);
                 }
             }
-            // --------------------------------------------------------------------
-            // 2) PARAMETERS NORMALES (fechas, anulada, etc.)
-            //    → Se añaden uno detrás de otro; el salto de línea ya se ha
-            //      forzado justo después del último master.
-            // --------------------------------------------------------------------
+
             if (hasParams)
             {
                 foreach (var p in report.Parameters!)
@@ -441,6 +640,7 @@ namespace OracleReportExport.Presentation.Desktop
                         input.Width = 110;
                     else if (input is TextBox)
                         input.Width = 160;
+
                     var block = CreateParamBlock(p.Label ?? p.Name, input);
                     _paramsPanel.Controls.Add(block);
                     _parameterControls[p.Name] = input;
@@ -448,15 +648,20 @@ namespace OracleReportExport.Presentation.Desktop
             }
 
             _paramsPanel.ResumeLayout();
+
             if (_paramsPanel.Controls.Count > 0)
             {
-                int maxBottom = _paramsPanel.Controls.Cast<Control>().Max(c => c.Bottom);
-                _grpParametros.Height = Math.Max(250, maxBottom + 30);
+                 int maxBottom = _paramsPanel.Controls.Cast<Control>().Max(c => c.Bottom);
+                _grpParametros.Height = maxBottom + 60;// Math.Max(250, maxBottom + 30);
+             
             }
             else
+            {
                 _grpParametros.Height = 100;
+            }
         }
-       private Control? CreateControlForParameter(ReportParameterDefinition parameter)
+
+        private Control? CreateControlForParameter(ReportParameterDefinition parameter)
         {
             var type = (parameter.Type ?? "string").ToLowerInvariant();
 
@@ -468,57 +673,58 @@ namespace OracleReportExport.Presentation.Desktop
                         Format = DateTimePickerFormat.Short,
                         Width = 120,
                         Margin = new Padding(4, 2, 4, 2)
+
+                    };
+                case "text":
+                    return new TextBox
+                    {
+                        Text = parameter.IsRequired ? string.Empty : "",
+                        Width = 160,
+                        Margin = new Padding(4, 4, 4, 2)
                     };
 
                 case "bool":
-                    return new CheckBox
-                    {
-                        Checked = parameter.IsRequired?true:false,
-                        AutoSize = true,
-                        Margin = new Padding(4, 4, 4, 2)
-                    };
                 case "funcion":
                     return new CheckBox
                     {
-                        Checked = parameter.IsRequired ? true : false,
+                        Checked = parameter.IsRequired,
                         AutoSize = true,
                         Margin = new Padding(4, 4, 4, 2)
                     };
 
-                default:  
-                    return null;
-            }
-        }
-
-        private Control? CreateControlForTableMasterParameter(TableMasterParameterDefinition parameter)
-        {
-            var type = (parameter.Type ?? "string").ToLowerInvariant();
-
-            switch (type)
-            {
-                case "combobox":
-                    var initialConnection = _connectionCatalog.GetAllConnections().Where(x => x.Type.Contains("Estacion")).FirstOrDefault();
-                    return LoadTableMasterDataIntoControl(parameter);
                 default:
                     return null;
             }
         }
-        private Control LoadTableMasterDataIntoControl(TableMasterParameterDefinition parameter)
+
+        private Control? CreateControlForTableMasterParameter(TableMasterParameterDefinition parameter, ReportSourceType sourceType)
+        {
+            var type = (parameter.Type ?? "string").ToLowerInvariant();
+
+            return type switch
+            {
+                "combobox" => LoadTableMasterDataIntoControl(parameter, sourceType),
+                _ => null
+            };
+        }
+
+        private Control LoadTableMasterDataIntoControl(TableMasterParameterDefinition parameter, ReportSourceType sourceType)
         {
             var initialConnection = _connectionCatalog
                 .GetAllConnections()
-                .FirstOrDefault(x => x.Type.Contains("Estacion"));
+                .FirstOrDefault(x => x.Type.Contains(sourceType.ToString()));
 
             if (initialConnection == null)
                 throw new Exception("No se encontró una conexión válida para Estación.");
 
             if (string.IsNullOrWhiteSpace(parameter.SqlQueryMaster))
-                return new CheckedListBox();   // vacío
+                return new CheckedListBox();
 
-            DataTable dt = new DataTable();
+            DataTable dt;
+
             using (var conn = _connectionFactory.CreateConnection(initialConnection.Id) as OracleConnection)
             {
-                conn.Open();
+                conn!.Open();
                 using var cmd = conn.CreateCommand();
                 cmd.CommandText = parameter.SqlQueryMaster;
                 using var da = new OracleDataAdapter(cmd);
@@ -533,24 +739,26 @@ namespace OracleReportExport.Presentation.Desktop
             {
                 CheckOnClick = true,
                 IntegralHeight = false,
-                Height = Math.Min(150, 18 * dt.Rows.Count + 4)   // alto razonable
+                Height = Math.Min(150, 18 * dt.Rows.Count + 4)
             };
 
-            clb.DisplayMember = parameter.Text ?? String.Empty;
-            clb.ValueMember = parameter.Id ?? String.Empty;
-            // Valores que deben aparecer ya marcados (CI, M, etc.)
+            clb.DisplayMember = parameter.Text ?? string.Empty;
+            clb.ValueMember = parameter.Id ?? string.Empty;
+
             var preselected = parameter.ValuesRequired ?? new List<string>();
 
             int maxWidth = 0;
+
             foreach (DataRow row in dt.Rows)
             {
                 string value = row[parameter.Id]?.ToString() ?? "";
                 string text = row[parameter.Text]?.ToString() ?? "";
-                // objeto para usar DisplayMember/ValueMember
+
                 var item = new MultiItem
                 {
                     Value = value,
                     Text = text
+
                 };
 
                 int index = clb.Items.Add(item);
@@ -560,59 +768,32 @@ namespace OracleReportExport.Presentation.Desktop
                 int w = TextRenderer.MeasureText(text, clb.Font).Width;
                 if (w > maxWidth)
                     maxWidth = w;
-
             }
+
             clb.Height = Math.Min(150, 18 * clb.Items.Count + 4);
             clb.Width = maxWidth + SystemInformation.VerticalScrollBarWidth + 30;
             return clb;
         }
 
-
-
-
-        private void BtnVerConsulta_Click(object? sender, EventArgs e)
+        private List<ConnectionInfo> GetSelectedConnections()
         {
-            if (_currentReport == null)
-            {
-                MessageBox.Show("No hay informe seleccionado.", "Ver consulta",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
-
-            //      private List<ConnectionInfo> GetSelectedConnection()
-            //{
-            //    return _chkConnections.CheckedItems
-            //        .OfType<ConnectionInfo>().ToList();
-
-            //}
-
-            var initialConnection= _connectionCatalog
-          .GetAllConnections()
-          .FirstOrDefault(x => x.Type.ToUpper().Contains(_currentReport.SourceType.ToString().ToUpper()));
-
-           var con= _connectionFactory.CreateConnection(initialConnection.Id);
-       
-
-            using (var frm = new SqlPreviewForm(_currentReport, con))
-            {
-                frm.ShowDialog(this);// modal
-            }
+            return _chkConnections.CheckedItems
+                .OfType<ConnectionInfo>()
+                .ToList();
         }
+
         private Dictionary<string, object?> BuildParametersFromUI()
         {
             var result = new Dictionary<string, object?>();
+
             if (_currentReport == null)
                 return result;
 
-            //
-            // Parámetros “normales” (FechaDesde, FechaHasta, Anulada, etc.)
-
-            //
             if (_currentReport.Parameters != null && _currentReport.Parameters.Count > 0)
             {
                 foreach (var p in _currentReport.Parameters)
                 {
-                  if (!_parameterControls.TryGetValue(p.Name, out var ctrl))
+                    if (!_parameterControls.TryGetValue(p.Name, out var ctrl))
                         continue;
 
                     object? value = ctrl switch
@@ -635,40 +816,43 @@ namespace OracleReportExport.Presentation.Desktop
 
                         return new Dictionary<string, object?>();
                     }
-                    if (value != null && value.GetType().Name.ToUpper().Equals("Boolean".ToUpper()))
+
+                    if (value != null && value is bool)
                     {
                         if (p.Type == "funcion")
                         {
                             int numberFromBoolean = value is bool b ? (b ? 1 : 0) : 0;
-                            value = p.Values.Where(x => x.Key == numberFromBoolean).FirstOrDefault()?.Value ?? String.Empty;
+                            value = p.Values
+                                .Where(x => x.Key == numberFromBoolean)
+                                .FirstOrDefault()
+                                .Value ?? string.Empty;
                         }
                         else
+                        {
                             value = (bool)value ? -1 : 0;
+                        }
+                    }
+
+                    if(p.Type == "text" && value != null)
+                    {
+                        value = String.Concat("%",value.ToString()!.Trim(), "%");
                     }
                     switch (p.Name.ToUpper())
                     {
                         case "FECHADESDE":
-                             var fromDate = (DateTime)value;
-                            var fromDateFormat = new DateTime(fromDate.Year, fromDate.Month, fromDate.Day);
-                            value = fromDateFormat;
+                            var fromDate = (DateTime)value!;
+                            value = new DateTime(fromDate.Year, fromDate.Month, fromDate.Day);
                             break;
-                            case "FECHAHASTA":
-                            var toDate = (DateTime)value;
-                            var toDateFormat = new DateTime(toDate.Year, toDate.Month, toDate.Day, 23, 59, 59);
-                            value = toDateFormat;
+
+                        case "FECHAHASTA":
+                            var toDate = (DateTime)value!;
+                            value = new DateTime(toDate.Year, toDate.Month, toDate.Day, 23, 59, 59);
                             break;
-                        default:
-                            break;
-                    }                     
+                    }
+
                     result[p.Name] = value;
                 }
             }
-
-            //
-            //Multi-select: construir las listas para IN(...)
-            //    TIPOSVEHICULO  -> {TiposVehiculoList}
-            //    TIPOINSPECCION_ENAC -> {CategoriasList}
-            //
 
             List<string> GetCheckedCodes(string controlKey)
             {
@@ -687,31 +871,25 @@ namespace OracleReportExport.Presentation.Desktop
             string BuildInList(List<string> values)
             {
                 if (values == null || values.Count == 0)
-                    return "''";  // si quieres obligar a elegir algo, aquí podrías lanzar excepción
+                    return "''";
 
                 return string.Join(", ",
                     values.Select(v => $"'{v.Replace("'", "''")}'"));
             }
-            //TODO:Cambiar los nombres de los parámetros según convenga y archivo txt de informes (campos interpolados)
-            // TIPOSVEHICULO 
+
             var tiposVehiculo = GetCheckedCodes("TIPOSVEHICULO");
-             if(tiposVehiculo!=null && tiposVehiculo.Count>0)
-              result["TiposVehiculoList"] = BuildInList(tiposVehiculo);
-            //TODO:Cambiar los nombres de los parámetros según convenga y archivo txt de informes (campos interpolados)
-            // CATEGORIAS
+            if (tiposVehiculo != null && tiposVehiculo.Count > 0)
+                result["TiposVehiculoList"] = BuildInList(tiposVehiculo);
+
             var categorias = GetCheckedCodes("CATEGORIAS");
             if (categorias != null && categorias.Count > 0)
                 result["CategoriasList"] = BuildInList(categorias);
 
-            //
-            //   Validación final de requeridos (por si mantienes TipoVehiculo1.. y Cat1.. en el JSON)
-            //    -> los excluimos de la validación para que no den guerra
-            //
             if (_currentReport.Parameters != null)
             {
                 foreach (var p in _currentReport.Parameters.Where(x => x.IsRequired))
                 {
-                      if (!result.TryGetValue(p.Name, out var val) ||
+                    if (!result.TryGetValue(p.Name, out var val) ||
                         val == null ||
                         (val is string s && string.IsNullOrWhiteSpace(s)))
                     {
@@ -729,219 +907,30 @@ namespace OracleReportExport.Presentation.Desktop
             return result;
         }
 
-        #endregion
-
-        #region Ejecución de informes
-        private List<ConnectionInfo> GetSelectedConnection()
+        private void ExportGridWithClosedXml(object? sender, EventArgs e)
         {
-            return _chkConnections.CheckedItems
-                .OfType<ConnectionInfo>().ToList();
-                 
-        }
-
-        
-
-        private async void BtnRunReport_Click(object? sender, EventArgs e)
-        {
-            var listConnectionsActive = GetSelectedConnection();
-
-            if (listConnectionsActive==null || listConnectionsActive.Count == 0)
-            {
-                MessageBox.Show(
-                    "Selecciona al menos una conexión para ejecutar el informe.",
-                    "Sin selección",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning);
-                return;
-            }
-
-            if (_cmbReports.SelectedItem is not ReportDefinition report)
-            {
-                MessageBox.Show(
-                    "Selecciona un informe en el combo.",
-                    "Informe no seleccionado",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning);
-                return;
-            }
-
-            _currentReport = report;
- 
-            var parametros = BuildParametersFromUI();
-            // Si la validación devolvió un diccionario vacío porque faltan requeridos, salimos.
-            if (_currentReport.Parameters != null &&
-                _currentReport.Parameters.Count > 0 &&
-                parametros.Count == 0)
-            {
-                return;
-            }
-
-            using var loading = new LoadingForm("Cargando datos...");
-
             try
             {
-                loading.Owner = this; 
-                loading.Show();
-                loading.Refresh();
+                var uniqueIdTime = DateTime.Now.ToString("yyyyMMdd_HHmmss");
 
-                Enabled = false;
-                Cursor = Cursors.WaitCursor;
-
-                var resultReport = await _reportService.ExecuteReportAsync(
-                    report,
-                    parametros,
-                    listConnectionsActive);
-
-                  _grid.DataSource = resultReport.Data;  
-                  var parent = _grid.Parent;
-
-                 var lblCountRowsExist = parent.Controls.OfType<Label>()
-                    .FirstOrDefault(l => l.Name == "lblCountRows");
-
-                if (lblCountRowsExist == null)
-                {
-                    this.lblCountRows = new Label
-                    {
-                        Name = "lblCountRows",
-                        AutoSize = true,
-                        ForeColor = SystemColors.GrayText,
-                        BackColor = Color.Transparent,
-                        Anchor = AnchorStyles.Top | AnchorStyles.Right,
-                        Margin = new Padding(4)
-                    };
-
-                    parent.Controls.Add(lblCountRows);
-                }
-
-                lblCountRows.Text = $"Registros encontrados: {resultReport.Data.Rows.Count}";
-                lblCountRows.Top = _grid.Top - lblCountRows.Height -8 ;
-                lblCountRows.Left = parent.ClientSize.Width - lblCountRows.Width - 10;
-                lblCountRows.BringToFront();
-
-                // ---------- BOTÓN ICONO EXCEL A LA IZQUIERDA ----------
-                var btnExcelExist = parent.Controls.OfType<Button>()
-                    .FirstOrDefault(b => b.Name == "btnExportExcel");
-
-                if (btnExcelExist == null)
-                {
-                    btnExcel = new Button
-                    {
-                        Name = "btnExportExcel",
-                        Size = new Size(24, 24),
-                        FlatStyle = FlatStyle.Flat,
-                        TabStop = false,
-                        Anchor = AnchorStyles.Top | AnchorStyles.Right,
-                        Visible=true
-                    };
-
-                    // quita el borde feo
-                    btnExcel.FlatAppearance.BorderSize = 0;
-
-                    // TODO: pon aquí tu icono de Excel en recursos
-                    // (cambia 'Excel16' por el nombre real del recurso)
-                    var resources = new ComponentResourceManager(typeof(MainForm));
-                    var iconObj = resources.GetObject("Excel_24");
-                    if (iconObj is Icon excelIcon)
-                    {
-                        btnExcel.Image = excelIcon.ToBitmap();   // ✔ convertir a Image (bitmap)
-                    }
-                    //btnExcel.Image = resources.GetObject("Excel_24");
-                    btnExcel.Click += ExportGridWithClosedXML;
-
-                    parent.Controls.Add(btnExcel);
-                }
-
-                
-
-                // Alinear verticalmente con el label y a su izquierda
-                btnExcel.Top = lblCountRows.Top-3 + (lblCountRows.Height - btnExcel.Height) / 2;
-                btnExcel.Left = lblCountRows.Left - btnExcel.Width - 6;
-
-                btnExcel.Visible = resultReport.Data.Rows.Count > 0;
-                //btnVerConsulta.Visible= true;
-                lblCountRows.BringToFront();
-                btnExcel.BringToFront();
-
-
-
-
-
-                if (resultReport.TimeoutConnections.Any())
-                {
-                    var estaciones = string.Join(", ", resultReport.TimeoutConnections);
-
-                    MessageBox.Show(
-                        $"No se ha podido obtener información de las siguientes conexiones (timeout):{Environment.NewLine}{estaciones}",
-                        "Aviso de Oracle",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Warning);
-                }
-
-            }
-            catch (OracleException ex) when (ex.Number == 942)
-            {
-                MessageBox.Show(
-                    "La tabla o vista no existe en la base de datos.Verifique que esta ejecutando " +
-                    "el informe correcto en la base de datos correspondiente.\n\nEsta ejecutando " +
-                    "un informe de "+ _currentReport.SourceType.ToString()+ ".\n",
-                    "Error de base de datos",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning);
-            }
-            catch (OracleException ex)
-            {
-                MessageBox.Show(
-                    $"Error de Oracle: {ex.Message}",
-                    "Error",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(
-                    $"Error ejecutando el informe:{Environment.NewLine}{ex.Message}",
-                    "Error en informe",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
-            }
-            finally
-            {
-                Cursor = Cursors.Default;
-                loading.Close();
-                Enabled = true;
-            }
-        }
-
-        #endregion
-
- 
-
-private void ExportGridWithClosedXML(Object sender ,EventArgs e)
-    {
-            try
-            {
-                var UniqueIdTime = DateTime.Now.ToString("yyyyMMdd_HHmmss");
                 using var sfd = new SaveFileDialog
                 {
                     Filter = "Excel (*.xlsx)|*.xlsx",
-                    FileName = String.Concat(((ReportDefinition)_cmbReports.SelectedItem).Name, UniqueIdTime, ".xlsx")
+                    FileName = $"{((ReportDefinition)_cmbReports.SelectedItem!).Name}{uniqueIdTime}.xlsx"
                 };
 
                 if (sfd.ShowDialog() != DialogResult.OK)
                     return;
 
                 using var wb = new XLWorkbook();
-                var ws = wb.Worksheets.Add(((ReportDefinition)_cmbReports.SelectedItem).Category);
+                var ws = wb.Worksheets.Add(((ReportDefinition)_cmbReports.SelectedItem!).Category);
 
-                // Cabeceras
                 for (int col = 0; col < _grid.Columns.Count; col++)
                 {
                     ws.Cell(1, col + 1).Value = _grid.Columns[col].HeaderText;
                     ws.Cell(1, col + 1).Style.Font.Bold = true;
-
                 }
 
-                // Datos
                 for (int row = 0; row < _grid.Rows.Count; row++)
                 {
                     if (_grid.Rows[row].IsNewRow) continue;
@@ -949,42 +938,43 @@ private void ExportGridWithClosedXML(Object sender ,EventArgs e)
                     for (int col = 0; col < _grid.Columns.Count; col++)
                     {
                         var value = _grid.Rows[row].Cells[col].Value;
-
-                        // Normalizar nulos
                         var safeValue = value == null ? "" : value.ToString();
-
                         ws.Cell(row + 2, col + 1).Value = safeValue;
                     }
                 }
 
-
                 ws.Columns().AdjustToContents();
                 foreach (var sheet in wb.Worksheets)
+                {
                     sheet.Columns().AdjustToContents();
-                //var nameExcel = String.Concat(Path.GetDirectoryName(sfd.FileName),"\\", Path.GetFileNameWithoutExtension(sfd.FileName), "_", DateTime.Now.ToString("yyyyMMdd_HHmmss"), ".xlsx");
+                }
+
                 wb.SaveAs(sfd.FileName);
 
-            
-            MessageBox.Show($"Exportación realizada correctamente en : \n\r {sfd.FileName}", $"Exportación informe",
-                                MessageBoxButtons.OK,
-                                MessageBoxIcon.Information);
+                MessageBox.Show(
+                    $"Exportación realizada correctamente en:\n{sfd.FileName}",
+                    "Exportación informe",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
             }
-            catch (System.IO.IOException ex)
+            catch (System.IO.IOException)
             {
-                MessageBox.Show($"El archivo puede estar abierto.Por favor cierrelo para poder guardar el archivo Excel", $"Error Exportación Excel",
-                                                MessageBoxButtons.OK,
-                                                MessageBoxIcon.Error);
-
+                MessageBox.Show(
+                    "El archivo puede estar abierto. Por favor, ciérrelo para poder guardar el archivo Excel.",
+                    "Error Exportación Excel",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
             }
         }
 
+        #endregion
 
-    #region Form de carga
-    private sealed class LoadingForm : Form
+        #region Form de carga
+
+        private sealed class LoadingForm : Form
         {
             public LoadingForm(string message)
             {
-                // Lo vamos a centrar nosotros → Manual
                 StartPosition = FormStartPosition.Manual;
                 TopMost = true;
                 ShowInTaskbar = false;
@@ -1009,7 +999,6 @@ private void ExportGridWithClosedXML(Object sender ,EventArgs e)
             {
                 base.OnShown(e);
 
-                // Si tiene formulario padre, centramos sobre él
                 if (Owner != null)
                 {
                     var rect = Owner.Bounds;
@@ -1018,7 +1007,6 @@ private void ExportGridWithClosedXML(Object sender ,EventArgs e)
                 }
                 else
                 {
-                    // Si no tiene, centramos en la pantalla activa
                     var screen = Screen.FromPoint(Cursor.Position).WorkingArea;
                     Left = screen.Left + (screen.Width - Width) / 2;
                     Top = screen.Top + (screen.Height - Height) / 2;
@@ -1029,15 +1017,16 @@ private void ExportGridWithClosedXML(Object sender ,EventArgs e)
         #endregion
     }
 
+    #region Clases auxiliares
+
     public class MultiItem
     {
         public string Value { get; set; } = "";
         public string Text { get; set; } = "";
-       public override string ToString()
+
+        public override string ToString()
             => $"({Value}) -> {Text}";
     }
 
+    #endregion
 }
-
-
-
