@@ -81,7 +81,7 @@
     {
       "Id": "3",
       "Name": "Enac No Periódicas",
-      "Category": "Inspecciones No Periódicas",
+      "Category": "Inspecciones_No_Periodicas",
       "Description": "Reporte de inspecciones no periódicas",
       "SourceType": "Estacion",
       "SqlFileForStations": "SQL/ENAC_InspeccionesNoPeriodicas.txt",
@@ -151,7 +151,7 @@
     {
       "Id": "4",
       "Name": "Expedientes con reforma",
-      "Category": "Expedientes con reforma",
+      "Category": "Expedientes_con_reforma",
       "Description": "Listado de vehículos tipo motocicletas por una fecha determinada",
       "SourceType": "Estacion",
       "SqlFileForStations": "Sql/ExpedientesConReforma.txt",
@@ -210,7 +210,7 @@
     {
       "Id": "6",
       "Name": "Inspecciones por número de equipo frenómetro",
-      "Category": "Inspecciones por número de equipo frenómetro",
+      "Category": "Inspecciones_equipo_frenometro",
       "Description": "Listado de Inspecciones de un número de equipo especificado",
       "SourceType": "Estacion",
       "SqlFileForStations": "Sql/InspeccinesPorNumeroEquipo.txt",

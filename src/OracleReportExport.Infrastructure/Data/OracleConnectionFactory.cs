@@ -35,7 +35,7 @@ namespace OracleReportExport.Infrastructure.Data
 
             // Diccionario: Id  -> conexión
             _connections = root.Connections
-                               .ToDictionary(c => c.Id,
+                               .ToDictionary(c => String.Concat(c.Id,"_",c.DisplayName),
                                              c => c,
                                              StringComparer.OrdinalIgnoreCase);
 

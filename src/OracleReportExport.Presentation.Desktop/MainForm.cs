@@ -46,6 +46,7 @@ namespace OracleReportExport.Presentation.Desktop
             Dock = DockStyle.Left,
             Width = 260,
             CheckOnClick = true,
+            ScrollAlwaysVisible= true 
 
         };
 
@@ -269,9 +270,18 @@ namespace OracleReportExport.Presentation.Desktop
 
             _chkConnections.Items.Clear();
 
-            foreach (ConnectionInfo c in conexiones)
+            var connectionStation = conexiones.Where(x => x.DisplayName.Contains("I.T.V.")).ToList();
+            foreach (ConnectionInfo c in connectionStation)
             {
                 _chkConnections.Items.Add(c, false);
+                _chkConnections.AutoAdjustWidth();
+            }
+
+            var connectionUma = conexiones.Where(x => x.DisplayName.Contains("U.M.A.")).ToList();
+            foreach (ConnectionInfo c in connectionUma)
+            {
+                _chkConnections.Items.Add(c, false);
+                _chkConnections.AutoAdjustWidth();
             }
         }
 
@@ -512,7 +522,7 @@ namespace OracleReportExport.Presentation.Desktop
                 return;
             }
 
-            using var con = _connectionFactory.CreateConnection(initialConnection.Id);
+            using var con = _connectionFactory.CreateConnection(String.Concat(initialConnection.Id, "_", initialConnection.DisplayName));
 
             using (var frm = new SqlPreviewForm(_currentReport, con))
             {
@@ -722,7 +732,7 @@ namespace OracleReportExport.Presentation.Desktop
 
             DataTable dt;
 
-            using (var conn = _connectionFactory.CreateConnection(initialConnection.Id) as OracleConnection)
+            using (var conn = _connectionFactory.CreateConnection(String.Concat(initialConnection.Id, "_", initialConnection.DisplayName)) as OracleConnection)
             {
                 conn!.Open();
                 using var cmd = conn.CreateCommand();

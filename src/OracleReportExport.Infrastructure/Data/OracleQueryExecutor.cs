@@ -34,7 +34,7 @@ namespace OracleReportExport.Infrastructure.Data
 
             var result = new DataTable();
 
-            await using var conn = _connectionFactory.CreateConnection(connectionInfo.Id) as OracleConnection
+            await using var conn = _connectionFactory.CreateConnection(String.Concat(connectionInfo.Id,"_",connectionInfo.DisplayName)) as OracleConnection
                                    ?? throw new InvalidOperationException("La conexión devuelta no es OracleConnection.");
 
             await conn.OpenAsync(ct);
