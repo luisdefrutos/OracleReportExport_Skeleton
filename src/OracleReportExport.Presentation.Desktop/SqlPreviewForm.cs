@@ -22,7 +22,7 @@ namespace OracleReportExport.Presentation.Desktop
         [DllImport("user32.dll")]
         private static extern bool HideCaret(IntPtr hWnd);
 
-        public SqlPreviewForm(ReportDefinition report, DbConnection cn)
+        public SqlPreviewForm(ReportDefinition ?report, DbConnection cn)
         {
             InitializeComponent();
             _report = report ?? throw new ArgumentNullException(nameof(report));

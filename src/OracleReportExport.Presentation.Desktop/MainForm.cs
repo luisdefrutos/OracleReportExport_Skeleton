@@ -1,4 +1,6 @@
 ﻿using ClosedXML.Excel;
+using DocumentFormat.OpenXml.Drawing;
+using DocumentFormat.OpenXml.Office.PowerPoint.Y2021.M06.Main;
 using Oracle.ManagedDataAccess.Client;
 using OracleReportExport.Application.Interfaces;
 using OracleReportExport.Application.Models;
@@ -13,7 +15,6 @@ using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -38,8 +39,6 @@ namespace OracleReportExport.Presentation.Desktop
             RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.DisableResizing,
             AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells,
             ScrollBars = ScrollBars.Both
-
-
         };
 
         private readonly CheckedListBox _chkConnections = new()
@@ -47,60 +46,56 @@ namespace OracleReportExport.Presentation.Desktop
             Dock = DockStyle.Left,
             Width = 260,
             CheckOnClick = true,
-            ScrollAlwaysVisible= true 
+            ScrollAlwaysVisible = true
+        };
 
+        private readonly CheckedListBox _chkConnectionsAdHoc = new()
+        {
+            Dock = DockStyle.Left,
+            Width = 260,
+            CheckOnClick = true,
+            ScrollAlwaysVisible = true
         };
 
         private readonly Button _btnSelectAll = new()
         {
             Text = "Marcar todas",
             AutoSize = true,
-            Visible = true,
- 
+            Visible = true
         };
 
         private readonly Button _btnUnselectAll = new()
         {
             Text = "Desmarcar",
             AutoSize = true,
-            Visible = true,
-
-             
+            Visible = true
         };
 
         private readonly Button _btnExport = new()
         {
             Text = "Exportar a Excel",
             AutoSize = true,
-            Visible = true,
-             
-             
+            Visible = true
         };
 
         private readonly Button _btnRunReport = new()
         {
             Text = "Ejecutar informe",
             AutoSize = true,
-            Visible = true,
-             
-             
+            Visible = true
         };
 
         private readonly Button _btnVerConsulta = new()
         {
             Text = "Ver Consulta",
             AutoSize = true,
-            Visible = true,
-             
-             
+            Visible = true
         };
 
         private readonly ComboBox _cmbReports = new()
         {
             DropDownStyle = ComboBoxStyle.DropDownList,
-            Width = 260,
-             
-             
+            Width = 260
         };
 
         private readonly FlowLayoutPanel _topPanel = new()
@@ -109,9 +104,16 @@ namespace OracleReportExport.Presentation.Desktop
             Height = 42,
             FlowDirection = FlowDirection.LeftToRight,
             WrapContents = false,
-            Padding = new Padding(5, 5, 5, 0),
-             
-             
+            Padding = new Padding(5, 5, 5, 0)
+        };
+
+        private readonly FlowLayoutPanel _topPanelAdHoc = new()
+        {
+            Dock = DockStyle.Top,
+            Height = 52,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            Padding = new Padding(5, 5, 5, 0)
         };
 
         private readonly GroupBox _grpParametros = new()
@@ -119,9 +121,7 @@ namespace OracleReportExport.Presentation.Desktop
             Text = "Parámetros",
             Dock = DockStyle.Top,
             Height = 120,
-            Padding = new Padding(8, 18, 8, 8),
-             
-             
+            Padding = new Padding(8, 18, 8, 8)
         };
 
         private readonly FlowLayoutPanel _paramsPanel = new()
@@ -132,9 +132,41 @@ namespace OracleReportExport.Presentation.Desktop
             FlowDirection = FlowDirection.LeftToRight,
             WrapContents = true,
             Padding = new Padding(8),
-            Margin = new Padding(0),
-             
-             
+            Margin = new Padding(0)
+        };
+
+        private readonly RichTextBox _txtSqlAdHoc = new()
+        {
+            Dock = DockStyle.Fill,
+            Font = new Font("Consolas", 10f),
+            BackColor = Color.FromArgb(232, 238, 247),   // (#E8EEF7)
+            ForeColor = Color.FromArgb(28, 59, 106),     // (#1C3B6A)
+            ScrollBars = RichTextBoxScrollBars.Both,
+            BorderStyle = BorderStyle.FixedSingle
+        };
+
+        private readonly Button ButtonAdHoc = new()
+        {
+            Width = 100,
+            Height = 30,
+            Text = "Ejecutar SQL",
+            Visible = true,
+            
+        };
+        
+
+        // Grid para resultados de SQL avanzada
+        private readonly DataGridView _gridAdHoc = new()
+        {
+            Dock = DockStyle.Fill,
+            ReadOnly = true,
+            AllowUserToAddRows = false,
+            AllowUserToResizeColumns = false,
+            AllowUserToResizeRows = false,
+            ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing,
+            RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.DisableResizing,
+            AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells,
+            ScrollBars = ScrollBars.Both
         };
 
         private readonly Dictionary<string, Control> _parameterControls = new();
@@ -176,28 +208,99 @@ namespace OracleReportExport.Presentation.Desktop
             ConfigurarTopPanel();
             ConfigurarGrupoParametros();
 
+            // --- Pestaña de informes predefinidos ---
             _tabPredefinidos.Controls.Add(_grid);
             _tabPredefinidos.Controls.Add(_chkConnections);
             _tabPredefinidos.Controls.Add(_grpParametros);
             _tabPredefinidos.Controls.Add(_topPanel);
 
+            // --- Pestaña SQL avanzada ---
+
+            // Copiamos las mismas conexiones al modo ad-hoc
+            _chkConnectionsAdHoc.Items.AddRange(
+                _chkConnections.Items.OfType<ConnectionInfo>().ToArray()
+            );
+
+            // Panel superior de título
+            _topPanelAdHoc.Controls.Add(new Label
+            {
+                Text = "Creación de Consultas Personalizadas",
+                AutoSize = true,
+                Padding = new Padding(8, 18, 8, 8)
+            });
+
+            // Panel derecho que contiene editor + botón + grid
+            var rightPanelAdHoc = new Panel
+            {
+                Dock = DockStyle.Fill
+            };
+
+            // Layout vertical: SQL (50%), botón (auto), grid (50%)
+            var layoutAdHoc = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 1,
+                RowCount = 3
+            };
+
+            layoutAdHoc.RowStyles.Add(new RowStyle(SizeType.Percent, 50f));   // RichTextBox
+            layoutAdHoc.RowStyles.Add(new RowStyle(SizeType.AutoSize));       // Botón
+            layoutAdHoc.RowStyles.Add(new RowStyle(SizeType.Percent, 50f));   // Grid
+
+            // Fila 0: editor SQL
+            _txtSqlAdHoc.Dock = DockStyle.Fill;
+            layoutAdHoc.Controls.Add(_txtSqlAdHoc, 0, 0);
+
+            // Fila 1: botón, alineado a la derecha
+            ButtonAdHoc.Anchor = AnchorStyles.Right;
+            ButtonAdHoc.Margin = new Padding(0, 5, 10, 5);
+            ButtonAdHoc.Click += ButtonAdHoc_Click;
+            layoutAdHoc.Controls.Add(ButtonAdHoc, 0, 1);
+
+            // Fila 2: grid resultados
+            _gridAdHoc.Dock = DockStyle.Fill;
+            layoutAdHoc.Controls.Add(_gridAdHoc, 0, 2);
+
+            rightPanelAdHoc.Controls.Add(layoutAdHoc);
+
+            // Orden en la pestaña:
+            // 1) panel derecho (Fill)
+            // 2) conexiones (Left)
+            // 3) cabecera (Top)
+            tabAdHoc.Controls.Add(rightPanelAdHoc);
+            tabAdHoc.Controls.Add(_chkConnectionsAdHoc);
+            tabAdHoc.Controls.Add(_topPanelAdHoc);
+
+            // Añadimos pestañas al TabControl
             _tabControl.TabPages.Add(_tabPredefinidos);
             _tabControl.TabPages.Add(tabAdHoc);
 
             Controls.Add(_tabControl);
 
             Load += MainForm_LoadAsync;
-          
         }
 
+        private async void ButtonAdHoc_Click(object? sender, EventArgs e)
+        {
+            var result = new Dictionary<string, object?>();
+            var sqlAdHoc= _txtSqlAdHoc.Text;
+            var resultQuery= await _reportService.ExecuteSQLAdHocAsync(sqlAdHoc,result, GetSelectedConnectionsAdHoc());
 
-        private void RecursiveEnableControlsForm(Control control,bool changeStated)
+            if(resultQuery!=null && resultQuery.Data != null)
+            {
+                _gridAdHoc.DataSource = resultQuery.Data;
+            }
+        }
+
+        private void RecursiveEnableControlsForm(Control control, bool changeStated)
         {
             if (control == null)
                 return;
+
             control.Enabled = changeStated;
+
             foreach (Control child in control.Controls)
-                 RecursiveEnableControlsForm(child,changeStated);
+                RecursiveEnableControlsForm(child, changeStated);
         }
 
         private async void MainForm_LoadAsync(object? sender, EventArgs e)
@@ -213,15 +316,13 @@ namespace OracleReportExport.Presentation.Desktop
         {
             _topPanel.Controls.Add(_btnSelectAll);
             _topPanel.Controls.Add(_btnUnselectAll);
-           // _topPanel.Controls.Add(_btnExport);
+            // _topPanel.Controls.Add(_btnExport);
 
             var sep = new Label
             {
                 AutoSize = true,
                 Margin = new Padding(20, 10, 0, 0),
-                Text = "|",
-                 
-                 
+                Text = "|"
             };
             _topPanel.Controls.Add(sep);
 
@@ -229,9 +330,7 @@ namespace OracleReportExport.Presentation.Desktop
             {
                 Text = "Informe:",
                 AutoSize = true,
-                Margin = new Padding(20, 10, 0, 0),
-                 
-                 
+                Margin = new Padding(20, 10, 0, 0)
             };
             _topPanel.Controls.Add(lblInforme);
 
@@ -275,7 +374,7 @@ namespace OracleReportExport.Presentation.Desktop
             }
 
             var connectionStation = conexiones.Where(x => !string.IsNullOrEmpty(x.DisplayName) &&
-                x.DisplayName.IndexOf("I.T.V.", StringComparison.OrdinalIgnoreCase) >= 0).ToList(); 
+                x.DisplayName.IndexOf("I.T.V.", StringComparison.OrdinalIgnoreCase) >= 0).ToList();
             foreach (ConnectionInfo c in connectionStation)
                 _chkConnections.Items.Add(c, false);
 
@@ -285,7 +384,6 @@ namespace OracleReportExport.Presentation.Desktop
                 _chkConnections.Items.Add(c, false);
 
             _chkConnections.AutoAdjustWidth();
-           
         }
 
         private async Task LoadReportsAsync()
@@ -369,8 +467,8 @@ namespace OracleReportExport.Presentation.Desktop
                 return;
             }
 
-           using var loading = new LoadingForm("Cargando datos...");
-            
+            using var loading = new LoadingForm("Cargando datos...");
+
             try
             {
                 RecursiveEnableControlsForm(this, false);
@@ -379,6 +477,7 @@ namespace OracleReportExport.Presentation.Desktop
                 loading.Refresh();
                 Enabled = false;
                 Cursor = Cursors.WaitCursor;
+
                 var resultReport = await _reportService.ExecuteReportAsync(
                     report,
                     parametros,
@@ -524,7 +623,8 @@ namespace OracleReportExport.Presentation.Desktop
                 return;
             }
 
-            using var con = _connectionFactory.CreateConnection(String.Concat(initialConnection.Id, "_", initialConnection.DisplayName));
+            using var con = _connectionFactory.CreateConnection(
+                string.Concat(initialConnection.Id, "_", initialConnection.DisplayName));
 
             using (var frm = new SqlPreviewForm(_currentReport, con))
             {
@@ -568,7 +668,7 @@ namespace OracleReportExport.Presentation.Desktop
                 return;
             }
 
-            FlowLayoutPanel CreateParamBlock(string labelText, Control input,bool? FilterLike)
+            FlowLayoutPanel CreateParamBlock(string labelText, Control input, bool? filterLike)
             {
                 var block = new FlowLayoutPanel
                 {
@@ -577,38 +677,39 @@ namespace OracleReportExport.Presentation.Desktop
                     FlowDirection = FlowDirection.LeftToRight,
                     WrapContents = false,
                     Margin = new Padding(8, 4, 8, 4),
-                    Padding = new Padding(0),
+                    Padding = new Padding(0)
                 };
 
                 var lbl = new Label
                 {
                     Text = labelText,
                     AutoSize = true,
-                    Margin = new Padding(0, 6, 8, 0),
-                     
-                     
+                    Margin = new Padding(0, 6, 8, 0)
                 };
-                CheckBox ?chkLike =null;
-                if (FilterLike!=null && FilterLike.Value==true)
+
+                CheckBox? chkLike = null;
+                if (filterLike != null && filterLike.Value)
                 {
-                     chkLike= new CheckBox
+                    chkLike = new CheckBox
                     {
-                        Checked = FilterLike.Value,
+                        Checked = filterLike.Value,
                         AutoSize = true,
                         Name = "chkBusquedaLike",
-                         Margin = new Padding(4, 4, 4, 2),
+                        Margin = new Padding(4, 4, 4, 2),
                         Text = "Búsqueda 'LIKE'"
-                     };
-   
+                    };
                 }
 
                 input.Margin = new Padding(0, 2, 0, 0);
-                if(input is CheckBox)
+                if (input is CheckBox)
                     input.Margin = new Padding(0, 6, 0, 0);
+
                 block.Controls.Add(lbl);
                 block.Controls.Add(input);
-                if(chkLike!=null)
+
+                if (chkLike != null)
                     block.Controls.Add(chkLike);
+
                 return block;
             }
 
@@ -628,7 +729,7 @@ namespace OracleReportExport.Presentation.Desktop
                         input.Height = 140;
                     }
 
-                    var block = CreateParamBlock(p.Label ?? p.Name, input,false);
+                    var block = CreateParamBlock(p.Label ?? p.Name, input, false);
                     _paramsPanel.Controls.Add(block);
                     masterCount++;
                     lastMasterBlock = block;
@@ -668,7 +769,7 @@ namespace OracleReportExport.Presentation.Desktop
                     else if (input is TextBox)
                         input.Width = 160;
 
-                    var block = CreateParamBlock(p.Label ?? p.Name, input,p.BusquedaLike);
+                    var block = CreateParamBlock(p.Label ?? p.Name, input, p.BusquedaLike);
                     _paramsPanel.Controls.Add(block);
                     _parameterControls[p.Name] = input;
                 }
@@ -678,9 +779,8 @@ namespace OracleReportExport.Presentation.Desktop
 
             if (_paramsPanel.Controls.Count > 0)
             {
-                 int maxBottom = _paramsPanel.Controls.Cast<Control>().Max(c => c.Bottom);
-                _grpParametros.Height = maxBottom + 60;// Math.Max(250, maxBottom + 30);
-             
+                int maxBottom = _paramsPanel.Controls.Cast<Control>().Max(c => c.Bottom);
+                _grpParametros.Height = maxBottom + 60;
             }
             else
             {
@@ -700,7 +800,6 @@ namespace OracleReportExport.Presentation.Desktop
                         Format = DateTimePickerFormat.Short,
                         Width = 120,
                         Margin = new Padding(4, 2, 4, 2)
-
                     };
                 case "text":
                     return new TextBox
@@ -709,7 +808,6 @@ namespace OracleReportExport.Presentation.Desktop
                         Width = 160,
                         Margin = new Padding(4, 4, 4, 2)
                     };
-
                 case "bool":
                 case "funcion":
                     return new CheckBox
@@ -718,7 +816,6 @@ namespace OracleReportExport.Presentation.Desktop
                         AutoSize = true,
                         Margin = new Padding(4, 4, 4, 2)
                     };
-
                 default:
                     return null;
             }
@@ -749,7 +846,8 @@ namespace OracleReportExport.Presentation.Desktop
 
             DataTable dt;
 
-            using (var conn = _connectionFactory.CreateConnection(String.Concat(initialConnection.Id, "_", initialConnection.DisplayName)) as OracleConnection)
+            using (var conn = _connectionFactory.CreateConnection(
+                string.Concat(initialConnection.Id, "_", initialConnection.DisplayName)) as OracleConnection)
             {
                 conn!.Open();
                 using var cmd = conn.CreateCommand();
@@ -785,7 +883,6 @@ namespace OracleReportExport.Presentation.Desktop
                 {
                     Value = value,
                     Text = text
-
                 };
 
                 int index = clb.Items.Add(item);
@@ -805,6 +902,13 @@ namespace OracleReportExport.Presentation.Desktop
         private List<ConnectionInfo> GetSelectedConnections()
         {
             return _chkConnections.CheckedItems
+                .OfType<ConnectionInfo>()
+                .ToList();
+        }
+
+        private List<ConnectionInfo> GetSelectedConnectionsAdHoc()
+        {
+            return _chkConnectionsAdHoc.CheckedItems
                 .OfType<ConnectionInfo>()
                 .ToList();
         }
@@ -860,8 +964,7 @@ namespace OracleReportExport.Presentation.Desktop
                         }
                     }
 
-                    if(p.Type == "text" )
-                    
+                    if (p.Type == "text")
                     {
                         if (ctrl.Parent is FlowLayoutPanel flp)
                         {
@@ -871,8 +974,8 @@ namespace OracleReportExport.Presentation.Desktop
                             {
                                 if (value != null)
                                 {
-                                    value = String.Concat("%", value.ToString()!.Trim(), "%");
-                                    ReplaceSqlInput(p.Name,_currentReport,value);
+                                    value = string.Concat("%", value.ToString()!.Trim(), "%");
+                                    ReplaceSqlInput(p.Name, _currentReport, value);
                                 }
                                 else
                                     value = "%%";
@@ -882,7 +985,7 @@ namespace OracleReportExport.Presentation.Desktop
                                 if (value != null)
                                 {
                                     value = value.ToString()!.Trim();
-                                    ReplaceSqlInput(p.Name,_currentReport,value);
+                                    ReplaceSqlInput(p.Name, _currentReport, value);
                                 }
                                 else
                                     value = "%%";
@@ -891,23 +994,24 @@ namespace OracleReportExport.Presentation.Desktop
                         else
                             value = value?.ToString()!.Trim();
                     }
-                        switch (p.Name.ToUpper())
-                        {
-                            case "FECHADESDE":
-                                var fromDate = (DateTime)value!;
-                                value = new DateTime(fromDate.Year, fromDate.Month, fromDate.Day);
-                                break;
 
-                            case "FECHAHASTA":
-                                var toDate = (DateTime)value!;
-                                value = new DateTime(toDate.Year, toDate.Month, toDate.Day, 23, 59, 59);
-                                break;
-                        }
+                    switch (p.Name.ToUpper())
+                    {
+                        case "FECHADESDE":
+                            var fromDate = (DateTime)value!;
+                            value = new DateTime(fromDate.Year, fromDate.Month, fromDate.Day);
+                            break;
+
+                        case "FECHAHASTA":
+                            var toDate = (DateTime)value!;
+                            value = new DateTime(toDate.Year, toDate.Month, toDate.Day, 23, 59, 59);
+                            break;
+                    }
 
                     result[p.Name] = value;
                 }
             }
-          
+
             List<string> GetCheckedCodes(string controlKey)
             {
                 if (_parameterControls.TryGetValue(controlKey, out var ctrl) &&
@@ -961,37 +1065,35 @@ namespace OracleReportExport.Presentation.Desktop
             return result;
         }
 
-
-        private void ReplaceSqlInput(string nameParameter,ReportDefinition? _currentReport,object? value)
+        private void ReplaceSqlInput(string nameParameter, ReportDefinition? currentReport, object? value)
         {
-            string pattern = @":"+ nameParameter+ @"([^)]*)\)";
-            string patternIsnull = @":" + nameParameter + @"([^)]*)\)";
-            if (_currentReport?.SourceType == ReportSourceType.Central && !string.IsNullOrEmpty(_currentReport.SqlForCentral))
+            string pattern = ":" + nameParameter + @"([^)]*)\)";
+            string patternIsnull = ":" + nameParameter + @"([^)]*)\)";
+
+            if (currentReport?.SourceType == ReportSourceType.Central && !string.IsNullOrEmpty(currentReport.SqlForCentral))
             {
                 if (value != null && value?.ToString() == "%%")
                 {
-                    var matchIsnull = Regex.Match(_currentReport.SqlForCentral, patternIsnull);
-                    var txtReplace = matchIsnull.Value.Replace($"{nameParameter}", String.Empty);
-                    _currentReport.SqlForCentral = Regex.Replace(_currentReport.SqlForCentral, pattern, $":{txtReplace} )");
+                    var matchIsnull = Regex.Match(currentReport.SqlForCentral, patternIsnull);
+                    var txtReplace = matchIsnull.Value.Replace($"{nameParameter}", string.Empty);
+                    currentReport.SqlForCentral = Regex.Replace(currentReport.SqlForCentral, pattern, $":{txtReplace} )");
                 }
                 else
-                    _currentReport.SqlForCentral = Regex.Replace(_currentReport.SqlForCentral, pattern, $":{nameParameter})");
+                    currentReport.SqlForCentral = Regex.Replace(currentReport.SqlForCentral, pattern, $":{nameParameter})");
             }
-            else if (_currentReport?.SourceType == ReportSourceType.Estacion && !string.IsNullOrEmpty(_currentReport.SqlForStations))
+            else if (currentReport?.SourceType == ReportSourceType.Estacion && !string.IsNullOrEmpty(currentReport.SqlForStations))
             {
-                if(value != null && value?.ToString() == "%%")
+                if (value != null && value?.ToString() == "%%")
                 {
-                    var matchIsnull = Regex.Match(_currentReport.SqlForStations, patternIsnull);
-                    var txtReplace = matchIsnull.Value.Replace($"{nameParameter}", String.Empty);
-                    _currentReport.SqlForCentral = Regex.Replace(_currentReport.SqlForStations, pattern, $":{txtReplace} )");
-
+                    var matchIsnull = Regex.Match(currentReport.SqlForStations, patternIsnull);
+                    var txtReplace = matchIsnull.Value.Replace($"{nameParameter}", string.Empty);
+                    currentReport.SqlForCentral = Regex.Replace(currentReport.SqlForStations, pattern, $":{txtReplace} )");
                 }
                 else
-                    _currentReport.SqlForStations = Regex.Replace(_currentReport.SqlForStations, pattern, $":{nameParameter})");
+                    currentReport.SqlForStations = Regex.Replace(currentReport.SqlForStations, pattern, $":{nameParameter})");
             }
-
         }
- 
+
         private void ExportGridWithClosedXml(object? sender, EventArgs e)
         {
             using var loading = new LoadingForm("Exportando datos a Excel ...");

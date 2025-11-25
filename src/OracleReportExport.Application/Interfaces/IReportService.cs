@@ -13,4 +13,10 @@ public interface IReportService
         IReadOnlyDictionary<string, object?> parameterValues,
         List<ConnectionInfo> targetConnection,
         CancellationToken ct = default);
+
+    Task<ReportQueryResult> ExecuteSQLAdHocAsync(
+        string ?sql,
+       IReadOnlyDictionary<string, object?> parameterValues,
+       List<ConnectionInfo> targetConnection,
+       CancellationToken ct = default);
 }

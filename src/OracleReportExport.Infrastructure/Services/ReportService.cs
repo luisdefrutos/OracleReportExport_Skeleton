@@ -123,6 +123,57 @@ namespace OracleReportExport.Infrastructure.Services
 
         }
 
-   }
+
+        public async Task<ReportQueryResult> ExecuteSQLAdHocAsync(string? sql, IReadOnlyDictionary<string, object?> ?parameterValues, List<ConnectionInfo> targetConnection, CancellationToken ct = default)
+        {
+            DataTable? combined = null;
+            var timeoutConnections = new List<string>();
+            if(string.IsNullOrWhiteSpace(sql))
+                throw new ArgumentNullException(nameof(sql), "La consulta SQL no puede estar vacía.");
+            foreach (var connectionId in targetConnection.ToList())
+            {
+                try
+                {
+                    var table = await _queryExecutor.ExecuteQueryAsync(
+                                sql,
+                                parameterValues,
+                                connectionId,
+                                String.Empty,
+                                ct);
+
+                    if (combined is null)
+                    {
+                        combined = table.Clone();
+                        combined.Columns.Add("CONEXION_ESTACION", typeof(string));
+                    }
+
+                    foreach (DataRow row in table.Rows)
+                    {
+                        var newRow = combined.NewRow();
+
+                        foreach (DataColumn col in table.Columns)
+                        {
+                            newRow[col.ColumnName] = row[col];
+                        }
+
+                        newRow["CONEXION_ESTACION"] = connectionId.ToString();
+                        combined.Rows.Add(newRow);
+                    }
+                }
+                catch (OracleException ex) when (ex.Number == 50000) //Timeout
+                {
+                    Log.Warning(ex,
+                        "Timeout en la conexión {ConnectionId} para la consulta ejecutada");
+                    timeoutConnections.Add(connectionId.ToString());
+                }
+            }
+
+            return new ReportQueryResult
+            {
+                Data = combined ?? new DataTable(),
+                TimeoutConnections = timeoutConnections
+            };
+        }
+    }
 }
 
