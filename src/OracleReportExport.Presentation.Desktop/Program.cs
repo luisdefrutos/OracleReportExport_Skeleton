@@ -25,6 +25,10 @@ namespace OracleReportExport.Presentation.Desktop
             System.Windows.Forms.Application.EnableVisualStyles();
             System.Windows.Forms.Application.SetCompatibleTextRenderingDefault(false);
 
+            System.Windows.Forms.Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
+
+            GlobalExceptionHandler.Initialize();
+
             System.Windows.Forms.Application.Run(new MainForm());
         }
     }

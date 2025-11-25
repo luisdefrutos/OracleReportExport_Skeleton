@@ -380,26 +380,35 @@ namespace OracleReportExport.Presentation.Desktop
 
         private async void ButtonAdHoc_Click(object? sender, EventArgs e)
         {
-            using (var loadingFormAdHoc = new LoadingForm("Cargando Datos Consulta ...."))
+            try
             {
-                RecursiveEnableControlsForm(this, false);
-                loadingFormAdHoc.Owner = this;
-                loadingFormAdHoc.Show();
-                loadingFormAdHoc.Refresh();
-                Enabled = false;
-                Cursor = Cursors.WaitCursor;
-                var result = new Dictionary<string, object?>();
-                var sqlAdHoc = _txtSqlAdHoc.Text;
-                var resultQuery = await _reportService.ExecuteSQLAdHocAsync(sqlAdHoc, result, GetSelectedConnectionsAdHoc());
-                if (resultQuery != null && resultQuery.Data != null)
-                    _gridAdHoc.DataSource = resultQuery.Data;
-                PaintControlsTopGrid(_gridAdHoc, null, ResultTabUI.TabSecundary);
-                RecursiveEnableControlsForm(this, true);
-                Cursor = Cursors.Default;
-                loadingFormAdHoc.Close();
-                Enabled = true;
+                using (var loadingFormAdHoc = new LoadingForm("Cargando Datos Consulta ...."))
+                {
+                    RecursiveEnableControlsForm(this, false);
+                    loadingFormAdHoc.Owner = this;
+                    loadingFormAdHoc.Show();
+                    loadingFormAdHoc.Refresh();
+                    Enabled = false;
+                    Cursor = Cursors.WaitCursor;
+                    var result = new Dictionary<string, object?>();
+                    var sqlAdHoc = _txtSqlAdHoc.Text;
+                    var resultQuery = await _reportService.ExecuteSQLAdHocAsync(sqlAdHoc, result, GetSelectedConnectionsAdHoc());
+                    if (resultQuery != null && resultQuery.Data != null)
+                        _gridAdHoc.DataSource = resultQuery.Data;
+                    PaintControlsTopGrid(_gridAdHoc, null, ResultTabUI.TabSecundary);
+                    RecursiveEnableControlsForm(this, true);
+                    Cursor = Cursors.Default;
+                    loadingFormAdHoc.Close();
+                    Enabled = true;
+                }
             }
-           
+             catch (OracleException ex) when (ex.Number == 942)
+            {
+                GlobalExceptionHandler.Handle(ex,null,
+                    "La tabla o vista no existe en la base de datos. Verifique que está ejecutando " +
+                    "la sentencia correcta en la base de datos seleccionada.\n\n");
+                _grid.DataSource = null;
+            }  
         }
 
         private void RecursiveEnableControlsForm(Control control, bool changeStated)
@@ -632,33 +641,12 @@ namespace OracleReportExport.Presentation.Desktop
             }
             catch (OracleException ex) when (ex.Number == 942)
             {
-                MessageBox.Show(
+                GlobalExceptionHandler.Handle(ex,null,
                     "La tabla o vista no existe en la base de datos. Verifique que está ejecutando " +
                     "el informe correcto en la base de datos seleccionada.\n\n" +
                     "Revise la consulta mediante el botón \"Ver consulta\" \n" +
                     "Está ejecutando " +
-                    $"un informe de {_currentReport?.SourceType}.",
-                    "Error de base de datos",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning);
-                _grid.DataSource = null;
-            }
-            catch (OracleException ex)
-            {
-                MessageBox.Show(
-                    $"Error de Oracle: {ex.Message}",
-                    "Error",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
-                _grid.DataSource = null;
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(
-                    $"Error ejecutando el informe:{Environment.NewLine}{ex.Message}",
-                    "Error en informe",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
+                    $"un informe de {_currentReport?.SourceType}.");
                 _grid.DataSource = null;
             }
             finally
