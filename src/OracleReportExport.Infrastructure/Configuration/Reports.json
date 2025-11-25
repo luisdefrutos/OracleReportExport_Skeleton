@@ -113,7 +113,7 @@
       "Parameters": [
         {
           "Name": "Anulada",
-          "Label": "Anulada",
+          "Label": "Anulada (desmarcada = no anulada)",
           "Type": "bool",
           "IsRequired": false
         },

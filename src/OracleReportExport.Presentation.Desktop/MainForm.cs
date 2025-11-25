@@ -18,6 +18,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Xml;
 
 namespace OracleReportExport.Presentation.Desktop
 {
@@ -61,14 +62,40 @@ namespace OracleReportExport.Presentation.Desktop
         {
             Text = "Marcar todas",
             AutoSize = true,
-            Visible = true
+            Visible = true,
+            Tag = ResultTabUI.TabInitial
         };
 
         private readonly Button _btnUnselectAll = new()
         {
             Text = "Desmarcar",
             AutoSize = true,
-            Visible = true
+            Visible = true,
+            Tag = ResultTabUI.TabInitial
+        };
+
+        private readonly Button _btnSelectAllAdHoc = new()
+        {
+            Text = "Marcar todas",
+            AutoSize = true,
+            Visible = true,
+            Tag = ResultTabUI.TabSecundary
+        };
+
+        private readonly Button _btnUnselectAllAdHoc = new()
+        {
+            Text = "Desmarcar",
+            AutoSize = true,
+            Visible = true,
+            Tag = ResultTabUI.TabSecundary
+        };
+
+        private readonly Button _btnClearAdHoc = new()
+        {
+            Text = "Limpiar consulta personalizada",
+            AutoSize = true,
+            Visible = true,
+            Tag = ResultTabUI.TabSecundary
         };
 
         private readonly Button _btnExport = new()
@@ -147,8 +174,7 @@ namespace OracleReportExport.Presentation.Desktop
 
         private readonly Button ButtonAdHoc = new()
         {
-            Width = 100,
-            Height = 30,
+            AutoSize=true,
             Text = "Ejecutar SQL",
             Visible = true,
             
@@ -173,6 +199,8 @@ namespace OracleReportExport.Presentation.Desktop
 
         private Label? _lblCountRows;
         private Button? _btnExcel;
+        private Label? _lblCountRowsAdHoc;
+        private Button? _btnExcelAdHoc;
 
         private readonly ConnectionCatalogService _connectionCatalog;
         private readonly IReportService _reportService;
@@ -226,8 +254,45 @@ namespace OracleReportExport.Presentation.Desktop
             {
                 Text = "Creación de Consultas Personalizadas",
                 AutoSize = true,
-                Padding = new Padding(8, 18, 8, 8)
+                Padding = new Padding(8, 10, 8, 8)
             });
+            var sepAdHoc = new Label
+            {
+                AutoSize = true,
+                Margin = new Padding(20, 10, 10, 0),
+                Text = "|"
+            };
+            _topPanelAdHoc.Controls.Add(sepAdHoc);
+
+            _btnSelectAllAdHoc.Anchor = AnchorStyles.Left;
+            _btnSelectAllAdHoc.Margin = new Padding(0, 5, 10, 5);
+            _btnSelectAllAdHoc.Tag = ResultTabUI.TabSecundary;
+            _btnSelectAllAdHoc.Click += _btnSelectAllAdHoc_Click;
+            _topPanelAdHoc.Controls.Add(_btnSelectAllAdHoc);
+
+
+            _btnUnselectAllAdHoc.Anchor = AnchorStyles.Left;
+            _btnUnselectAllAdHoc.Margin = new Padding(0, 5, 10, 5);
+            _btnUnselectAllAdHoc.Tag = ResultTabUI.TabSecundary;
+            _btnUnselectAllAdHoc.Click += _btnUnselectAllAdHoc_Click;
+            _topPanelAdHoc.Controls.Add(_btnUnselectAllAdHoc);
+
+ 
+
+            _btnClearAdHoc.Anchor = AnchorStyles.Left;
+            _btnClearAdHoc.Margin = new Padding(0, 5, 10, 5);
+            _btnClearAdHoc.Tag = ResultTabUI.TabSecundary;
+            _btnClearAdHoc.Click += _btnClearAdHoc_Click;
+            _topPanelAdHoc.Controls.Add(_btnClearAdHoc);
+
+
+            ButtonAdHoc.Anchor = AnchorStyles.Left;
+            ButtonAdHoc.Margin = new Padding(0, 5, 10, 5);
+            ButtonAdHoc.Click += ButtonAdHoc_Click;
+            _topPanelAdHoc.Controls.Add(ButtonAdHoc);
+
+         
+          
 
             // Panel derecho que contiene editor + botón + grid
             var rightPanelAdHoc = new Panel
@@ -250,19 +315,10 @@ namespace OracleReportExport.Presentation.Desktop
             // Fila 0: editor SQL
             _txtSqlAdHoc.Dock = DockStyle.Fill;
             layoutAdHoc.Controls.Add(_txtSqlAdHoc, 0, 0);
-
-            // Fila 1: botón, alineado a la derecha
-            ButtonAdHoc.Anchor = AnchorStyles.Right;
-            ButtonAdHoc.Margin = new Padding(0, 5, 10, 5);
-            ButtonAdHoc.Click += ButtonAdHoc_Click;
-            layoutAdHoc.Controls.Add(ButtonAdHoc, 0, 1);
-
             // Fila 2: grid resultados
             _gridAdHoc.Dock = DockStyle.Fill;
             layoutAdHoc.Controls.Add(_gridAdHoc, 0, 2);
-
-            rightPanelAdHoc.Controls.Add(layoutAdHoc);
-
+             rightPanelAdHoc.Controls.Add(layoutAdHoc);
             // Orden en la pestaña:
             // 1) panel derecho (Fill)
             // 2) conexiones (Left)
@@ -280,16 +336,70 @@ namespace OracleReportExport.Presentation.Desktop
             Load += MainForm_LoadAsync;
         }
 
+        private void _btnClearAdHoc_Click(object? sender, EventArgs e)
+        {
+            if(_txtSqlAdHoc!=null)
+                _txtSqlAdHoc.Clear();
+        }
+
+        private void _btnUnselectAllAdHoc_Click(object? sender, EventArgs e)
+        {
+            if (sender != null && sender is Button btn && btn.Tag is ResultTabUI typeExport)
+            {
+                switch (typeExport)
+                {
+                    case ResultTabUI.TabInitial:
+                        SetAllConnectionsChecked(false, _chkConnections);
+                        break;
+                    case ResultTabUI.TabSecundary:
+                        SetAllConnectionsChecked(false, _chkConnectionsAdHoc);
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+
+        private void _btnSelectAllAdHoc_Click(object? sender, EventArgs e)
+        {
+            if (sender != null && sender is Button btn && btn.Tag is ResultTabUI typeExport)
+            {
+                switch (typeExport)
+                {
+                    case ResultTabUI.TabInitial:
+                        SetAllConnectionsChecked(true,_chkConnections);
+                        break;
+                    case ResultTabUI.TabSecundary:
+                        SetAllConnectionsChecked(true, _chkConnectionsAdHoc);
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+
         private async void ButtonAdHoc_Click(object? sender, EventArgs e)
         {
-            var result = new Dictionary<string, object?>();
-            var sqlAdHoc= _txtSqlAdHoc.Text;
-            var resultQuery= await _reportService.ExecuteSQLAdHocAsync(sqlAdHoc,result, GetSelectedConnectionsAdHoc());
-
-            if(resultQuery!=null && resultQuery.Data != null)
+            using (var loadingFormAdHoc = new LoadingForm("Cargando Datos Consulta ...."))
             {
-                _gridAdHoc.DataSource = resultQuery.Data;
+                RecursiveEnableControlsForm(this, false);
+                loadingFormAdHoc.Owner = this;
+                loadingFormAdHoc.Show();
+                loadingFormAdHoc.Refresh();
+                Enabled = false;
+                Cursor = Cursors.WaitCursor;
+                var result = new Dictionary<string, object?>();
+                var sqlAdHoc = _txtSqlAdHoc.Text;
+                var resultQuery = await _reportService.ExecuteSQLAdHocAsync(sqlAdHoc, result, GetSelectedConnectionsAdHoc());
+                if (resultQuery != null && resultQuery.Data != null)
+                    _gridAdHoc.DataSource = resultQuery.Data;
+                PaintControlsTopGrid(_gridAdHoc, null, ResultTabUI.TabSecundary);
+                RecursiveEnableControlsForm(this, true);
+                Cursor = Cursors.Default;
+                loadingFormAdHoc.Close();
+                Enabled = true;
             }
+           
         }
 
         private void RecursiveEnableControlsForm(Control control, bool changeStated)
@@ -337,7 +447,7 @@ namespace OracleReportExport.Presentation.Desktop
             _topPanel.Controls.Add(_cmbReports);
             _topPanel.Controls.Add(_btnRunReport);
             _topPanel.Controls.Add(_btnVerConsulta);
-
+            _btnSelectAll.Tag = ResultTabUI.TabInitial;
             _btnSelectAll.Click += BtnSelectAll_Click;
             _btnUnselectAll.Click += BtnUnselectAll_Click;
             _btnRunReport.Click += BtnRunReport_Click;
@@ -406,12 +516,38 @@ namespace OracleReportExport.Presentation.Desktop
 
         private void BtnSelectAll_Click(object? sender, EventArgs e)
         {
-            SetAllConnectionsChecked(true);
+            if (sender != null && sender is Button btn && btn.Tag is ResultTabUI typeExport)
+            {
+                switch (typeExport)
+                {
+                    case ResultTabUI.TabInitial:
+                        SetAllConnectionsChecked(true, _chkConnections);
+                        break;
+                    case ResultTabUI.TabSecundary:
+                        SetAllConnectionsChecked(true, _chkConnectionsAdHoc);
+                        break;
+                    default:
+                        break;
+                }
+            }
         }
 
         private void BtnUnselectAll_Click(object? sender, EventArgs e)
         {
-            SetAllConnectionsChecked(false);
+            if (sender != null && sender is Button btn && btn.Tag is ResultTabUI typeExport)
+            {
+                switch (typeExport)
+                {
+                    case ResultTabUI.TabInitial:
+                        SetAllConnectionsChecked(false, _chkConnections);
+                        break;
+                    case ResultTabUI.TabSecundary:
+                        SetAllConnectionsChecked(false, _chkConnectionsAdHoc);
+                        break;
+                    default:
+                        break;
+                }
+            }
         }
 
         private void CmbReports_SelectedIndexChanged(object? sender, EventArgs e)
@@ -482,80 +618,11 @@ namespace OracleReportExport.Presentation.Desktop
                     report,
                     parametros,
                     listConnectionsActive);
-
                 _grid.DataSource = resultReport.Data;
-                var parent = _grid.Parent;
-
-                var lblCountRowsExist = parent.Controls.OfType<Label>()
-                    .FirstOrDefault(l => l.Name == "lblCountRows");
-
-                if (lblCountRowsExist == null)
-                {
-                    _lblCountRows = new Label
-                    {
-                        Name = "lblCountRows",
-                        AutoSize = true,
-                        ForeColor = SystemColors.GrayText,
-                        BackColor = Color.Transparent,
-                        Anchor = AnchorStyles.Top | AnchorStyles.Right,
-                        Margin = new Padding(4)
-                    };
-
-                    parent.Controls.Add(_lblCountRows);
-                }
-                else
-                {
-                    _lblCountRows = lblCountRowsExist;
-                }
-
-                _lblCountRows.Text = $"Registros encontrados: {resultReport.Data.Rows.Count}";
-                _lblCountRows.Top = _grid.Top - _lblCountRows.Height - 8;
-                _lblCountRows.Left = parent.ClientSize.Width - _lblCountRows.Width - 10;
-                _lblCountRows.BringToFront();
-
-                var btnExcelExist = parent.Controls.OfType<Button>()
-                    .FirstOrDefault(b => b.Name == "btnExportExcel");
-
-                if (btnExcelExist == null)
-                {
-                    _btnExcel = new Button
-                    {
-                        Name = "btnExportExcel",
-                        Size = new Size(24, 24),
-                        FlatStyle = FlatStyle.Flat,
-                        TabStop = false,
-                        Anchor = AnchorStyles.Top | AnchorStyles.Right,
-                        Visible = true
-                    };
-
-                    _btnExcel.FlatAppearance.BorderSize = 0;
-
-                    var resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
-                    var iconObj = resources.GetObject("Excel_24");
-                    if (iconObj is Icon excelIcon)
-                    {
-                        _btnExcel.Image = excelIcon.ToBitmap();
-                    }
-
-                    _btnExcel.Click += ExportGridWithClosedXml;
-                    parent.Controls.Add(_btnExcel);
-                }
-                else
-                {
-                    _btnExcel = btnExcelExist;
-                }
-
-                _btnExcel.Top = _lblCountRows.Top - 3 + (_lblCountRows.Height - _btnExcel.Height) / 2;
-                _btnExcel.Left = _lblCountRows.Left - _btnExcel.Width - 6;
-                _btnExcel.Visible = resultReport.Data.Rows.Count > 0;
-
-                _lblCountRows.BringToFront();
-                _btnExcel.BringToFront();
-
-                if (resultReport.TimeoutConnections.Any())
+                PaintControlsTopGrid(_grid, resultReport, ResultTabUI.TabInitial);
+                  if (resultReport.TimeoutConnections.Any())
                 {
                     var estaciones = string.Join(", ", resultReport.TimeoutConnections);
-
                     MessageBox.Show(
                         $"No se ha podido obtener información de las siguientes conexiones (timeout):{Environment.NewLine}{estaciones}",
                         "Aviso de Oracle",
@@ -603,6 +670,86 @@ namespace OracleReportExport.Presentation.Desktop
             }
         }
 
+        private void PaintControlsTopGrid(DataGridView grid, ReportQueryResult? resultReport, ResultTabUI nameTab)
+        {
+            if (grid == null || grid.Parent == null)
+                return;
+            // Padre  colocaremos label y botón
+            Control parent = grid.Parent;
+
+            // En la pestaña AdHoc el padre es un TableLayoutPanel, usamos su contenedor
+            if (parent is TableLayoutPanel && parent.Parent != null)
+                parent = parent.Parent;
+
+            // Posición del grid relativa al padre
+            System.Drawing.Point gridLocationInParent = parent.PointToClient(
+                grid.Parent.PointToScreen(grid.Location));
+
+            var lblCountRowsExist = parent.Controls
+                .OfType<Label>()
+                .FirstOrDefault(l => l.Name == $"lblCountRows_{nameTab}");
+
+            if (lblCountRowsExist == null)
+            {
+                _lblCountRows = new Label
+                {
+                    Name = $"lblCountRows_{nameTab}",
+                    AutoSize = true,
+                    ForeColor = SystemColors.GrayText,
+                    BackColor = Color.Transparent,
+                    Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                    Margin = new Padding(4)
+                };
+                parent.Controls.Add(_lblCountRows);
+            }
+            else
+                _lblCountRows = lblCountRowsExist;
+
+            int rowCount;
+            if (resultReport != null && resultReport.Data != null)
+                rowCount = resultReport.Data.Rows.Count;
+            else
+                rowCount = (grid.DataSource as DataTable)?.Rows.Count ?? 0;
+
+            _lblCountRows.Text = $"Registros encontrados: {rowCount}";
+            // el label encima del grid
+            _lblCountRows.Top = gridLocationInParent.Y - _lblCountRows.Height - 15;
+            _lblCountRows.Left = parent.ClientSize.Width - _lblCountRows.Width - 10;
+            _lblCountRows.BringToFront();
+
+            var btnExcelExist = parent.Controls
+                .OfType<Button>()
+                .FirstOrDefault(b => b.Name == $"btnExportExcel_{nameTab}");
+            if (btnExcelExist == null)
+            {
+                _btnExcel = new Button
+                {
+                    Name = $"btnExportExcel_{nameTab}",
+                    Size = new Size(24, 24),
+                    FlatStyle = FlatStyle.Flat,
+                    TabStop = false,
+                    Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                    Visible = true,
+                    Tag = nameTab
+                };
+
+                _btnExcel.FlatAppearance.BorderSize = 0;
+                var resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
+                var iconObj = resources.GetObject("Excel_24");
+                if (iconObj is Icon excelIcon)
+                    _btnExcel.Image = excelIcon.ToBitmap();
+                _btnExcel.Click += ExportGridWithClosedXml;
+                parent.Controls.Add(_btnExcel);
+            }
+            else
+                _btnExcel = btnExcelExist;
+
+            _btnExcel.Top = _lblCountRows.Top - 3 + (_lblCountRows.Height - _btnExcel.Height) / 2;
+            _btnExcel.Left = _lblCountRows.Left - _btnExcel.Width - 6;
+            _btnExcel.Visible = rowCount > 0;
+            _lblCountRows.BringToFront();
+            _btnExcel.BringToFront();
+        }
         private void BtnVerConsulta_Click(object? sender, EventArgs e)
         {
             if (_currentReport == null)
@@ -636,11 +783,11 @@ namespace OracleReportExport.Presentation.Desktop
 
         #region Métodos privados de ayuda
 
-        private void SetAllConnectionsChecked(bool isChecked)
+        private void SetAllConnectionsChecked(bool isChecked,CheckedListBox _chkCon)
         {
-            for (int i = 0; i < _chkConnections.Items.Count; i++)
+            for (int i = 0; i < _chkCon.Items.Count; i++)
             {
-                _chkConnections.SetItemChecked(i, isChecked);
+                _chkCon.SetItemChecked(i, isChecked);
             }
         }
 
@@ -1096,60 +1243,79 @@ namespace OracleReportExport.Presentation.Desktop
 
         private void ExportGridWithClosedXml(object? sender, EventArgs e)
         {
-            using var loading = new LoadingForm("Exportando datos a Excel ...");
-
+            using var loading = new LoadingForm("Exportando datos a Excel ..."); 
             try
-            {
+            {    
                 RecursiveEnableControlsForm(this, false);
                 loading.Owner = this;
                 loading.Show();
                 loading.Refresh();
-
-                var uniqueIdTime = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-
+                var uniqueIdTime = DateTime.Now.ToString("yyyyMMdd_HHmmss");              
                 using var sfd = new SaveFileDialog
                 {
-                    Filter = "Excel (*.xlsx)|*.xlsx",
-                    FileName = $"{((ReportDefinition)_cmbReports.SelectedItem!).Name}{uniqueIdTime}.xlsx"
+                    Filter = "Excel (*.xlsx)|*.xlsx"
                 };
-
-                if (sfd.ShowDialog() != DialogResult.OK)
-                    return;
-
-                using var wb = new XLWorkbook();
-                var ws = wb.Worksheets.Add(((ReportDefinition)_cmbReports.SelectedItem!).Category);
-
-                for (int col = 0; col < _grid.Columns.Count; col++)
+                if (sender != null && sender is Button btn && btn.Tag is ResultTabUI typeExport)
                 {
-                    ws.Cell(1, col + 1).Value = _grid.Columns[col].HeaderText;
-                    ws.Cell(1, col + 1).Style.Font.Bold = true;
-                }
-
-                for (int row = 0; row < _grid.Rows.Count; row++)
-                {
-                    if (_grid.Rows[row].IsNewRow) continue;
-
-                    for (int col = 0; col < _grid.Columns.Count; col++)
+                    switch (typeExport)
                     {
-                        var value = _grid.Rows[row].Cells[col].Value;
-                        var safeValue = value == null ? "" : value.ToString();
-                        ws.Cell(row + 2, col + 1).Value = safeValue;
+                        case ResultTabUI.TabInitial:
+                            sfd.FileName = $"{((ReportDefinition)_cmbReports.SelectedItem!).Name}_{uniqueIdTime}.xlsx";
+                            break;
+                        case ResultTabUI.TabSecundary:
+                            sfd.FileName = $"ConsultaPersonalizada_{uniqueIdTime}.xlsx";
+                            break;
+                        default:
+                            break;
                     }
+                    if (sfd.ShowDialog() != DialogResult.OK)
+                        return;
+                    IXLWorksheet? ws=null;
+                    using var wb = new XLWorkbook();
+                    switch (typeExport)
+                    {
+                        case ResultTabUI.TabInitial:
+                             ws = wb.Worksheets.Add(((ReportDefinition)_cmbReports.SelectedItem!).Category);
+                            break;
+                        case ResultTabUI.TabSecundary:
+                              ws = wb.Worksheets.Add("ConsultaPersonalizada");
+                            break;
+                    }
+                    if (ws == null)
+                        throw new Exception("Error al crear el Excel");
+                    DataGridView? _gridExport = null;
+                    if (typeExport == ResultTabUI.TabInitial)
+                        _gridExport = _grid;
+                    else if (typeExport == ResultTabUI.TabSecundary)
+                        _gridExport = _gridAdHoc;
+
+                    for (int col = 0; col < _gridExport?.Columns.Count; col++)
+                    {
+                        ws.Cell(1, col + 1).Value = _gridExport.Columns[col].HeaderText;
+                        ws.Cell(1, col + 1).Style.Font.Bold = true;
+                    }
+                    for (int row = 0; row < _gridExport?.Rows.Count; row++)
+                        {
+                            if (_gridExport.Rows[row].IsNewRow) continue;
+                            for (int col = 0; col < _gridExport.Columns.Count; col++)
+                            {
+                                var value = _gridExport.Rows[row].Cells[col].Value;
+                                var safeValue = value == null ? "" : value.ToString();
+                                ws.Cell(row + 2, col + 1).Value = safeValue;
+                            }
+                        }
+                    ws.Columns().AdjustToContents();
+                    foreach (var sheet in wb.Worksheets)
+                    {
+                        sheet.Columns().AdjustToContents();
+                    }
+                    wb.SaveAs(sfd.FileName);
+                    MessageBox.Show(
+                        $"Exportación realizada correctamente en:\n{sfd.FileName}",
+                        "Exportación informe",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
                 }
-
-                ws.Columns().AdjustToContents();
-                foreach (var sheet in wb.Worksheets)
-                {
-                    sheet.Columns().AdjustToContents();
-                }
-
-                wb.SaveAs(sfd.FileName);
-
-                MessageBox.Show(
-                    $"Exportación realizada correctamente en:\n{sfd.FileName}",
-                    "Exportación informe",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Information);
             }
             catch (System.IO.IOException)
             {
