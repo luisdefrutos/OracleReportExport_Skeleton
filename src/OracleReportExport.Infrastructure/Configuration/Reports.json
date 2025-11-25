@@ -241,7 +241,8 @@
           "Name": "NumeroEquipo",
           "Label": "Número de Equipo Frenómetro",
           "Type": "text",
-          "IsRequired": false
+          "IsRequired": false,
+          "BusquedaLike": true
         }
       ]
     }

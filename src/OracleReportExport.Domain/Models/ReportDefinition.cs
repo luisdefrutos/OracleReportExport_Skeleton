@@ -10,8 +10,8 @@ public sealed class ReportDefinition
     public string Description { get; init; } = string.Empty;
     public ReportSourceType SourceType { get; init; }
 
-    public string? SqlForStations { get; init; }
-    public string? SqlForCentral { get; init; }
+    public string? SqlForStations { get; set; }
+    public string? SqlForCentral { get; set; }
 
     public string? SqlFileForStations { get; init; }
     public string? SqlFileForCentral { get; init; }

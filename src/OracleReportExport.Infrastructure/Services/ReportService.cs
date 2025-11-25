@@ -55,35 +55,10 @@ namespace OracleReportExport.Infrastructure.Services
             switch (report.SourceType)
             {
                 case OracleReportExport.Domain.Enums.ReportSourceType.Central:
-                    if (!string.IsNullOrWhiteSpace(report.SqlFileForCentral))
-                    {
-                        // asume ruta relativa dentro de tu Configuration/SQL...
-                        var basePath = AppContext.BaseDirectory;
-                        var pathSql = Path.Combine(basePath, report.SqlFileForCentral);
-                        if (!File.Exists(pathSql))
-                            throw new FileNotFoundException($"No se encontró el fichero SQL: {pathSql}");
-                        sql = await File.ReadAllTextAsync(pathSql);
-                    }
-                    else
-                    {
-                        sql = report.SqlForCentral ?? string.Empty;
-                    }
+                    sql = report.SqlForCentral ?? string.Empty;
                     break;
                 case OracleReportExport.Domain.Enums.ReportSourceType.Estacion:
-                    if (!string.IsNullOrWhiteSpace(report.SqlFileForStations))
-                    {
-                        var basePath = AppContext.BaseDirectory;
-                        var pathSql = Path.Combine(basePath, report.SqlFileForStations);
-
-                        if (!File.Exists(pathSql))
-                            throw new FileNotFoundException($"No se encontró el fichero SQL: {pathSql}");
-
-                        sql = await File.ReadAllTextAsync(pathSql);
-                    }
-                    else
-                    {
-                        sql = report.SqlForStations ?? string.Empty;
-                    }
+                    sql = report.SqlForStations ?? string.Empty;
                     break;
             }
                 //  Sustituir tokens del txt de  {TiposVehiculoList} y {CategoriasList}

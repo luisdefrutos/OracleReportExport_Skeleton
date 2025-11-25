@@ -8,4 +8,5 @@ public sealed class ReportParameterDefinition
     public bool IsRequired { get; init; }
     public string[]? AllowedValues { get; init; }
     public List<IntCodeItem> Values { get; set; } = new();
+    public bool ? BusquedaLike { get; init; }
 }

@@ -14,6 +14,7 @@ using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -36,9 +37,9 @@ namespace OracleReportExport.Presentation.Desktop
             ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing,
             RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.DisableResizing,
             AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells,
-            ScrollBars = ScrollBars.Both 
-             
-             
+            ScrollBars = ScrollBars.Both
+
+
         };
 
         private readonly CheckedListBox _chkConnections = new()
@@ -194,14 +195,9 @@ namespace OracleReportExport.Presentation.Desktop
         {
             if (control == null)
                 return;
-          
+            control.Enabled = changeStated;
             foreach (Control child in control.Controls)
-            {
-                if(child.HasChildren)
-                RecursiveEnableControlsForm(child,changeStated);
-                else
-                    child.Enabled = changeStated;
-            }
+                 RecursiveEnableControlsForm(child,changeStated);
         }
 
         private async void MainForm_LoadAsync(object? sender, EventArgs e)
@@ -373,24 +369,22 @@ namespace OracleReportExport.Presentation.Desktop
                 return;
             }
 
-            using var loading = new LoadingForm("Cargando datos...");
-
+           using var loading = new LoadingForm("Cargando datos...");
+            
             try
             {
+                RecursiveEnableControlsForm(this, false);
                 loading.Owner = this;
                 loading.Show();
                 loading.Refresh();
-
                 Enabled = false;
                 Cursor = Cursors.WaitCursor;
-
                 var resultReport = await _reportService.ExecuteReportAsync(
                     report,
                     parametros,
                     listConnectionsActive);
 
                 _grid.DataSource = resultReport.Data;
-
                 var parent = _grid.Parent;
 
                 var lblCountRowsExist = parent.Controls.OfType<Label>()
@@ -503,6 +497,7 @@ namespace OracleReportExport.Presentation.Desktop
             }
             finally
             {
+                RecursiveEnableControlsForm(this, true);
                 Cursor = Cursors.Default;
                 loading.Close();
                 Enabled = true;
@@ -573,7 +568,7 @@ namespace OracleReportExport.Presentation.Desktop
                 return;
             }
 
-            FlowLayoutPanel CreateParamBlock(string labelText, Control input)
+            FlowLayoutPanel CreateParamBlock(string labelText, Control input,bool? FilterLike)
             {
                 var block = new FlowLayoutPanel
                 {
@@ -593,12 +588,27 @@ namespace OracleReportExport.Presentation.Desktop
                      
                      
                 };
+                CheckBox ?chkLike =null;
+                if (FilterLike!=null && FilterLike.Value==true)
+                {
+                     chkLike= new CheckBox
+                    {
+                        Checked = FilterLike.Value,
+                        AutoSize = true,
+                        Name = "chkBusquedaLike",
+                         Margin = new Padding(4, 4, 4, 2),
+                        Text = "Búsqueda 'LIKE'"
+                     };
+   
+                }
 
                 input.Margin = new Padding(0, 2, 0, 0);
                 if(input is CheckBox)
                     input.Margin = new Padding(0, 6, 0, 0);
                 block.Controls.Add(lbl);
                 block.Controls.Add(input);
+                if(chkLike!=null)
+                    block.Controls.Add(chkLike);
                 return block;
             }
 
@@ -618,7 +628,7 @@ namespace OracleReportExport.Presentation.Desktop
                         input.Height = 140;
                     }
 
-                    var block = CreateParamBlock(p.Label ?? p.Name, input);
+                    var block = CreateParamBlock(p.Label ?? p.Name, input,false);
                     _paramsPanel.Controls.Add(block);
                     masterCount++;
                     lastMasterBlock = block;
@@ -658,7 +668,7 @@ namespace OracleReportExport.Presentation.Desktop
                     else if (input is TextBox)
                         input.Width = 160;
 
-                    var block = CreateParamBlock(p.Label ?? p.Name, input);
+                    var block = CreateParamBlock(p.Label ?? p.Name, input,p.BusquedaLike);
                     _paramsPanel.Controls.Add(block);
                     _parameterControls[p.Name] = input;
                 }
@@ -850,27 +860,54 @@ namespace OracleReportExport.Presentation.Desktop
                         }
                     }
 
-                    if(p.Type == "text" && value != null)
+                    if(p.Type == "text" )
+                    
                     {
-                        value = String.Concat("%",value.ToString()!.Trim(), "%");
+                        if (ctrl.Parent is FlowLayoutPanel flp)
+                        {
+                            var chkLike = flp.Controls.OfType<CheckBox>()
+                                .FirstOrDefault(c => c.Name == "chkBusquedaLike");
+                            if (chkLike != null)
+                            {
+                                if (value != null)
+                                {
+                                    value = String.Concat("%", value.ToString()!.Trim(), "%");
+                                    ReplaceSqlInput(p.Name,_currentReport,value);
+                                }
+                                else
+                                    value = "%%";
+                            }
+                            else
+                            {
+                                if (value != null)
+                                {
+                                    value = value.ToString()!.Trim();
+                                    ReplaceSqlInput(p.Name,_currentReport,value);
+                                }
+                                else
+                                    value = "%%";
+                            }
+                        }
+                        else
+                            value = value?.ToString()!.Trim();
                     }
-                    switch (p.Name.ToUpper())
-                    {
-                        case "FECHADESDE":
-                            var fromDate = (DateTime)value!;
-                            value = new DateTime(fromDate.Year, fromDate.Month, fromDate.Day);
-                            break;
+                        switch (p.Name.ToUpper())
+                        {
+                            case "FECHADESDE":
+                                var fromDate = (DateTime)value!;
+                                value = new DateTime(fromDate.Year, fromDate.Month, fromDate.Day);
+                                break;
 
-                        case "FECHAHASTA":
-                            var toDate = (DateTime)value!;
-                            value = new DateTime(toDate.Year, toDate.Month, toDate.Day, 23, 59, 59);
-                            break;
-                    }
+                            case "FECHAHASTA":
+                                var toDate = (DateTime)value!;
+                                value = new DateTime(toDate.Year, toDate.Month, toDate.Day, 23, 59, 59);
+                                break;
+                        }
 
                     result[p.Name] = value;
                 }
             }
-
+          
             List<string> GetCheckedCodes(string controlKey)
             {
                 if (_parameterControls.TryGetValue(controlKey, out var ctrl) &&
@@ -924,10 +961,48 @@ namespace OracleReportExport.Presentation.Desktop
             return result;
         }
 
+
+        private void ReplaceSqlInput(string nameParameter,ReportDefinition? _currentReport,object? value)
+        {
+            string pattern = @":"+ nameParameter+ @"([^)]*)\)";
+            string patternIsnull = @":" + nameParameter + @"([^)]*)\)";
+            if (_currentReport?.SourceType == ReportSourceType.Central && !string.IsNullOrEmpty(_currentReport.SqlForCentral))
+            {
+                if (value != null && value?.ToString() == "%%")
+                {
+                    var matchIsnull = Regex.Match(_currentReport.SqlForCentral, patternIsnull);
+                    var txtReplace = matchIsnull.Value.Replace($"{nameParameter}", String.Empty);
+                    _currentReport.SqlForCentral = Regex.Replace(_currentReport.SqlForCentral, pattern, $":{txtReplace} )");
+                }
+                else
+                    _currentReport.SqlForCentral = Regex.Replace(_currentReport.SqlForCentral, pattern, $":{nameParameter})");
+            }
+            else if (_currentReport?.SourceType == ReportSourceType.Estacion && !string.IsNullOrEmpty(_currentReport.SqlForStations))
+            {
+                if(value != null && value?.ToString() == "%%")
+                {
+                    var matchIsnull = Regex.Match(_currentReport.SqlForStations, patternIsnull);
+                    var txtReplace = matchIsnull.Value.Replace($"{nameParameter}", String.Empty);
+                    _currentReport.SqlForCentral = Regex.Replace(_currentReport.SqlForStations, pattern, $":{txtReplace} )");
+
+                }
+                else
+                    _currentReport.SqlForStations = Regex.Replace(_currentReport.SqlForStations, pattern, $":{nameParameter})");
+            }
+
+        }
+ 
         private void ExportGridWithClosedXml(object? sender, EventArgs e)
         {
+            using var loading = new LoadingForm("Exportando datos a Excel ...");
+
             try
             {
+                RecursiveEnableControlsForm(this, false);
+                loading.Owner = this;
+                loading.Show();
+                loading.Refresh();
+
                 var uniqueIdTime = DateTime.Now.ToString("yyyyMMdd_HHmmss");
 
                 using var sfd = new SaveFileDialog
@@ -981,6 +1056,13 @@ namespace OracleReportExport.Presentation.Desktop
                     "Error Exportación Excel",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
+            }
+            finally
+            {
+                RecursiveEnableControlsForm(this, true);
+                Cursor = Cursors.Default;
+                loading.Close();
+                Enabled = true;
             }
         }
 
