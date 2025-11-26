@@ -170,7 +170,8 @@ namespace OracleReportExport.Presentation.Desktop
             BackColor = Color.FromArgb(232, 238, 247),   // (#E8EEF7)
             ForeColor = Color.FromArgb(28, 59, 106),     // (#1C3B6A)
             ScrollBars = RichTextBoxScrollBars.Both,
-            BorderStyle = BorderStyle.FixedSingle
+            BorderStyle = BorderStyle.FixedSingle,
+            ShortcutsEnabled = true
         };
 
         private readonly Button ButtonAdHoc = new()
@@ -315,6 +316,14 @@ namespace OracleReportExport.Presentation.Desktop
 
             // Fila 0: editor SQL
             _txtSqlAdHoc.Dock = DockStyle.Fill;
+            var menu = new ContextMenuStrip();
+            menu.Items.Add("Copiar", null, (_, __) => _txtSqlAdHoc.Copy());
+            menu.Items.Add("Pegar", null, (_, __) => _txtSqlAdHoc.Paste());
+            menu.Items.Add("Cortar", null, (_, __) => _txtSqlAdHoc.Cut());
+            menu.Items.Add("Seleccionar todo", null, (_, __) => _txtSqlAdHoc.SelectAll());
+
+            _txtSqlAdHoc.ContextMenuStrip = menu;
+
             layoutAdHoc.Controls.Add(_txtSqlAdHoc, 0, 0);
             // Fila 2: grid resultados
             _gridAdHoc.Dock = DockStyle.Fill;
