@@ -64,6 +64,8 @@ namespace OracleReportExport.Infrastructure.Data
 
             Log.Information($"Ejecutando SQL de '{reportId}' en {connectionInfo.ToString()}:\n{debugSql}");
 
+            using var registration = ct.Register(() => cmd.Cancel());
+
             using var reader = await cmd.ExecuteReaderAsync(ct);
             result.Load(reader);
 

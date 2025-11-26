@@ -156,7 +156,7 @@ namespace OracleReportExport.Infrastructure.Services
                             newRow[col.ColumnName] = row[col];
                         }
 
-                        newRow["CONEXION_ESTACION"] = connectionId.ToString();
+                        newRow["CONEXION_ESTACION"] = connectionId.ToString()?.Trim()??"";
                         combined.Rows.Add(newRow);
                     }
                 }

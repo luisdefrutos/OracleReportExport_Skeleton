@@ -29,6 +29,7 @@ namespace OracleReportExport.Presentation.Desktop
         private readonly TabControl _tabControl = new();
         private TabPage _tabPredefinidos;
 
+
         private readonly DataGridView _grid = new()
         {
             Dock = DockStyle.Fill,
@@ -174,12 +175,12 @@ namespace OracleReportExport.Presentation.Desktop
 
         private readonly Button ButtonAdHoc = new()
         {
-            AutoSize=true,
+            AutoSize = true,
             Text = "Ejecutar SQL",
             Visible = true,
-            
+
         };
-        
+
 
         // Grid para resultados de SQL avanzada
         private readonly DataGridView _gridAdHoc = new()
@@ -218,8 +219,8 @@ namespace OracleReportExport.Presentation.Desktop
         {
             Text = "Oracle Report Export";
             WindowState = FormWindowState.Maximized;
-            MaximizeBox = false;
-            FormBorderStyle = FormBorderStyle.FixedSingle;
+            MaximizeBox = true;
+            FormBorderStyle = FormBorderStyle.Sizable;
 
             _tabControl.Dock = DockStyle.Fill;
 
@@ -277,7 +278,7 @@ namespace OracleReportExport.Presentation.Desktop
             _btnUnselectAllAdHoc.Click += _btnUnselectAllAdHoc_Click;
             _topPanelAdHoc.Controls.Add(_btnUnselectAllAdHoc);
 
- 
+
 
             _btnClearAdHoc.Anchor = AnchorStyles.Left;
             _btnClearAdHoc.Margin = new Padding(0, 5, 10, 5);
@@ -291,8 +292,8 @@ namespace OracleReportExport.Presentation.Desktop
             ButtonAdHoc.Click += ButtonAdHoc_Click;
             _topPanelAdHoc.Controls.Add(ButtonAdHoc);
 
-         
-          
+
+
 
             // Panel derecho que contiene editor + botón + grid
             var rightPanelAdHoc = new Panel
@@ -318,7 +319,7 @@ namespace OracleReportExport.Presentation.Desktop
             // Fila 2: grid resultados
             _gridAdHoc.Dock = DockStyle.Fill;
             layoutAdHoc.Controls.Add(_gridAdHoc, 0, 2);
-             rightPanelAdHoc.Controls.Add(layoutAdHoc);
+            rightPanelAdHoc.Controls.Add(layoutAdHoc);
             // Orden en la pestaña:
             // 1) panel derecho (Fill)
             // 2) conexiones (Left)
@@ -338,7 +339,7 @@ namespace OracleReportExport.Presentation.Desktop
 
         private void _btnClearAdHoc_Click(object? sender, EventArgs e)
         {
-            if(_txtSqlAdHoc!=null)
+            if (_txtSqlAdHoc != null)
                 _txtSqlAdHoc.Clear();
         }
 
@@ -367,7 +368,7 @@ namespace OracleReportExport.Presentation.Desktop
                 switch (typeExport)
                 {
                     case ResultTabUI.TabInitial:
-                        SetAllConnectionsChecked(true,_chkConnections);
+                        SetAllConnectionsChecked(true, _chkConnections);
                         break;
                     case ResultTabUI.TabSecundary:
                         SetAllConnectionsChecked(true, _chkConnectionsAdHoc);
@@ -380,10 +381,24 @@ namespace OracleReportExport.Presentation.Desktop
 
         private async void ButtonAdHoc_Click(object? sender, EventArgs e)
         {
-            try
+            var listConnectionsActive = GetSelectedConnectionsAdHoc();
+
+            if (listConnectionsActive == null || listConnectionsActive.Count == 0)
             {
-                using (var loadingFormAdHoc = new LoadingForm("Cargando Datos Consulta ...."))
+                MessageBox.Show(
+                    "Selecciona al menos una conexión para ejecutar el informe.",
+                    "Sin selección",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+                return;
+            }
+
+            using var cts = new CancellationTokenSource();
+            using (var loadingFormAdHoc = new LoadingForm("Cargando Datos Consulta ....", cts))
+            {
+                try
                 {
+                     RemoveControlsTopGrid(_gridAdHoc, ResultTabUI.TabSecundary);
                     RecursiveEnableControlsForm(this, false);
                     loadingFormAdHoc.Owner = this;
                     loadingFormAdHoc.Show();
@@ -392,28 +407,56 @@ namespace OracleReportExport.Presentation.Desktop
                     Cursor = Cursors.WaitCursor;
                     var result = new Dictionary<string, object?>();
                     var sqlAdHoc = _txtSqlAdHoc.Text;
-                    var resultQuery = await _reportService.ExecuteSQLAdHocAsync(sqlAdHoc, result, GetSelectedConnectionsAdHoc());
+
+                   
+                    var resultQuery = await Task.Run(() => _reportService.ExecuteSQLAdHocAsync(sqlAdHoc, result, GetSelectedConnectionsAdHoc(), cts.Token));
+
                     if (resultQuery != null && resultQuery.Data != null)
                         _gridAdHoc.DataSource = resultQuery.Data;
                     PaintControlsTopGrid(_gridAdHoc, null, ResultTabUI.TabSecundary);
-                    RecursiveEnableControlsForm(this, true);
+
+                   
+                }
+                catch (OperationCanceledException ex)
+                {
+                    // Cancelado = NO es error
+                    _gridAdHoc.DataSource = null;
+                    MessageBox.Show("Consulta cancelada por el usuario.", "Cancelado", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                catch (OracleException ex) when (ex.Number == 942)
+                {
+                    GlobalExceptionHandler.Handle(ex, null,
+                        "La tabla o vista no existe en la base de datos. Verifique que está ejecutando " +
+                        "la sentencia correcta en la base de datos seleccionada.\n\n");
+                    _gridAdHoc.DataSource = null;
+                }
+                catch (OracleException ex) when (ex.Number == 1013)
+                {
+                    // ORA-01013 = cancelación del usuario
+                    _gridAdHoc.DataSource = null;
+                    MessageBox.Show("Consulta cancelada por el usuario.",
+                        "Cancelado",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+                }
+                finally
+                {
+                     RecursiveEnableControlsForm(this, true);
                     Cursor = Cursors.Default;
-                    loadingFormAdHoc.Close();
-                    Enabled = true;
+                    if (!loadingFormAdHoc.IsDisposed)
+                        loadingFormAdHoc.Close();
+                     Enabled = true;
+                    _btnUnselectAllAdHoc.PerformClick();
+
                 }
             }
-             catch (OracleException ex) when (ex.Number == 942)
-            {
-                GlobalExceptionHandler.Handle(ex,null,
-                    "La tabla o vista no existe en la base de datos. Verifique que está ejecutando " +
-                    "la sentencia correcta en la base de datos seleccionada.\n\n");
-                _grid.DataSource = null;
-            }  
         }
 
         private void RecursiveEnableControlsForm(Control control, bool changeStated)
         {
             if (control == null)
+                return;
+            if(control.Name.Contains("LoadingForm"))
                 return;
 
             control.Enabled = changeStated;
@@ -611,25 +654,26 @@ namespace OracleReportExport.Presentation.Desktop
             {
                 return;
             }
-
-            using var loading = new LoadingForm("Cargando datos...");
+            using var cts = new CancellationTokenSource();
+            using var loading = new LoadingForm("Cargando datos...", cts);
 
             try
             {
-                RecursiveEnableControlsForm(this, false);
+                 RecursiveEnableControlsForm(this, false);
                 loading.Owner = this;
                 loading.Show();
                 loading.Refresh();
                 Enabled = false;
                 Cursor = Cursors.WaitCursor;
 
-                var resultReport = await _reportService.ExecuteReportAsync(
+                var resultReport = await Task.Run(() => _reportService.ExecuteReportAsync(
                     report,
                     parametros,
-                    listConnectionsActive);
+                    listConnectionsActive,
+                    cts.Token));
                 _grid.DataSource = resultReport.Data;
                 PaintControlsTopGrid(_grid, resultReport, ResultTabUI.TabInitial);
-                  if (resultReport.TimeoutConnections.Any())
+                if (resultReport.TimeoutConnections.Any())
                 {
                     var estaciones = string.Join(", ", resultReport.TimeoutConnections);
                     MessageBox.Show(
@@ -639,9 +683,24 @@ namespace OracleReportExport.Presentation.Desktop
                         MessageBoxIcon.Warning);
                 }
             }
+            catch (OperationCanceledException ex)
+            {
+                // Cancelado = NO es error
+                _gridAdHoc.DataSource = null;
+                MessageBox.Show("Consulta cancelada por el usuario.", "Cancelado",MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (OracleException ex) when (ex.Number == 1013)
+            {
+                // ORA-01013 = cancelación del usuario
+                _gridAdHoc.DataSource = null;
+                MessageBox.Show("Consulta cancelada por el usuario.",
+                    "Cancelado",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+            }
             catch (OracleException ex) when (ex.Number == 942)
             {
-                GlobalExceptionHandler.Handle(ex,null,
+                GlobalExceptionHandler.Handle(ex, null,
                     "La tabla o vista no existe en la base de datos. Verifique que está ejecutando " +
                     "el informe correcto en la base de datos seleccionada.\n\n" +
                     "Revise la consulta mediante el botón \"Ver consulta\" \n" +
@@ -653,9 +712,41 @@ namespace OracleReportExport.Presentation.Desktop
             {
                 RecursiveEnableControlsForm(this, true);
                 Cursor = Cursors.Default;
-                loading.Close();
+                if (!loading.IsDisposed)
+                    loading.Close();
                 Enabled = true;
+                _btnUnselectAll.PerformClick();
             }
+        }
+
+
+
+        private void RemoveControlsTopGrid(DataGridView grid,  ResultTabUI nameTab)
+        {
+            if (grid == null || grid.Parent == null)
+                return;
+            Control parent = grid.Parent;
+
+            if (parent is TableLayoutPanel && parent.Parent != null)
+                parent = parent.Parent;
+
+            System.Drawing.Point gridLocationInParent = parent.PointToClient(
+                grid.Parent.PointToScreen(grid.Location));
+
+            var lblCountRowsExist = parent.Controls
+                .OfType<Label>()
+                .FirstOrDefault(l => l.Name == $"lblCountRows_{nameTab}");
+
+            if (lblCountRowsExist != null)
+                parent.Controls.Remove(lblCountRowsExist);
+
+            var btnExcelExist = parent.Controls
+                .OfType<Button>()
+                .FirstOrDefault(b => b.Name == $"btnExportExcel_{nameTab}");
+            if (btnExcelExist != null)
+                parent.Controls.Remove(btnExcelExist);
+
+                 grid.DataSource = null;
         }
 
         private void PaintControlsTopGrid(DataGridView grid, ReportQueryResult? resultReport, ResultTabUI nameTab)
@@ -771,7 +862,7 @@ namespace OracleReportExport.Presentation.Desktop
 
         #region Métodos privados de ayuda
 
-        private void SetAllConnectionsChecked(bool isChecked,CheckedListBox _chkCon)
+        private void SetAllConnectionsChecked(bool isChecked, CheckedListBox _chkCon)
         {
             for (int i = 0; i < _chkCon.Items.Count; i++)
             {
@@ -1231,14 +1322,15 @@ namespace OracleReportExport.Presentation.Desktop
 
         private void ExportGridWithClosedXml(object? sender, EventArgs e)
         {
-            using var loading = new LoadingForm("Exportando datos a Excel ..."); 
+            using var cts = new CancellationTokenSource();
+            using var loading = new LoadingForm("Exportando datos a Excel ...", cts);
             try
-            {    
+            {
                 RecursiveEnableControlsForm(this, false);
                 loading.Owner = this;
                 loading.Show();
                 loading.Refresh();
-                var uniqueIdTime = DateTime.Now.ToString("yyyyMMdd_HHmmss");              
+                var uniqueIdTime = DateTime.Now.ToString("yyyyMMdd_HHmmss");
                 using var sfd = new SaveFileDialog
                 {
                     Filter = "Excel (*.xlsx)|*.xlsx"
@@ -1258,15 +1350,15 @@ namespace OracleReportExport.Presentation.Desktop
                     }
                     if (sfd.ShowDialog() != DialogResult.OK)
                         return;
-                    IXLWorksheet? ws=null;
+                    IXLWorksheet? ws = null;
                     using var wb = new XLWorkbook();
                     switch (typeExport)
                     {
                         case ResultTabUI.TabInitial:
-                             ws = wb.Worksheets.Add(((ReportDefinition)_cmbReports.SelectedItem!).Category);
+                            ws = wb.Worksheets.Add(((ReportDefinition)_cmbReports.SelectedItem!).Category);
                             break;
                         case ResultTabUI.TabSecundary:
-                              ws = wb.Worksheets.Add("ConsultaPersonalizada");
+                            ws = wb.Worksheets.Add("ConsultaPersonalizada");
                             break;
                     }
                     if (ws == null)
@@ -1283,15 +1375,15 @@ namespace OracleReportExport.Presentation.Desktop
                         ws.Cell(1, col + 1).Style.Font.Bold = true;
                     }
                     for (int row = 0; row < _gridExport?.Rows.Count; row++)
+                    {
+                        if (_gridExport.Rows[row].IsNewRow) continue;
+                        for (int col = 0; col < _gridExport.Columns.Count; col++)
                         {
-                            if (_gridExport.Rows[row].IsNewRow) continue;
-                            for (int col = 0; col < _gridExport.Columns.Count; col++)
-                            {
-                                var value = _gridExport.Rows[row].Cells[col].Value;
-                                var safeValue = value == null ? "" : value.ToString();
-                                ws.Cell(row + 2, col + 1).Value = safeValue;
-                            }
+                            var value = _gridExport.Rows[row].Cells[col].Value;
+                            string ? safeValue = value == null ? "" : value.ToString();
+                            ws.Cell(row + 2, col + 1).Value = safeValue?.Trim();
                         }
+                    }
                     ws.Columns().AdjustToContents();
                     foreach (var sheet in wb.Worksheets)
                     {
@@ -1317,7 +1409,8 @@ namespace OracleReportExport.Presentation.Desktop
             {
                 RecursiveEnableControlsForm(this, true);
                 Cursor = Cursors.Default;
-                loading.Close();
+                if(!loading.IsDisposed)
+                        loading.Close();
                 Enabled = true;
             }
         }
@@ -1328,15 +1421,21 @@ namespace OracleReportExport.Presentation.Desktop
 
         private sealed class LoadingForm : Form
         {
-            public LoadingForm(string message)
+            private readonly CancellationTokenSource? _cts;
+            private  Panel _buttonsPanel;
+            private Button btnCancelar;
+
+            public LoadingForm(string message, CancellationTokenSource? cts = null)
             {
+                _cts = cts;
+                Name = "LoadingForm";
                 StartPosition = FormStartPosition.Manual;
                 TopMost = true;
                 ShowInTaskbar = false;
                 FormBorderStyle = FormBorderStyle.FixedDialog;
                 ControlBox = false;
                 Width = 260;
-                Height = 100;
+                Height = 120; 
                 Text = string.Empty;
 
                 var lbl = new Label
@@ -1348,6 +1447,48 @@ namespace OracleReportExport.Presentation.Desktop
                 };
 
                 Controls.Add(lbl);
+
+                _buttonsPanel = new Panel
+                {
+                    Dock = DockStyle.Bottom,
+                    Height = 42
+                };
+                Controls.Add(_buttonsPanel);
+
+                // Si nos pasan un CTS, añadimos botón Cancelar
+                if (_cts != null)
+                {
+                      btnCancelar = new Button
+                    {
+                        Text = "Cancelar",
+                        AutoSize = true,
+                        Height = 28,
+                        FlatStyle = FlatStyle.Flat,
+                        Font = new Font(SystemFonts.DefaultFont.FontFamily, 9f, FontStyle.Bold),
+                        BackColor = Color.FromArgb(230, 230, 230),
+                        ForeColor = Color.FromArgb(50, 50, 50),
+                        Cursor = Cursors.Hand,
+                        TabStop = false,
+                        Padding = new Padding(12, 4, 12, 4)
+                    };
+
+                    btnCancelar.FlatAppearance.BorderSize = 1;
+                    btnCancelar.FlatAppearance.BorderColor = Color.FromArgb(180, 180, 180);
+                    btnCancelar.Click += (_, __) => _cts.Cancel();
+
+                    //Controls.Add(btnCancelar);
+                    _buttonsPanel.Controls.Add(btnCancelar);
+                    CenterButton();
+
+                    _buttonsPanel.Resize += (_, __) => CenterButton();
+                }
+            }
+            private void CenterButton()
+            {
+                if (btnCancelar == null) return;
+
+                btnCancelar.Left = (_buttonsPanel.Width - btnCancelar.Width) / 2;
+                btnCancelar.Top = (_buttonsPanel.Height - btnCancelar.Height) / 2;
             }
 
             protected override void OnShown(EventArgs e)
@@ -1366,10 +1507,16 @@ namespace OracleReportExport.Presentation.Desktop
                     Left = screen.Left + (screen.Width - Width) / 2;
                     Top = screen.Top + (screen.Height - Height) / 2;
                 }
+
+                CenterButton();
+
             }
+
+
         }
 
         #endregion
+
     }
 
     #region Clases auxiliares
