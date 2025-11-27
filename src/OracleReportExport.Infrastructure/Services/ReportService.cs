@@ -174,6 +174,14 @@ namespace OracleReportExport.Infrastructure.Services
                 TimeoutConnections = timeoutConnections
             };
         }
+
+        public  async Task<bool> ValidateSqlSyntaxAsync(string sql, ConnectionInfo connection, CancellationToken ct)
+        {
+            return await _queryExecutor.ValidateSqlSyntaxAsync(
+                sql,
+                connection,
+                ct);
+        }
     }
 }
 

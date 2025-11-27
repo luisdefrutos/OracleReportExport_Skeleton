@@ -1,6 +1,9 @@
 ﻿using ClosedXML.Excel;
 using DocumentFormat.OpenXml.Drawing;
+using DocumentFormat.OpenXml.Drawing.Diagrams;
 using DocumentFormat.OpenXml.Office.PowerPoint.Y2021.M06.Main;
+using DocumentFormat.OpenXml.Office2016.Drawing.Charts;
+using Spre=DocumentFormat.OpenXml.Spreadsheet;
 using Oracle.ManagedDataAccess.Client;
 using OracleReportExport.Application.Interfaces;
 using OracleReportExport.Application.Models;
@@ -28,6 +31,12 @@ namespace OracleReportExport.Presentation.Desktop
 
         private readonly TabControl _tabControl = new();
         private TabPage _tabPredefinidos;
+        private static readonly Regex RegexParams = new(@"(?<!:):(?!\d)\w+", RegexOptions.Compiled);
+        private PropertyGrid propGrid;
+        private readonly Button _btnPrevPageAdHoc = new() { Text = "< Anterior", Name= "_btnPrevPageAdHoc", AutoSize = true ,Visible=false};
+        private readonly Button _btnNextPageAdHoc = new() { Text = "Siguiente >", Name = "_btnNextPageAdHoc", AutoSize = true,Visible=false };
+
+
 
 
         private readonly DataGridView _grid = new()
@@ -166,9 +175,9 @@ namespace OracleReportExport.Presentation.Desktop
         private readonly RichTextBox _txtSqlAdHoc = new()
         {
             Dock = DockStyle.Fill,
-            Font = new Font("Consolas", 10f),
-            BackColor = Color.FromArgb(232, 238, 247),   // (#E8EEF7)
-            ForeColor = Color.FromArgb(28, 59, 106),     // (#1C3B6A)
+            Font = new System.Drawing.Font("Consolas", 10f),
+            BackColor = System.Drawing.Color.FromArgb(232, 238, 247),   // (#E8EEF7)
+            ForeColor = System.Drawing.Color.FromArgb(28, 59, 106),     // (#1C3B6A)
             ScrollBars = RichTextBoxScrollBars.Both,
             BorderStyle = BorderStyle.FixedSingle,
             ShortcutsEnabled = true
@@ -195,6 +204,8 @@ namespace OracleReportExport.Presentation.Desktop
             RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.DisableResizing,
             AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells,
             ScrollBars = ScrollBars.Both
+            
+            
         };
 
         private readonly Dictionary<string, Control> _parameterControls = new();
@@ -307,12 +318,23 @@ namespace OracleReportExport.Presentation.Desktop
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 1,
-                RowCount = 3
+                RowCount = 4
+            };
+
+            var paginationPanel = new FlowLayoutPanel
+            {
+                FlowDirection = FlowDirection.RightToLeft,
+                Dock = DockStyle.Fill,
+                AutoSize = true,
+                Padding = new Padding(5),
+                Margin = new Padding(0),
+                WrapContents = false
             };
 
             layoutAdHoc.RowStyles.Add(new RowStyle(SizeType.Percent, 50f));   // RichTextBox
             layoutAdHoc.RowStyles.Add(new RowStyle(SizeType.AutoSize));       // Botón
             layoutAdHoc.RowStyles.Add(new RowStyle(SizeType.Percent, 50f));   // Grid
+            layoutAdHoc.RowStyles.Add(new RowStyle(SizeType.AutoSize));     // Fila de paginación
 
             // Fila 0: editor SQL
             _txtSqlAdHoc.Dock = DockStyle.Fill;
@@ -328,6 +350,14 @@ namespace OracleReportExport.Presentation.Desktop
             // Fila 2: grid resultados
             _gridAdHoc.Dock = DockStyle.Fill;
             layoutAdHoc.Controls.Add(_gridAdHoc, 0, 2);
+            ///
+            paginationPanel.Controls.Add(_btnNextPageAdHoc);
+            _btnPrevPageAdHoc.Click += _btnPrevPageAdHoc_Click;
+            paginationPanel.Controls.Add(_btnPrevPageAdHoc);
+            _btnNextPageAdHoc.Click += _btnNextPageAdHoc_Click;
+            layoutAdHoc.Controls.Add(paginationPanel, 0, 3);
+            ///
+
             rightPanelAdHoc.Controls.Add(layoutAdHoc);
             // Orden en la pestaña:
             // 1) panel derecho (Fill)
@@ -344,6 +374,20 @@ namespace OracleReportExport.Presentation.Desktop
             Controls.Add(_tabControl);
 
             Load += MainForm_LoadAsync;
+        }
+
+        private void _btnNextPageAdHoc_Click(object? sender, EventArgs e)
+        {
+            if (propGrid == null) return;
+            propGrid.ShowNextPage();
+            PaintControlsTopGrid(_gridAdHoc, ResultTabUI.TabSecundary, propGrid);
+        }
+
+        private void _btnPrevPageAdHoc_Click(object? sender, EventArgs e)
+        {
+            if (propGrid == null) return;
+            propGrid.ShowPreviousPage();
+            PaintControlsTopGrid(_gridAdHoc, ResultTabUI.TabSecundary, propGrid);
         }
 
         private void _btnClearAdHoc_Click(object? sender, EventArgs e)
@@ -388,8 +432,11 @@ namespace OracleReportExport.Presentation.Desktop
             }
         }
 
-        private async void ButtonAdHoc_Click(object? sender, EventArgs e)
+        private async Task<bool> ErrorSintaxAdHoc_Click(object? sender, EventArgs e)
         {
+            // Por implementar: validar sintaxis SQL
+            bool stopProcess = false;
+            
             var listConnectionsActive = GetSelectedConnectionsAdHoc();
 
             if (listConnectionsActive == null || listConnectionsActive.Count == 0)
@@ -399,15 +446,115 @@ namespace OracleReportExport.Presentation.Desktop
                     "Sin selección",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Warning);
-                return;
+                return true;
             }
+            var sqlAdHocRichTxt = _txtSqlAdHoc.Text;
+            if (string.IsNullOrWhiteSpace(sqlAdHocRichTxt))
+            {
+                MessageBox.Show(
+                    "Introduce una sentencia SQL.",
+                    "SQL vacía",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+                return true;
+            }
+            var paramNames = DetectarParametros(sqlAdHocRichTxt);
+            using var cts = new CancellationTokenSource();
+            using (var loadingFormAdHoc = new LoadingForm("Validando sentencia ....", cts))
+            {
+                try
+                {
+                    RemoveControlsTopGrid(_gridAdHoc, ResultTabUI.TabSecundary);
+                    RecursiveEnableControlsForm(this, false);
+                    loadingFormAdHoc.Owner = this;
+                    loadingFormAdHoc.Show();
+                    loadingFormAdHoc.Refresh();
+                    Enabled = false;
+                    Cursor = Cursors.WaitCursor;
+
+                    // ----------------------------------------------------------------
+                    // CASO 1: NO hay parámetros → validar sintaxis y preguntar
+                    // ----------------------------------------------------------------
+                    if (paramNames.Count == 0)
+                    {
+                        var connectionForValidation = listConnectionsActive.First();
+
+                        // true = NO continuar (error sintaxis o usuario dijo NO)
+                        stopProcess = await ValidarSqlSinParametrosAsync(sqlAdHocRichTxt, connectionForValidation, cts.Token);
+
+                        if (stopProcess)
+                            return true;
+                        else
+                        {
+                            RecursiveEnableControlsForm(this, true);
+                            Cursor = Cursors.Default;
+                            if (!loadingFormAdHoc.IsDisposed)
+                                loadingFormAdHoc.Close();
+                            Enabled = true;
+
+                            var resp = MessageBox.Show(
+                                "La sentencia SQL es sintácticamente correcta.\n\n¿Desea ejecutarla?",
+                                "Validación correcta",
+                                MessageBoxButtons.YesNo,
+                                MessageBoxIcon.Question);
+                          
+
+                            stopProcess= resp == DialogResult.No; // true = NO seguir
+                        }
+                    }
+
+                     return stopProcess;
+               
+                }
+                catch (OperationCanceledException ex)
+                {
+                      MessageBox.Show("Consulta cancelada por el usuario.", "Cancelado", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return true;
+                }
+                catch (OracleException ex) when (ex.Number == 942)
+                {
+                    GlobalExceptionHandler.Handle(ex, null,
+                        "La tabla o vista no existe en la sentencia ejecutada. Verifique que está ejecutando " +
+                        "la sentencia correcta en la base de datos seleccionada.\n\n");
+                    return true;
+
+                }
+                catch(OracleException ex) when(ex.Number == 1013)
+                {
+                    // ORA-01013 = cancelación del usuario
+                    _gridAdHoc.DataSource = null;
+                    MessageBox.Show("Consulta cancelada por el usuario.",
+                        "Cancelado",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+                    return true;
+                }
+                finally
+                {
+                    RecursiveEnableControlsForm(this, true);
+                    Cursor = Cursors.Default;
+                    if (!loadingFormAdHoc.IsDisposed)
+                        loadingFormAdHoc.Close();
+                    Enabled = true;
+                           
+
+                }
+            }
+
+             
+        }
+        private async void ButtonAdHoc_Click(object? sender, EventArgs e)
+        {
+            var resultSintax=await ErrorSintaxAdHoc_Click(sender, e);
+            if (resultSintax)
+                return;
 
             using var cts = new CancellationTokenSource();
             using (var loadingFormAdHoc = new LoadingForm("Cargando Datos Consulta ....", cts))
             {
                 try
                 {
-                     RemoveControlsTopGrid(_gridAdHoc, ResultTabUI.TabSecundary);
+                    RemoveControlsTopGrid(_gridAdHoc, ResultTabUI.TabSecundary);
                     RecursiveEnableControlsForm(this, false);
                     loadingFormAdHoc.Owner = this;
                     loadingFormAdHoc.Show();
@@ -417,14 +564,17 @@ namespace OracleReportExport.Presentation.Desktop
                     var result = new Dictionary<string, object?>();
                     var sqlAdHoc = _txtSqlAdHoc.Text;
 
-                   
+
                     var resultQuery = await Task.Run(() => _reportService.ExecuteSQLAdHocAsync(sqlAdHoc, result, GetSelectedConnectionsAdHoc(), cts.Token));
 
                     if (resultQuery != null && resultQuery.Data != null)
-                        _gridAdHoc.DataSource = resultQuery.Data;
-                    PaintControlsTopGrid(_gridAdHoc, null, ResultTabUI.TabSecundary);
-
+                    {
                    
+                        propGrid = new PropertyGrid(resultQuery.Data, _gridAdHoc, ResultTabUI.TabSecundary);
+                        propGrid.PageChanged += PropGrid_PageChanged;
+                        propGrid.ShowFirstPage();
+                        PaintControlsTopGrid(_gridAdHoc, ResultTabUI.TabSecundary, propGrid);
+                    }
                 }
                 catch (OperationCanceledException ex)
                 {
@@ -450,22 +600,62 @@ namespace OracleReportExport.Presentation.Desktop
                 }
                 finally
                 {
-                     RecursiveEnableControlsForm(this, true);
+                    RecursiveEnableControlsForm(this, true);
                     Cursor = Cursors.Default;
                     if (!loadingFormAdHoc.IsDisposed)
                         loadingFormAdHoc.Close();
-                     Enabled = true;
+                    Enabled = true;
                     _btnUnselectAllAdHoc.PerformClick();
 
                 }
             }
         }
+        private void PropGrid_PageChanged(object? sender, EventArgs e)
+        {
+            if(sender!=null && sender is PropertyGrid)
+            {
+                PropertyGrid propPag = (PropertyGrid)sender;
+                if (propPag.CurrentPage <= 0)
+                    _btnPrevPageAdHoc.Enabled = false;
+                else
+                    _btnPrevPageAdHoc.Enabled = true;
+                if (propPag.CurrentPage >= propPag.TotalPages-1)
+                    _btnNextPageAdHoc.Enabled = false;
+                else
+                    _btnNextPageAdHoc.Enabled = true;
+            }
+        }
+        private async Task<bool> ValidarSqlSinParametrosAsync(string sql, ConnectionInfo connectionForValidation, CancellationToken ct)
+        {
+            try
+            {
+                var result = await _reportService.ValidateSqlSyntaxAsync(sql, connectionForValidation, ct);
+                return result;
+            }
+            catch (OracleException ex)
+            {
+                throw;
+            }
+         }
 
+        private List<string> DetectarParametros(string sql)
+        {
+            var matches = RegexParams.Matches(sql);
+
+            return matches
+                .Cast<Match>()
+                .Select(m => m.Value) //quizas no hacer substring Substring(1)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
         private void RecursiveEnableControlsForm(Control control, bool changeStated)
         {
             if (control == null)
                 return;
-            if(control.Name.Contains("LoadingForm"))
+            if (control.Name.Contains("LoadingForm"))
+                return;
+
+            if (control.Name.Contains("_btnPrevPageAdHoc")|| control.Name.Contains("_btnNextPageAdHoc"))
                 return;
 
             control.Enabled = changeStated;
@@ -487,8 +677,6 @@ namespace OracleReportExport.Presentation.Desktop
         {
             _topPanel.Controls.Add(_btnSelectAll);
             _topPanel.Controls.Add(_btnUnselectAll);
-            // _topPanel.Controls.Add(_btnExport);
-
             var sep = new Label
             {
                 AutoSize = true,
@@ -668,7 +856,7 @@ namespace OracleReportExport.Presentation.Desktop
 
             try
             {
-                 RecursiveEnableControlsForm(this, false);
+                RecursiveEnableControlsForm(this, false);
                 loading.Owner = this;
                 loading.Show();
                 loading.Refresh();
@@ -681,7 +869,8 @@ namespace OracleReportExport.Presentation.Desktop
                     listConnectionsActive,
                     cts.Token));
                 _grid.DataSource = resultReport.Data;
-                PaintControlsTopGrid(_grid, resultReport, ResultTabUI.TabInitial);
+                propGrid=new PropertyGrid(resultReport.Data, _grid, ResultTabUI.TabInitial);
+                PaintControlsTopGrid(_grid,  ResultTabUI.TabInitial,propGrid);
                 if (resultReport.TimeoutConnections.Any())
                 {
                     var estaciones = string.Join(", ", resultReport.TimeoutConnections);
@@ -696,7 +885,7 @@ namespace OracleReportExport.Presentation.Desktop
             {
                 // Cancelado = NO es error
                 _gridAdHoc.DataSource = null;
-                MessageBox.Show("Consulta cancelada por el usuario.", "Cancelado",MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Consulta cancelada por el usuario.", "Cancelado", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (OracleException ex) when (ex.Number == 1013)
             {
@@ -730,7 +919,7 @@ namespace OracleReportExport.Presentation.Desktop
 
 
 
-        private void RemoveControlsTopGrid(DataGridView grid,  ResultTabUI nameTab)
+        private void RemoveControlsTopGrid(DataGridView grid, ResultTabUI nameTab)
         {
             if (grid == null || grid.Parent == null)
                 return;
@@ -755,10 +944,12 @@ namespace OracleReportExport.Presentation.Desktop
             if (btnExcelExist != null)
                 parent.Controls.Remove(btnExcelExist);
 
-                 grid.DataSource = null;
+            grid.DataSource = null;
+            _btnNextPageAdHoc.Visible = false;
+            _btnPrevPageAdHoc.Visible = false;
         }
 
-        private void PaintControlsTopGrid(DataGridView grid, ReportQueryResult? resultReport, ResultTabUI nameTab)
+        private void PaintControlsTopGrid(DataGridView ?grid, ResultTabUI nameTab,PropertyGrid propGrid)
         {
             if (grid == null || grid.Parent == null)
                 return;
@@ -776,7 +967,7 @@ namespace OracleReportExport.Presentation.Desktop
             var lblCountRowsExist = parent.Controls
                 .OfType<Label>()
                 .FirstOrDefault(l => l.Name == $"lblCountRows_{nameTab}");
-
+          
             if (lblCountRowsExist == null)
             {
                 _lblCountRows = new Label
@@ -793,16 +984,23 @@ namespace OracleReportExport.Presentation.Desktop
             else
                 _lblCountRows = lblCountRowsExist;
 
-            int rowCount;
-            if (resultReport != null && resultReport.Data != null)
-                rowCount = resultReport.Data.Rows.Count;
-            else
-                rowCount = (grid.DataSource as DataTable)?.Rows.Count ?? 0;
+            int ?rowCount;
+            rowCount = propGrid.FullData?.Rows.Count;
 
-            _lblCountRows.Text = $"Registros encontrados: {rowCount}";
+            if (nameTab == ResultTabUI.TabInitial)
+                _lblCountRows.Text = $"Registros encontrados: {rowCount}";
+            else
+            {
+                if (rowCount > 0)
+                    _lblCountRows.Text = $"Registros encontrados: {rowCount}. Cargando {((DataTable)propGrid.Grid.DataSource).Rows.Count} registros de página {propGrid.CurrentPage + 1} de {propGrid.TotalPages}";
+                else
+                    _lblCountRows.Text = $"Registros encontrados: {rowCount}";
+            }
             // el label encima del grid
-            _lblCountRows.Top = gridLocationInParent.Y - _lblCountRows.Height - 15;
-            _lblCountRows.Left = parent.ClientSize.Width - _lblCountRows.Width - 10;
+            if(_lblCountRows.Top==0)
+             _lblCountRows.Top = gridLocationInParent.Y - _lblCountRows.Height - 20;
+            if(_lblCountRows.Left==0)
+              _lblCountRows.Left = parent.ClientSize.Width - _lblCountRows.Width - 10;
             _lblCountRows.BringToFront();
 
             var btnExcelExist = parent.Controls
@@ -832,11 +1030,15 @@ namespace OracleReportExport.Presentation.Desktop
             else
                 _btnExcel = btnExcelExist;
 
-            _btnExcel.Top = _lblCountRows.Top - 3 + (_lblCountRows.Height - _btnExcel.Height) / 2;
-            _btnExcel.Left = _lblCountRows.Left - _btnExcel.Width - 6;
+            if(_btnExcel.Top==0)
+             _btnExcel.Top = _lblCountRows.Top - 3 + (_lblCountRows.Height - _btnExcel.Height) / 2;
+            if (_btnExcel.Left == 0)
+                _btnExcel.Left = _lblCountRows.Left - _btnExcel.Width - 6;
             _btnExcel.Visible = rowCount > 0;
             _lblCountRows.BringToFront();
             _btnExcel.BringToFront();
+            _btnNextPageAdHoc.Visible = rowCount > 0; 
+            _btnPrevPageAdHoc.Visible = rowCount > 0; 
         }
         private void BtnVerConsulta_Click(object? sender, EventArgs e)
         {
@@ -874,9 +1076,7 @@ namespace OracleReportExport.Presentation.Desktop
         private void SetAllConnectionsChecked(bool isChecked, CheckedListBox _chkCon)
         {
             for (int i = 0; i < _chkCon.Items.Count; i++)
-            {
                 _chkCon.SetItemChecked(i, isChecked);
-            }
         }
 
         private void RenderParameters(ReportDefinition report)
@@ -903,7 +1103,7 @@ namespace OracleReportExport.Presentation.Desktop
                 return;
             }
 
-            FlowLayoutPanel CreateParamBlock(string labelText, Control input, bool? filterLike)
+            FlowLayoutPanel CreateParamBlock(string ?labelText, Control input, bool? filterLike)
             {
                 var block = new FlowLayoutPanel
                 {
@@ -1105,13 +1305,13 @@ namespace OracleReportExport.Presentation.Desktop
             clb.DisplayMember = parameter.Text ?? string.Empty;
             clb.ValueMember = parameter.Id ?? string.Empty;
 
-            var preselected = parameter.ValuesRequired ?? new List<string>();
+            var preselected = parameter.ValuesRequired ?? new List<string?>();
 
             int maxWidth = 0;
 
             foreach (DataRow row in dt.Rows)
             {
-                string value = row[parameter.Id]?.ToString() ?? "";
+                string value = row[parameter.Id].ToString() ?? "";
                 string text = row[parameter.Text]?.ToString() ?? "";
 
                 var item = new MultiItem
@@ -1188,9 +1388,9 @@ namespace OracleReportExport.Presentation.Desktop
                         if (p.Type == "funcion")
                         {
                             int numberFromBoolean = value is bool b ? (b ? 1 : 0) : 0;
-                            value = p.Values
-                                .Where(x => x.Key == numberFromBoolean)
-                                .FirstOrDefault()
+                            value = p.Values?
+                                .Where(x => x.Key == numberFromBoolean)?
+                                .FirstOrDefault()?
                                 .Value ?? string.Empty;
                         }
                         else
@@ -1372,24 +1572,23 @@ namespace OracleReportExport.Presentation.Desktop
                     }
                     if (ws == null)
                         throw new Exception("Error al crear el Excel");
-                    DataGridView? _gridExport = null;
+                    DataTable? _gridExport = null;
                     if (typeExport == ResultTabUI.TabInitial)
-                        _gridExport = _grid;
+                        _gridExport = _grid.DataSource  as DataTable;
                     else if (typeExport == ResultTabUI.TabSecundary)
-                        _gridExport = _gridAdHoc;
+                        _gridExport = propGrid.FullData as DataTable;
 
                     for (int col = 0; col < _gridExport?.Columns.Count; col++)
                     {
-                        ws.Cell(1, col + 1).Value = _gridExport.Columns[col].HeaderText;
+                        ws.Cell(1, col + 1).Value = _gridExport.Columns[col].ColumnName;
                         ws.Cell(1, col + 1).Style.Font.Bold = true;
                     }
                     for (int row = 0; row < _gridExport?.Rows.Count; row++)
                     {
-                        if (_gridExport.Rows[row].IsNewRow) continue;
                         for (int col = 0; col < _gridExport.Columns.Count; col++)
                         {
-                            var value = _gridExport.Rows[row].Cells[col].Value;
-                            string ? safeValue = value == null ? "" : value.ToString();
+                            var value = _gridExport.Rows[row][col];
+                            string? safeValue = value == null ? "" : value.ToString();
                             ws.Cell(row + 2, col + 1).Value = safeValue?.Trim();
                         }
                     }
@@ -1418,8 +1617,8 @@ namespace OracleReportExport.Presentation.Desktop
             {
                 RecursiveEnableControlsForm(this, true);
                 Cursor = Cursors.Default;
-                if(!loading.IsDisposed)
-                        loading.Close();
+                if (!loading.IsDisposed)
+                    loading.Close();
                 Enabled = true;
             }
         }
@@ -1431,8 +1630,43 @@ namespace OracleReportExport.Presentation.Desktop
         private sealed class LoadingForm : Form
         {
             private readonly CancellationTokenSource? _cts;
-            private  Panel _buttonsPanel;
+            private Panel _buttonsPanel;
             private Button btnCancelar;
+            private Label lbl;
+
+
+            public void ChangeButtonCancelText(string text)
+            {
+                if (btnCancelar != null)
+                {
+                    btnCancelar.Text = text;
+                    btnCancelar.Refresh();
+                }
+            }
+            public void ChangeVisibilityButton(bool state)
+            {
+                if (btnCancelar != null)
+                {
+                    btnCancelar.Visible = state;
+                    btnCancelar.Refresh();
+                }
+            }
+            public  void ChangeMessage(string message)
+            {
+                if (lbl != null)
+                {
+                    lbl.Text = message;
+                    lbl.Refresh();
+                }
+            }
+            public void ChangeVisilityMessage(bool state)
+            {
+                if (lbl != null)
+                {
+                    lbl.Visible = state;
+                    lbl.Refresh();
+                }
+            }
 
             public LoadingForm(string message, CancellationTokenSource? cts = null)
             {
@@ -1444,10 +1678,10 @@ namespace OracleReportExport.Presentation.Desktop
                 FormBorderStyle = FormBorderStyle.FixedDialog;
                 ControlBox = false;
                 Width = 260;
-                Height = 120; 
+                Height = 120;
                 Text = string.Empty;
 
-                var lbl = new Label
+                 lbl = new Label
                 {
                     Dock = DockStyle.Fill,
                     TextAlign = ContentAlignment.MiddleCenter,
@@ -1467,7 +1701,7 @@ namespace OracleReportExport.Presentation.Desktop
                 // Si nos pasan un CTS, añadimos botón Cancelar
                 if (_cts != null)
                 {
-                      btnCancelar = new Button
+                    btnCancelar = new Button
                     {
                         Text = "Cancelar",
                         AutoSize = true,
@@ -1484,11 +1718,8 @@ namespace OracleReportExport.Presentation.Desktop
                     btnCancelar.FlatAppearance.BorderSize = 1;
                     btnCancelar.FlatAppearance.BorderColor = Color.FromArgb(180, 180, 180);
                     btnCancelar.Click += (_, __) => _cts.Cancel();
-
-                    //Controls.Add(btnCancelar);
                     _buttonsPanel.Controls.Add(btnCancelar);
                     CenterButton();
-
                     _buttonsPanel.Resize += (_, __) => CenterButton();
                 }
             }
@@ -1530,7 +1761,84 @@ namespace OracleReportExport.Presentation.Desktop
 
     #region Clases auxiliares
 
-    public class MultiItem
+    public sealed class PropertyGrid
+    {
+        public DataTable? FullData { get; set; }          
+        public DataGridView Grid { get; set; }      
+        public ResultTabUI TypeResource { get; set; }
+
+        // Paginación
+        public int PageSize { get; set; } = 500;        // filas por página (ajusta)
+        public int CurrentPage { get; private set; } = 0;
+
+        public event EventHandler? PageChanged;
+
+        public int TotalRows => FullData?.Rows.Count ?? 0;
+        public int TotalPages =>
+            FullData == null || PageSize <= 0
+                ? 0
+                : (int)Math.Ceiling(TotalRows / (double)PageSize);
+
+        public PropertyGrid(DataTable? fullData, DataGridView grid, ResultTabUI typeResource)
+        {
+            FullData = fullData;
+            Grid = grid;
+            TypeResource = typeResource;
+        }
+
+        public void ShowPage(int pageIndex)
+        {
+          
+            if (FullData == null || FullData.Rows.Count == 0)
+            {
+                Grid.DataSource = null;
+                CurrentPage = 0;
+                PageChanged?.Invoke(this, EventArgs.Empty);
+                return;
+            }
+
+            if (pageIndex <=0)
+               pageIndex = 0;
+            if (pageIndex >= TotalPages)
+                pageIndex = TotalPages - 1;
+
+
+            var rows = FullData.AsEnumerable()
+                               .Skip(pageIndex * PageSize)
+                               .Take(PageSize);
+
+            DataTable pageTable;
+
+            if (rows.Any())
+                pageTable = rows.CopyToDataTable();
+            else
+                pageTable = FullData.Clone(); // misma estructura, 0 filas
+
+            Grid.SuspendLayout();
+            try
+            {
+                Grid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None;
+                Grid.DataSource = pageTable;
+            }
+            finally
+            {
+                Grid.ResumeLayout();
+            }
+
+            CurrentPage = pageIndex;
+            PageChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        public void ShowFirstPage() => ShowPage(0);
+        public void ShowNextPage() => ShowPage(CurrentPage + 1);
+        public void ShowPreviousPage() => ShowPage(CurrentPage - 1);
+    }
+
+
+  
+}
+
+public class MultiItem
     {
         public string Value { get; set; } = "";
         public string Text { get; set; } = "";
@@ -1540,4 +1848,4 @@ namespace OracleReportExport.Presentation.Desktop
     }
 
     #endregion
-}
+

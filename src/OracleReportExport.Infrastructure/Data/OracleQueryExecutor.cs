@@ -112,10 +112,24 @@ namespace OracleReportExport.Infrastructure.Data
         }
     }
 
+        public async Task<bool> ValidateSqlSyntaxAsync(string sql,
+                 ConnectionInfo connection,
+                 CancellationToken ct)
+                    {
+                        using var conn = (OracleConnection)_connectionFactory.CreateConnection(
+                            string.Concat(connection.Id, "_", connection.DisplayName));
 
+                        await conn.OpenAsync(ct);
 
+                        using var cmd = conn.CreateCommand();
+                        cmd.CommandText = $"EXPLAIN PLAN FOR {sql}";
 
+                        using var registration = ct.Register(() => cmd.Cancel());
 
+                       var result= await cmd.ExecuteNonQueryAsync(ct);
+                          return result >= 0;
+            // Si la sintaxis es mala -> OracleException ORA-009xx
+        }
 
-}
+    }
 }

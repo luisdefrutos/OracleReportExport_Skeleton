@@ -11,4 +11,9 @@ public interface IQueryExecutor
         ConnectionInfo connectionInfo,
         string reportId,
         CancellationToken ct = default);
+
+    Task<bool> ValidateSqlSyntaxAsync(
+      string sql,
+      ConnectionInfo connection,
+      CancellationToken ct);
 }
