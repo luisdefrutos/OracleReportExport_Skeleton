@@ -46,8 +46,8 @@ namespace OracleReportExport.Presentation.Desktop
                 // Log.Fatal(ex, "Error global en {Context}", context);
                 var messageSettings = String.IsNullOrWhiteSpace(messageAdHoc) ? ex.Message : messageAdHoc;
                 var msgContext = string.IsNullOrWhiteSpace(context) ? "" : $"[{context}] ";
-                var message = $"{msgContext}Se ha producido un error.\n\n" +
-                              $"{messageSettings}\n\n" +
+                var message = $"{msgContext}Se ha producido un error.\n" +
+                              $"{messageSettings}\n" +
                               "Si el problema persiste, contacte con el soporte.";
 
                 MessageBox.Show(message,
