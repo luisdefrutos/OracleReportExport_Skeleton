@@ -26,93 +26,27 @@ using System.Xml;
 
 namespace OracleReportExport.Presentation.Desktop
 {
+
+
     public class MainForm : Form
     {
         #region Campos privados
 
         private readonly TabControl _tabControl = new();
         private TabPage _tabPredefinidos;
+        private TabPage _tabAdHoc;
         private static readonly Regex RegexParams = new(@"(?<!:):(?!\d)\w+", RegexOptions.Compiled);
 
-        // Paginadores lógicos (uno por pestaña)
+        // Paginadores (uno por pestaña)
         private PropertyGrid? _pagerPredef;
         private PropertyGrid? _pagerAdHoc;
 
-        // Botones de paginación AdHoc
-        private readonly Button _btnPrevPageAdHoc = new()
-        {
-            Name = "_btnPrevPageAdHoc",
-            Text = "< Anterior",
-            AutoSize = true,
-            Visible = false,
-            Enabled = false
-        };
+        private readonly Button _btnPrevPage = new() { Text = "< Anterior", Name = "_btnPrevPage", AutoSize = true, Visible = false };
+        private readonly Button _btnNextPage = new() { Text = "Siguiente >", Name = "_btnNextPage", AutoSize = true, Visible = false };
 
-        private readonly Button _btnNextPageAdHoc = new()
-        {
-            Name = "_btnNextPageAdHoc",
-            Text = "Siguiente >",
-            AutoSize = true,
-            Visible = false,
-            Enabled = false
-        };
+        private readonly Button _btnPrevPageAdHoc = new() { Text = "< Anterior", Name = "_btnPrevPageAdHoc", AutoSize = true, Visible = false };
+        private readonly Button _btnNextPageAdHoc = new() { Text = "Siguiente >", Name = "_btnNextPageAdHoc", AutoSize = true, Visible = false };
 
-        // Botones de paginación Predefinidos
-        private readonly Button _btnPrevPagePredef = new()
-        {
-            Name = "_btnPrevPagePredef",
-            Text = "< Anterior",
-            AutoSize = true,
-            Enabled = false
-        };
-
-        private readonly Button _btnNextPagePredef = new()
-        {
-            Name = "_btnNextPagePredef",
-            Text = "Siguiente >",
-            AutoSize = true,
-            Enabled = false
-        };
-
-        // Labels de estado por pestaña
-        private readonly Label _lblCountRowsPredef = new()
-        {
-            AutoSize = true,
-            ForeColor = SystemColors.ControlText,   // misma letra que el resto de la app
-            Margin = new Padding(4),
-            Visible = false
-        };
-
-        private readonly Label _lblCountRowsAdHoc = new()
-        {
-            AutoSize = true,
-            ForeColor = SystemColors.ControlText,
-            Margin = new Padding(4),
-            Visible = false
-        };
-
-        // Botones Excel por pestaña
-        private readonly Button _btnExcelPredef = new()
-        {
-            Name = "btnExportExcel_Predef",
-            Size = new Size(24, 24),
-            FlatStyle = FlatStyle.Flat,
-            TabStop = false,
-            Visible = false,
-            Tag = ResultTabUI.TabInitial
-        };
-
-        private readonly Button _btnExcelAdHoc = new()
-        {
-            Name = "btnExportExcel_AdHoc",
-            Size = new Size(24, 24),
-            FlatStyle = FlatStyle.Flat,
-            TabStop = false,
-            Visible = false,
-            Tag = ResultTabUI.TabSecundary
-        };
-
-        // Grids principales
         private readonly DataGridView _grid = new()
         {
             Dock = DockStyle.Fill,
@@ -126,20 +60,6 @@ namespace OracleReportExport.Presentation.Desktop
             ScrollBars = ScrollBars.Both
         };
 
-        private readonly DataGridView _gridAdHoc = new()
-        {
-            Dock = DockStyle.Fill,
-            ReadOnly = true,
-            AllowUserToAddRows = false,
-            AllowUserToResizeColumns = false,
-            AllowUserToResizeRows = false,
-            ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing,
-            RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.DisableResizing,
-            AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells,
-            ScrollBars = ScrollBars.Both
-        };
-
-        // Conexiones
         private readonly CheckedListBox _chkConnections = new()
         {
             Dock = DockStyle.Left,
@@ -156,7 +76,6 @@ namespace OracleReportExport.Presentation.Desktop
             ScrollAlwaysVisible = true
         };
 
-        // Botones de selección de conexiones
         private readonly Button _btnSelectAll = new()
         {
             Text = "Marcar todas",
@@ -217,7 +136,6 @@ namespace OracleReportExport.Presentation.Desktop
             Width = 260
         };
 
-        // Paneles superiores
         private readonly FlowLayoutPanel _topPanel = new()
         {
             Dock = DockStyle.Top,
@@ -238,7 +156,6 @@ namespace OracleReportExport.Presentation.Desktop
             Margin = new Padding(0, 0, 0, 10)
         };
 
-        // Parámetros
         private readonly GroupBox _grpParametros = new()
         {
             Text = "Parámetros",
@@ -258,13 +175,12 @@ namespace OracleReportExport.Presentation.Desktop
             Margin = new Padding(0)
         };
 
-        // SQL AdHoc
         private readonly RichTextBox _txtSqlAdHoc = new()
         {
             Dock = DockStyle.Fill,
             Font = new System.Drawing.Font("Consolas", 10f),
-            BackColor = System.Drawing.Color.FromArgb(232, 238, 247),
-            ForeColor = System.Drawing.Color.FromArgb(28, 59, 106),
+            BackColor = System.Drawing.Color.FromArgb(232, 238, 247),   // (#E8EEF7)
+            ForeColor = System.Drawing.Color.FromArgb(28, 59, 106),     // (#1C3B6A)
             ScrollBars = RichTextBoxScrollBars.Both,
             BorderStyle = BorderStyle.FixedSingle,
             ShortcutsEnabled = true
@@ -274,10 +190,31 @@ namespace OracleReportExport.Presentation.Desktop
         {
             AutoSize = true,
             Text = "Ejecutar SQL",
-            Visible = true
+            Visible = true,
         };
 
+        // Grid para resultados de SQL avanzada
+        private readonly DataGridView _gridAdHoc = new()
+        {
+            Dock = DockStyle.Fill,
+            ReadOnly = true,
+            AllowUserToAddRows = false,
+            AllowUserToResizeColumns = false,
+            AllowUserToResizeRows = false,
+            ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing,
+            RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.DisableResizing,
+            AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells,
+            ScrollBars = ScrollBars.Both
+        };
+
+     
+
         private readonly Dictionary<string, Control> _parameterControls = new();
+
+        private Label? _lblCountRows;
+        private Button? _btnExcel;
+        private Label? _lblCountRowsAdHoc;
+        private Button? _btnExcelAdHoc;
 
         private readonly ConnectionCatalogService _connectionCatalog;
         private readonly IReportService _reportService;
@@ -286,6 +223,8 @@ namespace OracleReportExport.Presentation.Desktop
         private readonly IOracleConnectionFactory _connectionFactory;
 
         private ReportDefinition? _currentReport;
+
+        private readonly ToolTip _toolTip = new ToolTip();
 
         #endregion
 
@@ -301,7 +240,33 @@ namespace OracleReportExport.Presentation.Desktop
             _tabControl.Dock = DockStyle.Fill;
 
             _tabPredefinidos = new TabPage("Informes predefinidos");
-            var tabAdHoc = new TabPage("SQL avanzada");
+            _tabAdHoc = new TabPage("SQL avanzada");
+
+            // --- Pestaña de informes predefinidos ---
+            _tabPredefinidos.Controls.Add(_grid);
+            _tabPredefinidos.Controls.Add(_chkConnections);
+            _tabPredefinidos.Controls.Add(_grpParametros);
+            _tabPredefinidos.Controls.Add(_topPanel);
+
+            // Panel de paginación para predefinidos
+            var paginationPanelPredef = new FlowLayoutPanel
+            {
+                FlowDirection = FlowDirection.RightToLeft,
+                Dock = DockStyle.Bottom,
+                AutoSize = true,
+                Padding = new Padding(5),
+                Margin = new Padding(0),
+                WrapContents = false
+            };
+
+            _btnPrevPage.Click += _btnPrevPage_Click;
+            _btnNextPage.Click += _btnNextPage_Click;
+
+            paginationPanelPredef.Controls.Add(_btnNextPage);
+            paginationPanelPredef.Controls.Add(_btnPrevPage);
+
+            _tabPredefinidos.Controls.Add(paginationPanelPredef);
+
 
             _connectionCatalog = new ConnectionCatalogService();
             _connectionFactory = new OracleConnectionFactory();
@@ -313,97 +278,13 @@ namespace OracleReportExport.Presentation.Desktop
             ConfigurarTopPanel();
             ConfigurarGrupoParametros();
 
-            var resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
-
-            // ------------------------------------------------------------------
-            // PESTAÑA INFORMES PREDEFINIDOS
-            // ------------------------------------------------------------------
-
-            var rightPredefLayout = new TableLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                ColumnCount = 1,
-                RowCount = 4
-            };
-            rightPredefLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));        // parámetros
-            rightPredefLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));        // info (icono+texto)
-            rightPredefLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));   // grid
-            rightPredefLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));        // paginación
-
-            // 0) Parámetros
-            rightPredefLayout.Controls.Add(_grpParametros, 0, 0);
-
-            // 1) Panel superior info (icono + texto) alineado a la derecha
-            var infoPredefOuter = new Panel
-            {
-                Dock = DockStyle.Fill,
-                Height = 26
-            };
-            var infoPredefRight = new FlowLayoutPanel
-            {
-                Dock = DockStyle.Right,
-                FlowDirection = FlowDirection.LeftToRight,
-                AutoSize = true,
-                WrapContents = false,
-                Padding = new Padding(5, 3, 5, 0),
-                Margin = new Padding(0)
-            };
-
-            _btnExcelPredef.FlatAppearance.BorderSize = 0;
-            var iconObj1 = resources.GetObject("Excel_24");
-            if (iconObj1 is Icon excelIcon1)
-                _btnExcelPredef.Image = excelIcon1.ToBitmap();
-
-            infoPredefRight.Controls.Add(_btnExcelPredef);     // primero icono
-            infoPredefRight.Controls.Add(_lblCountRowsPredef); // luego texto
-
-            infoPredefOuter.Controls.Add(infoPredefRight);
-            rightPredefLayout.Controls.Add(infoPredefOuter, 0, 1);
-
-            // 2) Grid
-            _grid.Dock = DockStyle.Fill;
-            rightPredefLayout.Controls.Add(_grid, 0, 2);
-
-            // 3) Panel inferior de paginación
-            var pagerPredefOuter = new Panel
-            {
-                Dock = DockStyle.Fill,
-                Height = 32
-            };
-            var pagerPredefRight = new FlowLayoutPanel
-            {
-                Dock = DockStyle.Right,
-                FlowDirection = FlowDirection.LeftToRight,
-                AutoSize = true,
-                WrapContents = false,
-                Padding = new Padding(5, 3, 5, 3),
-                Margin = new Padding(0)
-            };
-
-            pagerPredefRight.Controls.Add(_btnPrevPagePredef);
-            pagerPredefRight.Controls.Add(_btnNextPagePredef);
-
-            pagerPredefOuter.Controls.Add(pagerPredefRight);
-            rightPredefLayout.Controls.Add(pagerPredefOuter, 0, 3);
-
-            var mainPredefPanel = new Panel
-            {
-                Dock = DockStyle.Fill
-            };
-
-            _chkConnections.Dock = DockStyle.Left;
-            _chkConnections.Width = 260;
-
-            mainPredefPanel.Controls.Add(rightPredefLayout);
-            mainPredefPanel.Controls.Add(_chkConnections);
-
-            _tabPredefinidos.Controls.Add(mainPredefPanel);
+            // --- Pestaña de informes predefinidos ---
+            _tabPredefinidos.Controls.Add(_grid);
+            _tabPredefinidos.Controls.Add(_chkConnections);
+            _tabPredefinidos.Controls.Add(_grpParametros);
             _tabPredefinidos.Controls.Add(_topPanel);
 
-            // ------------------------------------------------------------------
-            // PESTAÑA SQL AVANZADA (ADHOC)
-            // ------------------------------------------------------------------
-
+            // --- Pestaña SQL avanzada ---
             _chkConnectionsAdHoc.Items.AddRange(
                 _chkConnections.Items.OfType<ConnectionInfo>().ToArray()
             );
@@ -444,7 +325,7 @@ namespace OracleReportExport.Presentation.Desktop
             ButtonAdHoc.Anchor = AnchorStyles.Left;
             ButtonAdHoc.Margin = new Padding(0, 5, 10, 5);
             ButtonAdHoc.Click += ButtonAdHoc_Click;
-            _topPanelAdHoc.Controls.Add(ButtonAdHoc); // botón de ejecución el más a la derecha
+            _topPanelAdHoc.Controls.Add(ButtonAdHoc);
 
             var rightPanelAdHoc = new Panel
             {
@@ -457,273 +338,136 @@ namespace OracleReportExport.Presentation.Desktop
                 ColumnCount = 1,
                 RowCount = 4
             };
-            layoutAdHoc.RowStyles.Add(new RowStyle(SizeType.Percent, 40f));   // SQL
-            layoutAdHoc.RowStyles.Add(new RowStyle(SizeType.AutoSize));       // info (icono+texto)
-            layoutAdHoc.RowStyles.Add(new RowStyle(SizeType.Percent, 60f));   // grid
-            layoutAdHoc.RowStyles.Add(new RowStyle(SizeType.AutoSize));       // paginación
 
-            // 0) editor SQL
+            var paginationPanel = new FlowLayoutPanel
+            {
+                FlowDirection = FlowDirection.RightToLeft,
+                Dock = DockStyle.Fill,
+                AutoSize = true,
+                Padding = new Padding(5),
+                Margin = new Padding(0),
+                WrapContents = false
+            };
+
+            var separationPanel = new FlowLayoutPanel
+            {
+                FlowDirection = FlowDirection.RightToLeft,
+                Dock = DockStyle.None,
+                Height = 20
+            };
+
+            layoutAdHoc.RowStyles.Add(new RowStyle(SizeType.Percent, 40f));   // RichTextBox
+            layoutAdHoc.RowStyles.Add(new RowStyle(SizeType.AutoSize));       // Separación
+            layoutAdHoc.RowStyles.Add(new RowStyle(SizeType.Percent, 40f));   // Grid
+            layoutAdHoc.RowStyles.Add(new RowStyle(SizeType.AutoSize));       // Paginación
+
             _txtSqlAdHoc.Dock = DockStyle.Fill;
             var menu = new ContextMenuStrip();
-            menu.Items.Add("Copiar", null, TxtSql_Copy_Click);
-            menu.Items.Add("Pegar", null, TxtSql_Paste_Click);
-            menu.Items.Add("Cortar", null, TxtSql_Cut_Click);
-            menu.Items.Add("Seleccionar todo", null, TxtSql_SelectAll_Click);
+            menu.Items.Add("Copiar", null, new EventHandler((_, __) => _txtSqlAdHoc.Copy()));
+            menu.Items.Add("Pegar", null, new EventHandler((_, __) => _txtSqlAdHoc.Paste()));
+            menu.Items.Add("Cortar", null, new EventHandler((_, __) => _txtSqlAdHoc.Cut()));
+            menu.Items.Add("Seleccionar todo", null, new EventHandler((_, __) => _txtSqlAdHoc.SelectAll()));
             _txtSqlAdHoc.ContextMenuStrip = menu;
+            _txtSqlAdHoc.Enter += _txtSqlAdHoc_Enter;
+            _txtSqlAdHoc.Leave += _txtSqlAdHoc_Leave;
 
             layoutAdHoc.Controls.Add(_txtSqlAdHoc, 0, 0);
 
-            // 1) panel info AdHoc (icono + texto) alineado a la derecha
-            var infoAdHocOuter = new Panel
-            {
-                Dock = DockStyle.Fill,
-                Height = 26
-            };
-            var infoAdHocRight = new FlowLayoutPanel
-            {
-                Dock = DockStyle.Right,
-                FlowDirection = FlowDirection.LeftToRight,
-                AutoSize = true,
-                WrapContents = false,
-                Padding = new Padding(5, 3, 5, 0),
-                Margin = new Padding(0)
-            };
-
-            _btnExcelAdHoc.FlatAppearance.BorderSize = 0;
-            var iconObj2 = resources.GetObject("Excel_24");
-            if (iconObj2 is Icon excelIcon2)
-                _btnExcelAdHoc.Image = excelIcon2.ToBitmap();
-
-            infoAdHocRight.Controls.Add(_btnExcelAdHoc);      // icono
-            infoAdHocRight.Controls.Add(_lblCountRowsAdHoc);  // texto
-            infoAdHocOuter.Controls.Add(infoAdHocRight);
-            layoutAdHoc.Controls.Add(infoAdHocOuter, 0, 1);
-
-            // 2) grid resultados
             _gridAdHoc.Dock = DockStyle.Fill;
             layoutAdHoc.Controls.Add(_gridAdHoc, 0, 2);
 
-            // 3) panel inferior de paginación AdHoc
-            var pagerAdHocOuter = new Panel
-            {
-                Dock = DockStyle.Fill,
-                Height = 32
-            };
-            var pagerAdHocRight = new FlowLayoutPanel
-            {
-                Dock = DockStyle.Right,
-                FlowDirection = FlowDirection.LeftToRight,
-                AutoSize = true,
-                WrapContents = false,
-                Padding = new Padding(5, 3, 5, 3),
-                Margin = new Padding(0)
-            };
+            layoutAdHoc.Controls.Add(separationPanel, 0, 1);
 
-            pagerAdHocRight.Controls.Add(_btnPrevPageAdHoc);
-            pagerAdHocRight.Controls.Add(_btnNextPageAdHoc);
+            _btnPrevPageAdHoc.Click += _btnPrevPageAdHoc_Click;
+            _btnNextPageAdHoc.Click += _btnNextPageAdHoc_Click;
 
-            pagerAdHocOuter.Controls.Add(pagerAdHocRight);
-            layoutAdHoc.Controls.Add(pagerAdHocOuter, 0, 3);
+            paginationPanel.Controls.Add(_btnNextPageAdHoc);
+            paginationPanel.Controls.Add(_btnPrevPageAdHoc);
+
+            layoutAdHoc.Controls.Add(paginationPanel, 0, 3);
 
             rightPanelAdHoc.Controls.Add(layoutAdHoc);
 
-            _chkConnectionsAdHoc.Dock = DockStyle.Left;
-            _chkConnectionsAdHoc.Width = 260;
-
-            tabAdHoc.Controls.Add(rightPanelAdHoc);
-            tabAdHoc.Controls.Add(_chkConnectionsAdHoc);
-            tabAdHoc.Controls.Add(_topPanelAdHoc);
+            _tabAdHoc.Controls.Add(rightPanelAdHoc);
+            _tabAdHoc.Controls.Add(_chkConnectionsAdHoc);
+            _tabAdHoc.Controls.Add(_topPanelAdHoc);
 
             _tabControl.TabPages.Add(_tabPredefinidos);
-            _tabControl.TabPages.Add(tabAdHoc);
+            _tabControl.TabPages.Add(_tabAdHoc);
 
             Controls.Add(_tabControl);
 
-            // Eventos paginación
-            _btnPrevPageAdHoc.Click += _btnPrevPageAdHoc_Click;
-            _btnNextPageAdHoc.Click += _btnNextPageAdHoc_Click;
-            _btnPrevPagePredef.Click += _btnPrevPagePredef_Click;
-            _btnNextPagePredef.Click += _btnNextPagePredef_Click;
+            // OwnerDraw para colorear pestaña activa
+            _tabControl.DrawMode = TabDrawMode.OwnerDrawFixed;
+            _tabControl.DrawItem += TabControl_DrawItem;
+            _tabControl.SelectedIndexChanged += TabControl_SelectedIndexChanged;
 
-            // Excel
-            _btnExcelPredef.Click += ExportGridWithClosedXml;
-            _btnExcelAdHoc.Click += ExportGridWithClosedXml;
+            // Botón por defecto inicial: informes predefinidos
+            this.AcceptButton = _btnRunReport;
+
+            // Aplicar tema visual
+            ApplyTheme();
+
 
             Load += MainForm_LoadAsync;
         }
 
-        #endregion
+        private void _btnNextPage_Click(object? sender, EventArgs e)
+        {
+            if (_pagerPredef == null) return;
 
-        #region Eventos UI básicos (context menu SQL)
+            _pagerPredef.ShowNextPage();
+            PaintControlsTopGrid(_grid, ResultTabUI.TabInitial, _pagerPredef);
+        }
 
-        private void TxtSql_Copy_Click(object sender, EventArgs e) => _txtSqlAdHoc.Copy();
-        private void TxtSql_Paste_Click(object sender, EventArgs e) => _txtSqlAdHoc.Paste();
-        private void TxtSql_Cut_Click(object sender, EventArgs e) => _txtSqlAdHoc.Cut();
-        private void TxtSql_SelectAll_Click(object sender, EventArgs e) => _txtSqlAdHoc.SelectAll();
+        private void _btnPrevPage_Click(object? sender, EventArgs e)
+        {
+            if (_pagerPredef == null) return;
 
-        #endregion
+            _pagerPredef.ShowPreviousPage();
+            PaintControlsTopGrid(_grid, ResultTabUI.TabInitial, _pagerPredef);
+        }
 
-        #region Eventos paginación
 
         private void _btnNextPageAdHoc_Click(object? sender, EventArgs e)
         {
             if (_pagerAdHoc == null) return;
+
             _pagerAdHoc.ShowNextPage();
-            ActualizarPaginacionAdHoc();
+            PaintControlsTopGrid(_gridAdHoc, ResultTabUI.TabSecundary, _pagerAdHoc);
         }
 
         private void _btnPrevPageAdHoc_Click(object? sender, EventArgs e)
         {
             if (_pagerAdHoc == null) return;
+
             _pagerAdHoc.ShowPreviousPage();
-            ActualizarPaginacionAdHoc();
+            PaintControlsTopGrid(_gridAdHoc, ResultTabUI.TabSecundary, _pagerAdHoc);
         }
-
-        private void _btnNextPagePredef_Click(object? sender, EventArgs e)
+        private void _txtSqlAdHoc_Enter(object sender, EventArgs e)
         {
-            if (_pagerPredef == null) return;
-            _pagerPredef.ShowNextPage();
-            ActualizarPaginacionPredefinidos();
-        }
-
-        private void _btnPrevPagePredef_Click(object? sender, EventArgs e)
-        {
-            if (_pagerPredef == null) return;
-            _pagerPredef.ShowPreviousPage();
-            ActualizarPaginacionPredefinidos();
-        }
-
-        #endregion
-
-        #region Inicialización de diseño
-
-        private void ConfigurarTopPanel()
-        {
-            _topPanel.Controls.Add(_btnSelectAll);
-            _topPanel.Controls.Add(_btnUnselectAll);
-
-            var sep = new Label
+            // Mientras escribo SQL, quiero que Enter sea solo salto de línea
+            if (_tabControl.SelectedTab == _tabAdHoc)
             {
-                AutoSize = true,
-                Margin = new Padding(20, 10, 0, 0),
-                Text = "|"
-            };
-            _topPanel.Controls.Add(sep);
-
-            var lblInforme = new Label
-            {
-                Text = "Informe:",
-                AutoSize = true,
-                Margin = new Padding(20, 10, 0, 0)
-            };
-            _topPanel.Controls.Add(lblInforme);
-
-            _topPanel.Controls.Add(_cmbReports);
-
-            // Queremos ejecutar informe a la derecha del todo:
-            _topPanel.Controls.Add(_btnVerConsulta);
-            _topPanel.Controls.Add(_btnRunReport);
-
-            _btnSelectAll.Tag = ResultTabUI.TabInitial;
-            _btnSelectAll.Click += BtnSelectAll_Click;
-            _btnUnselectAll.Tag = ResultTabUI.TabInitial;
-            _btnUnselectAll.Click += BtnUnselectAll_Click;
-
-            _btnRunReport.Click += BtnRunReport_Click;
-            _btnVerConsulta.Click += BtnVerConsulta_Click;
-            _cmbReports.SelectedIndexChanged += CmbReports_SelectedIndexChanged;
-        }
-
-        private void ConfigurarGrupoParametros()
-        {
-            _grpParametros.Controls.Clear();
-            _grpParametros.Controls.Add(_paramsPanel);
-            _grpParametros.Height = 160;
-        }
-
-        #endregion
-
-        #region Carga de datos
-
-        private void CargarConexiones()
-        {
-            var conexiones = _connectionCatalog
-                .GetAllConnections()
-                .OrderBy(c => c.Type)
-                .ThenBy(c => c.Id);
-
-            _chkConnections.Items.Clear();
-
-            var connectionCentral = conexiones
-                .Where(x => !string.IsNullOrEmpty(x.DisplayName) &&
-                            x.DisplayName.IndexOf("Central", StringComparison.OrdinalIgnoreCase) >= 0)
-                .ToList();
-
-            foreach (ConnectionInfo c in connectionCentral)
-            {
-                c.DisplayName = c.DisplayName!.ToUpperInvariant().Trim();
-                _chkConnections.Items.Add(c, false);
-            }
-
-            var connectionStation = conexiones
-                .Where(x => !string.IsNullOrEmpty(x.DisplayName) &&
-                            x.DisplayName.IndexOf("I.T.V.", StringComparison.OrdinalIgnoreCase) >= 0)
-                .ToList();
-
-            foreach (ConnectionInfo c in connectionStation)
-                _chkConnections.Items.Add(c, false);
-
-            var connectionUma = conexiones
-                .Where(x => !string.IsNullOrEmpty(x.DisplayName) &&
-                            x.DisplayName.IndexOf("U.M.A.", StringComparison.OrdinalIgnoreCase) >= 0)
-                .ToList();
-
-            foreach (ConnectionInfo c in connectionUma)
-                _chkConnections.Items.Add(c, false);
-
-            _chkConnections.AutoAdjustWidth();
-        }
-
-        private async Task LoadReportsAsync()
-        {
-            var reports = (await _reportService.GetAvailableReportsAsync()).ToList();
-
-            _cmbReports.DataSource = reports;
-            _cmbReports.DisplayMember = nameof(ReportDefinition.Name);
-            _cmbReports.ValueMember = nameof(ReportDefinition.Id);
-
-            if (reports.Any())
-            {
-                _cmbReports.SelectedIndex = 0;
+                this.AcceptButton = null;
             }
         }
 
-        private async void MainForm_LoadAsync(object? sender, EventArgs e)
+        private void _txtSqlAdHoc_Leave(object sender, EventArgs e)
         {
-            await LoadReportsAsync();
-        }
-
-        #endregion
-
-        #region Eventos de UI (conexiones y combo)
-
-        private void BtnSelectAll_Click(object? sender, EventArgs e)
-        {
-            if (sender is Button btn && btn.Tag is ResultTabUI typeExport)
+            // Al salir del editor, vuelvo a activar el botón por defecto de la pestaña
+            if (_tabControl.SelectedTab == _tabAdHoc)
             {
-                switch (typeExport)
-                {
-                    case ResultTabUI.TabInitial:
-                        SetAllConnectionsChecked(true, _chkConnections);
-                        break;
-                    case ResultTabUI.TabSecundary:
-                        SetAllConnectionsChecked(true, _chkConnectionsAdHoc);
-                        break;
-                }
+                this.AcceptButton = ButtonAdHoc;
             }
         }
 
-        private void BtnUnselectAll_Click(object? sender, EventArgs e)
+        private void _btnClearAdHoc_Click(object? sender, EventArgs e)
+        {
+            _txtSqlAdHoc.Clear();
+        }
+
+        private void _btnUnselectAllAdHoc_Click(object? sender, EventArgs e)
         {
             if (sender is Button btn && btn.Tag is ResultTabUI typeExport)
             {
@@ -755,170 +499,6 @@ namespace OracleReportExport.Presentation.Desktop
             }
         }
 
-        private void _btnUnselectAllAdHoc_Click(object? sender, EventArgs e)
-        {
-            if (sender is Button btn && btn.Tag is ResultTabUI typeExport)
-            {
-                switch (typeExport)
-                {
-                    case ResultTabUI.TabInitial:
-                        SetAllConnectionsChecked(false, _chkConnections);
-                        break;
-                    case ResultTabUI.TabSecundary:
-                        SetAllConnectionsChecked(false, _chkConnectionsAdHoc);
-                        break;
-                }
-            }
-        }
-
-        private void _btnClearAdHoc_Click(object? sender, EventArgs e)
-        {
-            _txtSqlAdHoc?.Clear();
-        }
-
-        private void CmbReports_SelectedIndexChanged(object? sender, EventArgs e)
-        {
-            if (_cmbReports.SelectedItem is not ReportDefinition report)
-                return;
-
-            CargarConexiones();
-            _grid.DataSource = null;
-
-            _pagerPredef = null;
-            ResetPaginacionPredefinidos();
-
-            _currentReport = report;
-            RenderParameters(report);
-        }
-
-        #endregion
-
-        #region Ejecución informes predefinidos
-
-        private async void BtnRunReport_Click(object? sender, EventArgs e)
-        {
-            var listConnectionsActive = GetSelectedConnections();
-
-            if (listConnectionsActive == null || listConnectionsActive.Count == 0)
-            {
-                MessageBox.Show(
-                    "Selecciona al menos una conexión para ejecutar el informe.",
-                    "Sin selección",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning);
-                return;
-            }
-
-            if (_cmbReports.SelectedItem is not ReportDefinition report)
-            {
-                MessageBox.Show(
-                    "Selecciona un informe en el combo.",
-                    "Informe no seleccionado",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning);
-                return;
-            }
-
-            _currentReport = report;
-            var parametros = BuildParametersFromUI();
-
-            if (_currentReport.Parameters != null &&
-                _currentReport.Parameters.Count > 0 &&
-                parametros.Count == 0)
-            {
-                return;
-            }
-
-            using var cts = new CancellationTokenSource();
-            using var loading = new LoadingForm("Cargando datos...", cts);
-
-            try
-            {
-                _pagerPredef = null;
-                _grid.DataSource = null;
-                ResetPaginacionPredefinidos();
-
-                RecursiveEnableControlsForm(this, false);
-                loading.Owner = this;
-                loading.Show();
-                loading.Refresh();
-                Enabled = false;
-                Cursor = Cursors.WaitCursor;
-
-                var resultReport = await Task.Run(() => _reportService.ExecuteReportAsync(
-                    report,
-                    parametros,
-                    listConnectionsActive,
-                    cts.Token));
-
-                if (resultReport != null && resultReport.Data != null)
-                {
-                    _pagerPredef = new PropertyGrid(
-                        resultReport.Data,
-                        _grid,
-                        ResultTabUI.TabInitial,
-                        (ReportDefinition)_cmbReports.SelectedItem);
-
-                    _pagerPredef.PageSize = 500;
-                    _pagerPredef.PageChanged += PagerPredef_PageChanged;
-                    _pagerPredef.ShowFirstPage();
-                    ActualizarPaginacionPredefinidos();
-                }
-
-                if (resultReport != null && resultReport.TimeoutConnections.Any())
-                {
-                    var estaciones = string.Join(", ", resultReport.TimeoutConnections);
-                    MessageBox.Show(
-                        $"No se ha podido obtener información de las siguientes conexiones (timeout):{Environment.NewLine}{estaciones}",
-                        "Aviso de Oracle",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Warning);
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                _grid.DataSource = null;
-                MessageBox.Show("Consulta cancelada por el usuario.", "Cancelado",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-            catch (OracleException ex) when (ex.Number == 1013)
-            {
-                _grid.DataSource = null;
-                MessageBox.Show("Consulta cancelada por el usuario.",
-                    "Cancelado",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Information);
-            }
-            catch (OracleException ex) when (ex.Number == 942)
-            {
-                GlobalExceptionHandler.Handle(ex, null,
-                    "La tabla o vista no existe en la base de datos. Verifique que está ejecutando " +
-                    "el informe correcto en la base de datos seleccionada.\n\n" +
-                    "Revise la consulta mediante el botón \"Ver consulta\" \n" +
-                    "Está ejecutando " +
-                    $"un informe de {_currentReport?.SourceType}.");
-                _grid.DataSource = null;
-            }
-            finally
-            {
-                RecursiveEnableControlsForm(this, true);
-                Cursor = Cursors.Default;
-                if (!loading.IsDisposed)
-                    loading.Close();
-                Enabled = true;
-                _btnUnselectAll.PerformClick();
-            }
-        }
-
-        private void PagerPredef_PageChanged(object? sender, EventArgs e)
-        {
-            ActualizarPaginacionPredefinidos();
-        }
-
-        #endregion
-
-        #region Ejecución SQL AdHoc
-
         private async Task<bool> ErrorSintaxAdHoc_Click(object? sender, EventArgs e)
         {
             bool stopProcess = false;
@@ -947,16 +527,13 @@ namespace OracleReportExport.Presentation.Desktop
             }
 
             var paramNames = DetectarParametros(sqlAdHocRichTxt);
-
             using var cts = new CancellationTokenSource();
             using (var loadingFormAdHoc = new LoadingForm("Validando sentencia ....", cts))
             {
                 try
                 {
-                    _pagerAdHoc = null;
                     _gridAdHoc.DataSource = null;
-                    ResetPaginacionAdHoc();
-
+                    RemoveControlsTopGrid(_gridAdHoc, ResultTabUI.TabSecundary);
                     RecursiveEnableControlsForm(this, false);
                     loadingFormAdHoc.Owner = this;
                     loadingFormAdHoc.Show();
@@ -994,8 +571,7 @@ namespace OracleReportExport.Presentation.Desktop
                 }
                 catch (OperationCanceledException)
                 {
-                    MessageBox.Show("Consulta cancelada por el usuario.", "Cancelado",
-                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show("Consulta cancelada por el usuario.", "Cancelado", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     return true;
                 }
                 catch (OracleException ex) when (ex.Number == 942)
@@ -1036,9 +612,8 @@ namespace OracleReportExport.Presentation.Desktop
             {
                 try
                 {
-                    _pagerAdHoc = null;
+                    RemoveControlsTopGrid(_gridAdHoc, ResultTabUI.TabSecundary);
                     _gridAdHoc.DataSource = null;
-                    ResetPaginacionAdHoc();
 
                     RecursiveEnableControlsForm(this, false);
                     loadingFormAdHoc.Owner = this;
@@ -1050,25 +625,20 @@ namespace OracleReportExport.Presentation.Desktop
                     var result = new Dictionary<string, object?>();
                     var sqlAdHoc = _txtSqlAdHoc.Text;
 
-                    var resultQuery = await Task.Run(() =>
-                        _reportService.ExecuteSQLAdHocAsync(sqlAdHoc, result, GetSelectedConnectionsAdHoc(), cts.Token));
+                    var resultQuery = await Task.Run(() => _reportService.ExecuteSQLAdHocAsync(sqlAdHoc, result, GetSelectedConnectionsAdHoc(), cts.Token));
 
                     if (resultQuery != null && resultQuery.Data != null)
                     {
                         _pagerAdHoc = new PropertyGrid(resultQuery.Data, _gridAdHoc, ResultTabUI.TabSecundary, null);
-                        _pagerAdHoc.PageSize = 500;
-                        _pagerAdHoc.PageChanged += PagerAdHoc_PageChanged;
+                        _pagerAdHoc.PageChanged += Pager_PageChanged;
                         _pagerAdHoc.ShowFirstPage();
-                        ActualizarPaginacionAdHoc();
+                        PaintControlsTopGrid(_gridAdHoc, ResultTabUI.TabSecundary, _pagerAdHoc);
                     }
                 }
                 catch (OperationCanceledException)
                 {
                     _gridAdHoc.DataSource = null;
-                    MessageBox.Show("Consulta cancelada por el usuario.",
-                        "Cancelado",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Information);
+                    MessageBox.Show("Consulta cancelada por el usuario.", "Cancelado", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 catch (OracleException ex) when (ex.Number == 942)
                 {
@@ -1097,10 +667,25 @@ namespace OracleReportExport.Presentation.Desktop
             }
         }
 
-        private void PagerAdHoc_PageChanged(object? sender, EventArgs e)
+        private void Pager_PageChanged(object? sender, EventArgs e)
         {
-            ActualizarPaginacionAdHoc();
+            if (sender is PropertyGrid propPag)
+            {
+                if (propPag == _pagerAdHoc)
+                {
+                    _btnPrevPageAdHoc.Enabled = propPag.CurrentPage > 0;
+                    _btnNextPageAdHoc.Enabled = propPag.CurrentPage < propPag.TotalPages - 1;
+                    RemoveControlsTopGrid(_gridAdHoc, ResultTabUI.TabSecundary);
+                }
+                else if (propPag == _pagerPredef)
+                {
+                    _btnPrevPage.Enabled = propPag.CurrentPage > 0;
+                    _btnNextPage.Enabled = propPag.CurrentPage < propPag.TotalPages - 1;
+                    RemoveControlsTopGrid(_grid, ResultTabUI.TabInitial);
+                }
+            }
         }
+
 
         private async Task<bool> ValidarSqlSinParametrosAsync(string sql, ConnectionInfo connectionForValidation, CancellationToken ct)
         {
@@ -1126,10 +711,6 @@ namespace OracleReportExport.Presentation.Desktop
                 .ToList();
         }
 
-        #endregion
-
-        #region Métodos privados de ayuda (UI, parámetros, paginación)
-
         private void RecursiveEnableControlsForm(Control control, bool changeStated)
         {
             if (control == null)
@@ -1138,10 +719,7 @@ namespace OracleReportExport.Presentation.Desktop
             if (control.Name.Contains("LoadingForm"))
                 return;
 
-            if (control.Name.Contains("_btnPrevPageAdHoc") ||
-                control.Name.Contains("_btnNextPageAdHoc") ||
-                control.Name.Contains("_btnPrevPagePredef") ||
-                control.Name.Contains("_btnNextPagePredef"))
+            if (control.Name.Contains("_btnPrevPageAdHoc") || control.Name.Contains("_btnNextPageAdHoc"))
                 return;
 
             control.Enabled = changeStated;
@@ -1150,123 +728,569 @@ namespace OracleReportExport.Presentation.Desktop
                 RecursiveEnableControlsForm(child, changeStated);
         }
 
+        private async void MainForm_LoadAsync(object? sender, EventArgs e)
+        {
+            await LoadReportsAsync();
+        }
+
+        #endregion
+
+        #region Inicialización de diseño
+
+        private void ConfigurarTopPanel()
+        {
+            _topPanel.Controls.Add(_btnSelectAll);
+            _topPanel.Controls.Add(_btnUnselectAll);
+
+            var sep = new Label
+            {
+                AutoSize = true,
+                Margin = new Padding(20, 10, 0, 0),
+                Text = "|"
+            };
+            _topPanel.Controls.Add(sep);
+
+            var lblInforme = new Label
+            {
+                Text = "Informe:",
+                AutoSize = true,
+                Margin = new Padding(20, 10, 0, 0)
+            };
+            _topPanel.Controls.Add(lblInforme);
+
+            _topPanel.Controls.Add(_cmbReports);
+            _topPanel.Controls.Add(_btnVerConsulta);
+            _topPanel.Controls.Add(_btnRunReport);
+
+            _btnSelectAll.Tag = ResultTabUI.TabInitial;
+            _btnSelectAll.Click += BtnSelectAll_Click;
+            _btnUnselectAll.Click += BtnUnselectAll_Click;
+            _btnRunReport.Click += BtnRunReport_Click;
+            _btnVerConsulta.Click += BtnVerConsulta_Click;
+            _cmbReports.SelectedIndexChanged += CmbReports_SelectedIndexChanged;
+        }
+
+        private void ConfigurarGrupoParametros()
+        {
+            _grpParametros.Controls.Clear();
+            _grpParametros.Controls.Add(_paramsPanel);
+            _grpParametros.Height = 160;
+        }
+
+        #endregion
+
+        #region Tema visual
+
+        private void ApplyTheme()
+        {
+            this.BackColor = AppTheme.FormBackColor;
+
+            _topPanel.BackColor = AppTheme.TopPanelBackColor;
+            _topPanelAdHoc.BackColor = AppTheme.TopPanelBackColor;
+            _grpParametros.BackColor = AppTheme.GroupBoxBackColor;
+
+            ApplyGridTheme(_grid);
+            ApplyGridTheme(_gridAdHoc);
+
+            StylePrimaryButton(_btnRunReport);
+            StylePrimaryButton(ButtonAdHoc);
+
+            StyleSecondaryButton(_btnSelectAll);
+            StyleSecondaryButton(_btnUnselectAll);
+            StyleSecondaryButton(_btnSelectAllAdHoc);
+            StyleSecondaryButton(_btnUnselectAllAdHoc);
+            StyleSecondaryButton(_btnClearAdHoc);
+            StyleSecondaryButton(_btnVerConsulta);
+            StyleSecondaryButton(_btnPrevPageAdHoc);
+            StyleSecondaryButton(_btnNextPageAdHoc);
+            StyleSecondaryButton(_btnPrevPage);       
+            StyleSecondaryButton(_btnNextPage);       
+        }
+
+        private static void ApplyAlternateRowStyle(DataGridView dgv)
+        {
+            dgv.EnableHeadersVisualStyles = false;
+
+            // Cabecera
+            dgv.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(45, 45, 48);
+            dgv.ColumnHeadersDefaultCellStyle.ForeColor = Color.White;
+            dgv.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+
+            // Fondo general
+            dgv.BackgroundColor = Color.White;
+            dgv.DefaultCellStyle.BackColor = Color.White;
+
+            // Alternancia más marcada
+            dgv.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(235, 244, 255); // azul clarito
+            dgv.AlternatingRowsDefaultCellStyle.ForeColor = Color.Black;
+
+            // Bordes y selección
+            dgv.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
+            dgv.GridColor = Color.LightGray;
+
+            dgv.DefaultCellStyle.SelectionBackColor = Color.FromArgb(51, 153, 255);
+            dgv.DefaultCellStyle.SelectionForeColor = Color.White;
+
+            // Ajustes visuales extra
+            dgv.RowHeadersVisible = false;
+            dgv.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+        }
+
+
+        private void ApplyGridTheme(DataGridView grid)
+        {
+            grid.BackgroundColor = AppTheme.GridBackColor;
+            grid.DefaultCellStyle.BackColor = AppTheme.GridBackColor;
+            grid.DefaultCellStyle.ForeColor = AppTheme.GridForeColor;
+            grid.BorderStyle = BorderStyle.FixedSingle;
+            grid.GridColor = AppTheme.GridBorderColor;
+            grid.DefaultCellStyle.Font = this.Font;
+
+            grid.EnableHeadersVisualStyles = false;
+            grid.ColumnHeadersDefaultCellStyle.BackColor = AppTheme.GridHeaderBackColor;
+            grid.ColumnHeadersDefaultCellStyle.ForeColor = AppTheme.GridHeaderForeColor;
+            grid.ColumnHeadersDefaultCellStyle.Font = new Font(grid.Font, FontStyle.Bold);
+
+            grid.AlternatingRowsDefaultCellStyle.BackColor = AppTheme.GridAlternateRowColor;
+        }
+
+        private void StylePrimaryButton(Button btn)
+        {
+            btn.FlatStyle = FlatStyle.Flat;
+            btn.FlatAppearance.BorderSize = 0;
+            btn.BackColor = AppTheme.PrimaryButtonBackColor;
+            btn.ForeColor = AppTheme.PrimaryButtonForeColor;
+            btn.Padding = new Padding(6, 2, 6, 2);
+        }
+
+        private void StyleSecondaryButton(Button btn)
+        {
+            btn.FlatStyle = FlatStyle.Flat;
+            btn.FlatAppearance.BorderSize = 0;
+            btn.BackColor = AppTheme.SecondaryButtonBackColor;
+            btn.ForeColor = AppTheme.SecondaryButtonForeColor;
+            btn.Padding = new Padding(6, 2, 6, 2);
+        }
+
+        private void TabControl_DrawItem(object sender, DrawItemEventArgs e)
+        {
+            TabControl tab = (TabControl)sender;
+            TabPage page = tab.TabPages[e.Index];
+
+            bool isSelected = (e.Index == tab.SelectedIndex);
+
+            Color backColor = isSelected
+                ? AppTheme.ActiveTabBackColor
+                : AppTheme.InactiveTabBackColor;
+
+            Color borderColor = isSelected
+                ? AppTheme.ActiveTabBorderColor
+                : AppTheme.InactiveTabBorderColor;
+
+            using (var backBrush = new SolidBrush(backColor))
+            using (var borderPen = new Pen(borderColor))
+            {
+                e.Graphics.FillRectangle(backBrush, e.Bounds);
+                e.Graphics.DrawRectangle(borderPen, e.Bounds);
+            }
+
+            TextRenderer.DrawText(
+                e.Graphics,
+                page.Text,
+                tab.Font,
+                e.Bounds,
+                Color.Black,
+                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
+        }
+
+        private void TabControl_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (_tabControl.SelectedTab == _tabPredefinidos)
+            {
+                this.AcceptButton = _btnRunReport;
+            }
+            else
+            {
+                this.AcceptButton = _txtSqlAdHoc.Focused ? null : ButtonAdHoc;
+            }
+        }
+
+        #endregion
+
+        #region Carga de datos
+
+        private void CargarConexiones()
+        {
+            var conexiones = _connectionCatalog
+                .GetAllConnections()
+                .OrderBy(c => c.Type)
+                .ThenBy(c => c.Id);
+
+            _chkConnections.Items.Clear();
+
+            var connectionCentral = conexiones.Where(x => !string.IsNullOrEmpty(x.DisplayName) &&
+                x.DisplayName.IndexOf("Central", StringComparison.OrdinalIgnoreCase) >= 0).ToList();
+            foreach (ConnectionInfo c in connectionCentral)
+            {
+                c.DisplayName = c.DisplayName!.ToUpperInvariant().Trim();
+                _chkConnections.Items.Add(c, false);
+            }
+
+            var connectionStation = conexiones.Where(x => !string.IsNullOrEmpty(x.DisplayName) &&
+                x.DisplayName.IndexOf("I.T.V.", StringComparison.OrdinalIgnoreCase) >= 0).ToList();
+            foreach (ConnectionInfo c in connectionStation)
+                _chkConnections.Items.Add(c, false);
+
+            var connectionUma = conexiones.Where(x => !string.IsNullOrEmpty(x.DisplayName) &&
+                x.DisplayName.IndexOf("U.M.A.", StringComparison.OrdinalIgnoreCase) >= 0).ToList();
+            foreach (ConnectionInfo c in connectionUma)
+                _chkConnections.Items.Add(c, false);
+
+            _chkConnections.AutoAdjustWidth();
+        }
+
+        private async Task LoadReportsAsync()
+        {
+            var reports = (await _reportService.GetAvailableReportsAsync()).ToList();
+
+            _cmbReports.DataSource = reports;
+            _cmbReports.DisplayMember = nameof(ReportDefinition.Name);
+            _cmbReports.ValueMember = nameof(ReportDefinition.Id);
+
+            if (reports.Any())
+            {
+                _cmbReports.SelectedIndex = 0;
+            }
+        }
+
+        #endregion
+
+        #region Eventos de UI
+
+        private void BtnSelectAll_Click(object? sender, EventArgs e)
+        {
+            if (sender is Button btn && btn.Tag is ResultTabUI typeExport)
+            {
+                switch (typeExport)
+                {
+                    case ResultTabUI.TabInitial:
+                        SetAllConnectionsChecked(true, _chkConnections);
+                        break;
+                    case ResultTabUI.TabSecundary:
+                        SetAllConnectionsChecked(true, _chkConnectionsAdHoc);
+                        break;
+                }
+            }
+        }
+
+        private void BtnUnselectAll_Click(object? sender, EventArgs e)
+        {
+            if (sender is Button btn && btn.Tag is ResultTabUI typeExport)
+            {
+                switch (typeExport)
+                {
+                    case ResultTabUI.TabInitial:
+                        SetAllConnectionsChecked(false, _chkConnections);
+                        break;
+                    case ResultTabUI.TabSecundary:
+                        SetAllConnectionsChecked(false, _chkConnectionsAdHoc);
+                        break;
+                }
+            }
+        }
+
+        private void CmbReports_SelectedIndexChanged(object? sender, EventArgs e)
+        {
+            if (_cmbReports.SelectedItem is not ReportDefinition report)
+                return;
+
+            CargarConexiones();
+            _grid.DataSource = null;
+
+            if (_btnExcel != null)
+                _btnExcel.Visible = false;
+
+            if (_lblCountRows != null)
+                _lblCountRows.Text = string.Empty;
+
+            _currentReport = report;
+            RenderParameters(report);
+            RemoveControlsTopGrid(_grid, ResultTabUI.TabInitial);
+        }
+
+        private async void BtnRunReport_Click(object? sender, EventArgs e)
+        {
+            var listConnectionsActive = GetSelectedConnections();
+
+            if (listConnectionsActive == null || listConnectionsActive.Count == 0)
+            {
+                MessageBox.Show(
+                    "Selecciona al menos una conexión para ejecutar el informe.",
+                    "Sin selección",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (_cmbReports.SelectedItem is not ReportDefinition report)
+            {
+                MessageBox.Show(
+                    "Selecciona un informe en el combo.",
+                    "Informe no seleccionado",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+                return;
+            }
+
+            _currentReport = report;
+
+            var parametros = BuildParametersFromUI();
+
+            if (_currentReport.Parameters != null &&
+                _currentReport.Parameters.Count > 0 &&
+                parametros.Count == 0)
+            {
+                return;
+            }
+
+            using var cts = new CancellationTokenSource();
+            using var loading = new LoadingForm("Cargando datos...", cts);
+
+            try
+            {
+                RemoveControlsTopGrid(_grid, ResultTabUI.TabInitial);
+                _grid.DataSource = null;
+                RecursiveEnableControlsForm(this, false);
+                loading.Owner = this;
+                loading.Show();
+                loading.Refresh();
+                Enabled = false;
+                Cursor = Cursors.WaitCursor;
+
+                var resultReport = await Task.Run(() => _reportService.ExecuteReportAsync(
+                    report,
+                    parametros,
+                    listConnectionsActive,
+                    cts.Token));
+
+                if (resultReport != null && resultReport.Data != null)
+                {
+                    _pagerPredef = new PropertyGrid(resultReport.Data, _grid, ResultTabUI.TabInitial, (ReportDefinition)_cmbReports.SelectedItem);
+                    _pagerPredef.PageChanged += Pager_PageChanged;
+                    _pagerPredef.ShowFirstPage();
+                    PaintControlsTopGrid(_grid, ResultTabUI.TabInitial, _pagerPredef);
+                }
+
+                if (resultReport != null && resultReport.TimeoutConnections.Any())
+                {
+                    var estaciones = string.Join(", ", resultReport.TimeoutConnections);
+                    MessageBox.Show(
+                        $"No se ha podido obtener información de las siguientes conexiones (timeout):{Environment.NewLine}{estaciones}",
+                        "Aviso de Oracle",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                _grid.DataSource = null;
+                MessageBox.Show("Consulta cancelada por el usuario.", "Cancelado", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (OracleException ex) when (ex.Number == 1013)
+            {
+                _grid.DataSource = null;
+                MessageBox.Show("Consulta cancelada por el usuario.",
+                    "Cancelado",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+            }
+            catch (OracleException ex) when (ex.Number == 942)
+            {
+                GlobalExceptionHandler.Handle(ex, null,
+                    "La tabla o vista no existe en la base de datos. Verifique que está ejecutando " +
+                    "el informe correcto en la base de datos seleccionada.\n\n" +
+                    "Revise la consulta mediante el botón \"Ver consulta\" \n" +
+                    "Está ejecutando " +
+                    $"un informe de {_currentReport?.SourceType}.");
+                _grid.DataSource = null;
+            }
+            finally
+            {
+                RecursiveEnableControlsForm(this, true);
+                Cursor = Cursors.Default;
+                if (!loading.IsDisposed)
+                    loading.Close();
+                Enabled = true;
+                _btnUnselectAll.PerformClick();
+            }
+        }
+
+        private void RemoveControlsTopGrid(DataGridView grid, ResultTabUI nameTab)
+        {
+            if (grid == null || grid.Parent == null)
+                return;
+
+            Control parent = grid.Parent;
+
+            if (parent is TableLayoutPanel && parent.Parent != null)
+                parent = parent.Parent;
+
+            var listLbl = parent.Controls.OfType<Label>()
+                .Where(l => l.Name.Contains("lblCountRows_"))
+                .ToList();
+
+            foreach (var itemlbl in listLbl)
+                parent.Controls.Remove(itemlbl);
+
+            var listBtn = parent.Controls.OfType<Button>()
+                .Where(b => b.Name.Contains("btnExportExcel_"))
+                .ToList();
+
+            foreach (var itemButton in listBtn)
+                parent.Controls.Remove(itemButton);
+
+            if (nameTab == ResultTabUI.TabSecundary)
+            {
+                _btnNextPageAdHoc.Visible = false;
+                _btnPrevPageAdHoc.Visible = false;
+            }
+            else if (nameTab == ResultTabUI.TabInitial)
+            {
+                _btnNextPage.Visible = false;
+                _btnPrevPage.Visible = false;
+            }
+
+        }
+
+        private void PaintControlsTopGrid(DataGridView? grid, ResultTabUI nameTab, PropertyGrid pager)
+        {
+            if (grid == null || grid.Parent == null)
+                return;
+
+            Control parent = grid.Parent;
+
+            if (parent is TableLayoutPanel && parent.Parent != null)
+                parent = parent.Parent;
+
+            System.Drawing.Point gridLocationInParent = parent.PointToClient(
+                grid.Parent.PointToScreen(grid.Location));
+
+            string SufixLabel = pager.CurrentReport == null ? nameTab.ToString() : pager.CurrentReport.Id;
+
+            _lblCountRows = new Label
+            {
+                Name = $"lblCountRows_{SufixLabel}",
+                AutoSize = true,
+                ForeColor = SystemColors.ControlText,
+                BackColor = Color.Transparent,
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                Margin = new Padding(4)
+            };
+            parent.Controls.Add(_lblCountRows);
+
+            int? rowCount = pager.FullData?.Rows.Count;
+            if (rowCount > 0)
+                _lblCountRows.Text = $"Registros encontrados: {rowCount}. Cargando {((DataTable)grid.DataSource).Rows.Count} registros de página {pager.CurrentPage + 1} de {pager.TotalPages}";
+            else
+                _lblCountRows.Text = $"Registros encontrados: {rowCount}";
+
+            if (_lblCountRows.Top == 0 && _lblCountRows.Left == 0)
+            {
+                _lblCountRows.Top = gridLocationInParent.Y - _lblCountRows.Height - 18;
+                _lblCountRows.Left = parent.ClientSize.Width - _lblCountRows.Width - 10;
+            }
+            _lblCountRows.BringToFront();
+
+            string SufixExcel = pager.CurrentReport == null ? nameTab.ToString() : pager.CurrentReport.Id;
+
+            _btnExcel = new Button
+            {
+                Name = $"btnExportExcel_{SufixExcel}",
+                Size = new Size(24, 24),
+                FlatStyle = FlatStyle.Flat,
+                TabStop = false,
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                Visible = true,
+                Tag = nameTab
+            };
+
+            _btnExcel.FlatAppearance.BorderSize = 0;
+            var resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
+            var iconObj = resources.GetObject("Excel_24");
+            if (iconObj is Icon excelIcon)
+                _btnExcel.Image = excelIcon.ToBitmap();
+
+            _btnExcel.Click += ExportGridWithClosedXml;
+            parent.Controls.Add(_btnExcel);
+
+            if (_btnExcel.Top == 0 && _btnExcel.Left == 0)
+            {
+                _btnExcel.Top = _lblCountRows.Top - 4;
+                _btnExcel.Left = _lblCountRows.Left - _btnExcel.Width - 6;
+            }
+
+            _btnExcel.Visible = pager.FullData?.Rows.Count > 0;
+            _lblCountRows.BringToFront();
+            _btnExcel.BringToFront();
+
+            // Tooltip
+            _toolTip.SetToolTip(_btnExcel, "Exportar todos los registros a Excel");
+
+            // Mostrar/ocultar botones de paginación según el tab
+            if (pager.FullData?.Rows.Count > 0)
+            {
+                if (nameTab == ResultTabUI.TabSecundary)
+                {
+                    _btnNextPageAdHoc.Visible = pager.TotalPages > 1;
+                    _btnPrevPageAdHoc.Visible = pager.TotalPages > 1;
+                }
+                else if (nameTab == ResultTabUI.TabInitial)
+                {
+                    _btnNextPage.Visible = pager.TotalPages > 1;
+                    _btnPrevPage.Visible = pager.TotalPages > 1;
+                }
+            }
+
+        }
+
+        private void BtnVerConsulta_Click(object? sender, EventArgs e)
+        {
+            if (_currentReport == null)
+            {
+                MessageBox.Show("No hay informe seleccionado.", "Ver consulta",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            var initialConnection = _connectionCatalog
+                .GetAllConnections()
+                .FirstOrDefault(x => x.Type.ToUpper().Contains(_currentReport.SourceType.ToString().ToUpper()));
+
+            if (initialConnection == null)
+            {
+                MessageBox.Show("No se encontró una conexión adecuada para ver la consulta.",
+                    "Ver consulta", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            using var con = _connectionFactory.CreateConnection(
+                string.Concat(initialConnection.Id, "_", initialConnection.DisplayName));
+
+            using (var frm = new SqlPreviewForm(_currentReport, con))
+            {
+                frm.ShowDialog(this);
+            }
+        }
+
+        #endregion
+
+        #region Métodos privados de ayuda
+
         private void SetAllConnectionsChecked(bool isChecked, CheckedListBox chk)
         {
             for (int i = 0; i < chk.Items.Count; i++)
                 chk.SetItemChecked(i, isChecked);
         }
-
-        private List<ConnectionInfo> GetSelectedConnections()
-        {
-            return _chkConnections.CheckedItems
-                .OfType<ConnectionInfo>()
-                .ToList();
-        }
-
-        private List<ConnectionInfo> GetSelectedConnectionsAdHoc()
-        {
-            return _chkConnectionsAdHoc.CheckedItems
-                .OfType<ConnectionInfo>()
-                .ToList();
-        }
-
-        private void ResetPaginacionPredefinidos()
-        {
-            _lblCountRowsPredef.Visible = false;
-            _lblCountRowsPredef.Text = string.Empty;
-
-            _btnExcelPredef.Visible = false;
-            _btnPrevPagePredef.Enabled = false;
-            _btnNextPagePredef.Enabled = false;
-        }
-
-        private void ResetPaginacionAdHoc()
-        {
-            _lblCountRowsAdHoc.Visible = false;
-            _lblCountRowsAdHoc.Text = string.Empty;
-
-            _btnExcelAdHoc.Visible = false;
-            _btnPrevPageAdHoc.Enabled = false;
-            _btnNextPageAdHoc.Enabled = false;
-            _btnPrevPageAdHoc.Visible = false;
-            _btnNextPageAdHoc.Visible = false;
-        }
-
-        private void ActualizarPaginacionPredefinidos()
-        {
-            if (_pagerPredef == null)
-            {
-                ResetPaginacionPredefinidos();
-                return;
-            }
-
-            int totalFilas = _pagerPredef.TotalRows;
-            var tablaPagina = _grid.DataSource as DataTable;
-            int filasPagina = tablaPagina?.Rows.Count ?? 0;
-            int totalPaginas = _pagerPredef.TotalPages;
-
-            if (totalFilas <= 0)
-            {
-                _lblCountRowsPredef.Text = "Registros encontrados: 0";
-                _lblCountRowsPredef.Visible = true;
-                _btnExcelPredef.Visible = false;
-                _btnPrevPagePredef.Enabled = false;
-                _btnNextPagePredef.Enabled = false;
-                return;
-            }
-
-            _lblCountRowsPredef.Text =
-                $"Registros encontrados: {totalFilas}. " +
-                $"Cargando {filasPagina} registros de página {_pagerPredef.CurrentPage + 1} de {totalPaginas}";
-
-            _lblCountRowsPredef.Visible = true;
-            _btnExcelPredef.Visible = true;
-
-            _btnPrevPagePredef.Enabled = _pagerPredef.CurrentPage > 0;
-            _btnNextPagePredef.Enabled = _pagerPredef.CurrentPage < totalPaginas - 1;
-        }
-
-        private void ActualizarPaginacionAdHoc()
-        {
-            if (_pagerAdHoc == null)
-            {
-                ResetPaginacionAdHoc();
-                return;
-            }
-
-            int totalFilas = _pagerAdHoc.TotalRows;
-            var tablaPagina = _gridAdHoc.DataSource as DataTable;
-            int filasPagina = tablaPagina?.Rows.Count ?? 0;
-            int totalPaginas = _pagerAdHoc.TotalPages;
-
-            if (totalFilas <= 0)
-            {
-                _lblCountRowsAdHoc.Text = "Registros encontrados: 0";
-                _lblCountRowsAdHoc.Visible = true;
-                _btnExcelAdHoc.Visible = false;
-                _btnPrevPageAdHoc.Enabled = false;
-                _btnNextPageAdHoc.Enabled = false;
-                _btnPrevPageAdHoc.Visible = false;
-                _btnNextPageAdHoc.Visible = false;
-                return;
-            }
-
-            _lblCountRowsAdHoc.Text =
-                $"Registros encontrados: {totalFilas}. " +
-                $"Cargando {filasPagina} registros de página {_pagerAdHoc.CurrentPage + 1} de {totalPaginas}";
-
-            _lblCountRowsAdHoc.Visible = true;
-            _btnExcelAdHoc.Visible = true;
-            _btnPrevPageAdHoc.Visible = true;
-            _btnNextPageAdHoc.Visible = true;
-
-            _btnPrevPageAdHoc.Enabled = _pagerAdHoc.CurrentPage > 0;
-            _btnNextPageAdHoc.Enabled = _pagerAdHoc.CurrentPage < totalPaginas - 1;
-        }
-
-        #endregion
-
-        #region Render parámetros / construcción parámetros
 
         private void RenderParameters(ReportDefinition report)
         {
@@ -1520,7 +1544,30 @@ namespace OracleReportExport.Presentation.Desktop
 
             clb.Height = Math.Min(150, 18 * clb.Items.Count + 4);
             clb.Width = maxWidth + SystemInformation.VerticalScrollBarWidth + 30;
+
+            // Centrar visualmente en el primer elemento seleccionado
+            if (clb.CheckedIndices.Count > 0)
+            {
+                int firstChecked = clb.CheckedIndices[0];
+                clb.SelectedIndex = firstChecked;
+                clb.TopIndex = firstChecked;
+            }
+
             return clb;
+        }
+
+        private List<ConnectionInfo> GetSelectedConnections()
+        {
+            return _chkConnections.CheckedItems
+                .OfType<ConnectionInfo>()
+                .ToList();
+        }
+
+        private List<ConnectionInfo> GetSelectedConnectionsAdHoc()
+        {
+            return _chkConnectionsAdHoc.CheckedItems
+                .OfType<ConnectionInfo>()
+                .ToList();
         }
 
         private Dictionary<string, object?> BuildParametersFromUI()
@@ -1642,7 +1689,7 @@ namespace OracleReportExport.Presentation.Desktop
                     return "''";
 
                 return string.Join(", ",
-                    values.Select(v => $"'{v.Replace("'", "''")}'"));
+                        values.Select(v => $"'{v.Replace("'", "''")}'"));
             }
 
             var tiposVehiculo = GetCheckedCodes("TIPOSVEHICULO");
@@ -1704,13 +1751,8 @@ namespace OracleReportExport.Presentation.Desktop
             }
         }
 
-        #endregion
-
-        #region Exportación Excel
-
         private void ExportGridWithClosedXml(object? sender, EventArgs e)
         {
-            using var cts = new CancellationTokenSource();
             using var loading = new LoadingForm("Exportando datos a Excel ...");
 
             try
@@ -1728,13 +1770,11 @@ namespace OracleReportExport.Presentation.Desktop
 
                 if (sender is Button btn && btn.Tag is ResultTabUI typeExport)
                 {
-                    // Nombre sugerido del archivo
                     switch (typeExport)
                     {
                         case ResultTabUI.TabInitial:
                             sfd.FileName = $"{((ReportDefinition)_cmbReports.SelectedItem!).Name}_{uniqueIdTime}.xlsx";
                             break;
-
                         case ResultTabUI.TabSecundary:
                             sfd.FileName = $"ConsultaPersonalizada_{uniqueIdTime}.xlsx";
                             break;
@@ -1746,13 +1786,11 @@ namespace OracleReportExport.Presentation.Desktop
                     using var wb = new XLWorkbook();
                     IXLWorksheet? ws = null;
 
-                    // Hoja según pestaña
                     switch (typeExport)
                     {
                         case ResultTabUI.TabInitial:
                             ws = wb.Worksheets.Add(((ReportDefinition)_cmbReports.SelectedItem!).Category);
                             break;
-
                         case ResultTabUI.TabSecundary:
                             ws = wb.Worksheets.Add("ConsultaPersonalizada");
                             break;
@@ -1761,6 +1799,7 @@ namespace OracleReportExport.Presentation.Desktop
                     if (ws == null)
                         throw new Exception("Error al crear el Excel");
 
+                    // Exportar SIEMPRE el FullData del paginador (todos los registros)
                     DataTable? gridExport = null;
 
                     switch (typeExport)
@@ -1768,7 +1807,6 @@ namespace OracleReportExport.Presentation.Desktop
                         case ResultTabUI.TabInitial:
                             gridExport = _pagerPredef?.FullData;
                             break;
-
                         case ResultTabUI.TabSecundary:
                             gridExport = _pagerAdHoc?.FullData;
                             break;
@@ -1777,14 +1815,12 @@ namespace OracleReportExport.Presentation.Desktop
                     if (gridExport == null || gridExport.Columns.Count == 0)
                         throw new Exception("No hay datos para exportar.");
 
-                    // Cabeceras
                     for (int col = 0; col < gridExport.Columns.Count; col++)
                     {
                         ws.Cell(1, col + 1).Value = gridExport.Columns[col].ColumnName;
                         ws.Cell(1, col + 1).Style.Font.Bold = true;
                     }
 
-                    // Filas
                     for (int row = 0; row < gridExport.Rows.Count; row++)
                     {
                         for (int col = 0; col < gridExport.Columns.Count; col++)
@@ -1795,13 +1831,13 @@ namespace OracleReportExport.Presentation.Desktop
                         }
                     }
 
-                    // Ajuste de columnas
                     ws.Columns().AdjustToContents();
                     foreach (var sheet in wb.Worksheets)
+                    {
                         sheet.Columns().AdjustToContents();
+                    }
 
                     wb.SaveAs(sfd.FileName);
-
                     MessageBox.Show(
                         $"Exportación realizada correctamente en:\n{sfd.FileName}",
                         "Exportación informe",
@@ -1827,43 +1863,9 @@ namespace OracleReportExport.Presentation.Desktop
             }
         }
 
-
         #endregion
 
-        #region Ver consulta
-
-        private void BtnVerConsulta_Click(object? sender, EventArgs e)
-        {
-            if (_currentReport == null)
-            {
-                MessageBox.Show("No hay informe seleccionado.", "Ver consulta",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
-
-            var initialConnection = _connectionCatalog
-                .GetAllConnections()
-                .FirstOrDefault(x => x.Type.ToUpper().Contains(_currentReport.SourceType.ToString().ToUpper()));
-
-            if (initialConnection == null)
-            {
-                MessageBox.Show("No se encontró una conexión adecuada para ver la consulta.",
-                    "Ver consulta", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            using var con = _connectionFactory.CreateConnection(
-                string.Concat(initialConnection.Id, "_", initialConnection.DisplayName));
-
-            using (var frm = new SqlPreviewForm(_currentReport, con))
-            {
-                frm.ShowDialog(this);
-            }
-        }
-
-        #endregion
-
-        #region Form de carga (LoadingForm)
+        #region Form de carga
 
         private sealed class LoadingForm : Form
         {
@@ -1956,22 +1958,11 @@ namespace OracleReportExport.Presentation.Desktop
 
                     btnCancelar.FlatAppearance.BorderSize = 1;
                     btnCancelar.FlatAppearance.BorderColor = Color.FromArgb(180, 180, 180);
-                    btnCancelar.Click += BtnCancelar_Click;
-
+                    btnCancelar.Click += new EventHandler((_, __) => _cts.Cancel());
                     _buttonsPanel.Controls.Add(btnCancelar);
                     CenterButton();
-                    _buttonsPanel.Resize += ButtonsPanel_Resize;
+                    _buttonsPanel.Resize += new EventHandler((_, __) => CenterButton());
                 }
-            }
-
-            private void BtnCancelar_Click(object? sender, EventArgs e)
-            {
-                _cts?.Cancel();
-            }
-
-            private void ButtonsPanel_Resize(object? sender, EventArgs e)
-            {
-                CenterButton();
             }
 
             private void CenterButton()
@@ -2021,7 +2012,6 @@ namespace OracleReportExport.Presentation.Desktop
         public event EventHandler? PageChanged;
 
         public int TotalRows => FullData?.Rows.Count ?? 0;
-
         public int TotalPages =>
             FullData == null || PageSize <= 0
                 ? 0
@@ -2054,15 +2044,19 @@ namespace OracleReportExport.Presentation.Desktop
                                .Skip(pageIndex * PageSize)
                                .Take(PageSize);
 
-            DataTable pageTable = rows.Any()
-                ? rows.CopyToDataTable()
-                : FullData.Clone();
+            DataTable pageTable;
+
+            if (rows.Any())
+                pageTable = rows.CopyToDataTable();
+            else
+                pageTable = FullData.Clone();
 
             Grid.SuspendLayout();
             try
             {
                 Grid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
                 Grid.DataSource = pageTable;
+             
             }
             finally
             {
