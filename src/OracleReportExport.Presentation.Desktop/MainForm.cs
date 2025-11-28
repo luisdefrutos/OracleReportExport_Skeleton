@@ -1711,7 +1711,8 @@ namespace OracleReportExport.Presentation.Desktop
         private void ExportGridWithClosedXml(object? sender, EventArgs e)
         {
             using var cts = new CancellationTokenSource();
-            using var loading = new LoadingForm("Exportando datos a Excel ...", cts);
+            using var loading = new LoadingForm("Exportando datos a Excel ...");
+
             try
             {
                 RecursiveEnableControlsForm(this, false);
@@ -1727,11 +1728,13 @@ namespace OracleReportExport.Presentation.Desktop
 
                 if (sender is Button btn && btn.Tag is ResultTabUI typeExport)
                 {
+                    // Nombre sugerido del archivo
                     switch (typeExport)
                     {
                         case ResultTabUI.TabInitial:
                             sfd.FileName = $"{((ReportDefinition)_cmbReports.SelectedItem!).Name}_{uniqueIdTime}.xlsx";
                             break;
+
                         case ResultTabUI.TabSecundary:
                             sfd.FileName = $"ConsultaPersonalizada_{uniqueIdTime}.xlsx";
                             break;
@@ -1740,14 +1743,16 @@ namespace OracleReportExport.Presentation.Desktop
                     if (sfd.ShowDialog() != DialogResult.OK)
                         return;
 
-                    IXLWorksheet? ws = null;
                     using var wb = new XLWorkbook();
+                    IXLWorksheet? ws = null;
 
+                    // Hoja según pestaña
                     switch (typeExport)
                     {
                         case ResultTabUI.TabInitial:
                             ws = wb.Worksheets.Add(((ReportDefinition)_cmbReports.SelectedItem!).Category);
                             break;
+
                         case ResultTabUI.TabSecundary:
                             ws = wb.Worksheets.Add("ConsultaPersonalizada");
                             break;
@@ -1756,24 +1761,30 @@ namespace OracleReportExport.Presentation.Desktop
                     if (ws == null)
                         throw new Exception("Error al crear el Excel");
 
-                    DataGridView gridSource = typeExport switch
-                    {
-                        ResultTabUI.TabInitial => _grid,
-                        ResultTabUI.TabSecundary => _gridAdHoc,
-                        _ => _grid
-                    };
+                    DataTable? gridExport = null;
 
-                    DataTable? gridExport = gridSource.DataSource as DataTable;
+                    switch (typeExport)
+                    {
+                        case ResultTabUI.TabInitial:
+                            gridExport = _pagerPredef?.FullData;
+                            break;
+
+                        case ResultTabUI.TabSecundary:
+                            gridExport = _pagerAdHoc?.FullData;
+                            break;
+                    }
 
                     if (gridExport == null || gridExport.Columns.Count == 0)
                         throw new Exception("No hay datos para exportar.");
 
+                    // Cabeceras
                     for (int col = 0; col < gridExport.Columns.Count; col++)
                     {
                         ws.Cell(1, col + 1).Value = gridExport.Columns[col].ColumnName;
                         ws.Cell(1, col + 1).Style.Font.Bold = true;
                     }
 
+                    // Filas
                     for (int row = 0; row < gridExport.Rows.Count; row++)
                     {
                         for (int col = 0; col < gridExport.Columns.Count; col++)
@@ -1784,13 +1795,13 @@ namespace OracleReportExport.Presentation.Desktop
                         }
                     }
 
+                    // Ajuste de columnas
                     ws.Columns().AdjustToContents();
                     foreach (var sheet in wb.Worksheets)
-                    {
                         sheet.Columns().AdjustToContents();
-                    }
 
                     wb.SaveAs(sfd.FileName);
+
                     MessageBox.Show(
                         $"Exportación realizada correctamente en:\n{sfd.FileName}",
                         "Exportación informe",
@@ -1815,6 +1826,7 @@ namespace OracleReportExport.Presentation.Desktop
                 Enabled = true;
             }
         }
+
 
         #endregion
 
