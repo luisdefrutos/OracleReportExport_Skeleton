@@ -271,7 +271,12 @@ namespace OracleReportExport.Presentation.Desktop
             _connectionCatalog = new ConnectionCatalogService();
             _connectionFactory = new OracleConnectionFactory();
             _queryExecutor = new OracleQueryExecutor(_connectionFactory);
-            _reportDefinitionRepository = new JsonReportDefinitionRepository();
+            //_reportDefinitionRepository = new JsonReportDefinitionRepository();
+
+            var connectionDesa=_connectionCatalog.GetAllConnections().Where(x=>x.DisplayName.ToUpper().Contains("DESA")).FirstOrDefault();
+            _reportDefinitionRepository = new OracleReportDefinitionRepository(
+                        _connectionFactory,
+                        String.Concat(connectionDesa.Id,"_",connectionDesa.DisplayName));   // Id de Connections.json
             _reportService = new ReportService(_reportDefinitionRepository, _queryExecutor);
 
             CargarConexiones();
