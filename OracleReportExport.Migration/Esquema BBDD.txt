@@ -1,0 +1,94 @@
+﻿                   ┌───────────────────────────────┐
+                   │     RPT_REPORT_DEFINITION     │
+                   │-------------------------------│
+                   │ REPORT_ID (PK, VARCHAR2)      │
+                   │ NAME                          │
+                   │ CATEGORY                      │
+                   │ DESCRIPTION                   │
+                   │ SOURCE_TYPE                   │
+                   │ SQL_FOR_STATIONS (CLOB)       │
+                   │ SQL_FOR_CENTRAL  (CLOB)       │
+                   │ SQL_FILE_FOR_STN              │
+                   │ SQL_FILE_FOR_CEN              │
+                   │ IS_ACTIVE (-1/0)              │
+                   └─────────────┬─────────────────┘
+                                 │ 1:N
+             ┌───────────────────┴───────────────────────┐
+             │                                           │
+             ▼                                           ▼
+
+┌───────────────────────────────┐          ┌───────────────────────────────┐
+│     RPT_REPORT_PARAMETER      │          │   RPT_REPORT_TABLE_MASTER    │
+│-------------------------------│          │-------------------------------│
+│ PARAM_ID (PK, NUMBER)         │          │ TM_ID (PK, NUMBER)           │
+│ REPORT_ID (FK)                │◄─────────│ REPORT_ID (FK)               │
+│ NAME                          │          │ NAME                          │
+│ LABEL                         │          │ LABEL                         │
+│ TYPE                          │          │ TYPE                          │
+│ IS_REQUIRED (-1/0)            │          │ IS_REQUIRED (-1/0)            │
+│ ALLOWED_VALUES_JSON (CLOB)    │          │ ID_COLUMN                     │
+│ BUSQUEDA_LIKE (-1/0/NULL)     │          │ TEXT_COLUMN                   │
+└─────────────┬─────────────────┘          │ SQL_QUERY_MASTER (CLOB)       │
+              │ 1:N                         └─────────────┬─────────────────┘
+              ▼                                           │ 1:N
+┌───────────────────────────────┐                        ▼
+│   RPT_REPORT_PARAM_VALUE      │          ┌───────────────────────────────┐
+│-------------------------------│          │ RPT_REPORT_TM_REQUIRED_VALUE  │
+│ PARAM_VALUE_ID (PK, NUMBER)   │          │-------------------------------│
+│ PARAM_ID (FK)                 │◄─────────│ TM_ID (FK)                    │
+│ KEY_INT                       │          │ TM_REQ_ID (PK, NUMBER)        │
+│ VALUE_TEXT                    │          │ REQUIRED_VALUE                │
+└───────────────────────────────┘          │ ORDER_INDEX                   │
+                                           └───────────────────────────────
+
+SELECT
+    -- Cabecera informe
+    r.REPORT_ID,
+    r.NAME            AS REPORT_NAME,
+    r.CATEGORY,
+    r.DESCRIPTION,
+    r.SOURCE_TYPE,
+    r.IS_ACTIVE,
+    r.SQL_FOR_STATIONS,
+    r.SQL_FOR_CENTRAL,
+    r.SQL_FILE_FOR_STN,
+    r.SQL_FILE_FOR_CEN,
+
+    -- Parámetros
+    p.PARAM_ID,
+    p.NAME            AS PARAM_NAME,
+    p.LABEL           AS PARAM_LABEL,
+    p.TYPE            AS PARAM_TYPE,
+    p.IS_REQUIRED     AS PARAM_IS_REQUIRED,
+    p.ALLOWED_VALUES_JSON,
+    p.BUSQUEDA_LIKE,
+
+    pv.PARAM_VALUE_ID,
+    pv.KEY_INT        AS PARAM_VALUE_KEY,
+    pv.VALUE_TEXT     AS PARAM_VALUE_TEXT,
+
+    -- Tablas maestras
+    tm.TM_ID,
+    tm.NAME           AS TM_NAME,
+    tm.LABEL          AS TM_LABEL,
+    tm.TYPE           AS TM_TYPE,
+    tm.IS_REQUIRED    AS TM_IS_REQUIRED,
+    tm.ID_COLUMN,
+    tm.TEXT_COLUMN,
+    tm.SQL_QUERY_MASTER,
+
+    tr.TM_REQ_ID,
+    tr.REQUIRED_VALUE AS TM_REQUIRED_VALUE,
+    tr.ORDER_INDEX    AS TM_REQUIRED_ORDER
+FROM
+    RPT_REPORT_DEFINITION r
+    LEFT JOIN RPT_REPORT_PARAMETER p
+        ON p.REPORT_ID = r.REPORT_ID
+    LEFT JOIN RPT_REPORT_PARAM_VALUE pv
+        ON pv.PARAM_ID = p.PARAM_ID
+    LEFT JOIN RPT_REPORT_TABLE_MASTER tm
+        ON tm.REPORT_ID = r.REPORT_ID
+    LEFT JOIN RPT_REPORT_TM_REQUIRED_VALUE tr
+        ON tr.TM_ID = tm.TM_ID
+WHERE
+    r.REPORT_ID = :P_REPORT_ID;   -- por ejemplo '1'

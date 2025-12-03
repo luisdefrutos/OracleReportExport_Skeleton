@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.0.31912.275
+# Visual Studio Version 18
+VisualStudioVersion = 18.0.11222.15 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OracleReportExport.Domain", "src\OracleReportExport.Domain\OracleReportExport.Domain.csproj", "{460C993A-4930-40E8-97D0-16D20C26D4E0}"
 EndProject
@@ -15,6 +15,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OracleReportExport.Application.Tests", "tests\OracleReportExport.Application.Tests\OracleReportExport.Application.Tests.csproj", "{036DB0E6-320D-4B25-A905-C10BE61A9C40}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OracleReportExport.Infrastructure.Tests", "tests\OracleReportExport.Infrastructure.Tests\OracleReportExport.Infrastructure.Tests.csproj", "{6EE468EA-CBC0-4DA0-BE98-255D48B5BF31}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OracleReportExport.Migration", "OracleReportExport.Migration\OracleReportExport.Migration.csproj", "{C017846F-3047-4894-BF60-7773007F0E1D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -47,8 +49,15 @@ Global
 		{6EE468EA-CBC0-4DA0-BE98-255D48B5BF31}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{6EE468EA-CBC0-4DA0-BE98-255D48B5BF31}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6EE468EA-CBC0-4DA0-BE98-255D48B5BF31}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C017846F-3047-4894-BF60-7773007F0E1D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C017846F-3047-4894-BF60-7773007F0E1D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C017846F-3047-4894-BF60-7773007F0E1D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C017846F-3047-4894-BF60-7773007F0E1D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5533A82A-2FA5-4789-87AB-229038190418}
 	EndGlobalSection
 EndGlobal
