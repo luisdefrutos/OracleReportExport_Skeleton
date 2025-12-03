@@ -592,7 +592,7 @@ namespace OracleReportExport.Presentation.Desktop
                 }
                 finally
                 {
-                    RecursiveEnableControlsForm(this, true);
+                    RecursiveEnableControlsForm(this, true,true);
                     Cursor = Cursors.Default;
                     if (!loadingFormAdHoc.IsDisposed)
                         loadingFormAdHoc.Close();
@@ -657,7 +657,7 @@ namespace OracleReportExport.Presentation.Desktop
                 }
                 finally
                 {
-                    RecursiveEnableControlsForm(this, true);
+                    RecursiveEnableControlsForm(this, true,true);
                     Cursor = Cursors.Default;
                     if (!loadingFormAdHoc.IsDisposed)
                         loadingFormAdHoc.Close();
@@ -673,13 +673,13 @@ namespace OracleReportExport.Presentation.Desktop
             {
                 if (propPag == _pagerAdHoc)
                 {
-                    _btnPrevPageAdHoc.Enabled = propPag.CurrentPage > 0;
+                    _btnPrevPageAdHoc.Enabled = propPag.CurrentPage==0?true: propPag.CurrentPage > 0;
                     _btnNextPageAdHoc.Enabled = propPag.CurrentPage < propPag.TotalPages - 1;
                     RemoveControlsTopGrid(_gridAdHoc, ResultTabUI.TabSecundary);
                 }
                 else if (propPag == _pagerPredef)
                 {
-                    _btnPrevPage.Enabled = propPag.CurrentPage > 0;
+                    _btnPrevPage.Enabled = propPag.CurrentPage==0?true:propPag.CurrentPage > 0;
                     _btnNextPage.Enabled = propPag.CurrentPage < propPag.TotalPages - 1;
                     RemoveControlsTopGrid(_grid, ResultTabUI.TabInitial);
                 }
@@ -711,21 +711,29 @@ namespace OracleReportExport.Presentation.Desktop
                 .ToList();
         }
 
-        private void RecursiveEnableControlsForm(Control control, bool changeStated)
+        private void RecursiveEnableControlsForm(Control control, bool changeStated,bool dataLoad=false)
         {
+       
             if (control == null)
                 return;
 
-            if (control.Name.Contains("LoadingForm"))
-                return;
+          
+                control.Enabled = changeStated;
+          
+                foreach (Control child in control.Controls)
+                {
 
-            if (control.Name.Contains("_btnPrevPageAdHoc") || control.Name.Contains("_btnNextPageAdHoc"))
-                return;
+                     bool   skipSetting =
+                                control.Name.Contains("_btnPrevPageAdHoc") ||
+                                control.Name.Contains("_btnPrevPage") ||
+                                control.Name.Contains("_btnNextPageAdHoc") ||
+                                control.Name.Contains("_btnNextPage");
 
-            control.Enabled = changeStated;
-
-            foreach (Control child in control.Controls)
-                RecursiveEnableControlsForm(child, changeStated);
+                        if (!skipSetting)
+                            continue;
+                    RecursiveEnableControlsForm(child, changeStated);
+                }
+            
         }
 
         private async void MainForm_LoadAsync(object? sender, EventArgs e)
@@ -1090,6 +1098,7 @@ namespace OracleReportExport.Presentation.Desktop
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Warning);
                 }
+                
             }
             catch (OperationCanceledException)
             {
@@ -1116,7 +1125,7 @@ namespace OracleReportExport.Presentation.Desktop
             }
             finally
             {
-                RecursiveEnableControlsForm(this, true);
+                RecursiveEnableControlsForm(this, true, true);
                 Cursor = Cursors.Default;
                 if (!loading.IsDisposed)
                     loading.Close();
@@ -1855,7 +1864,7 @@ namespace OracleReportExport.Presentation.Desktop
             }
             finally
             {
-                RecursiveEnableControlsForm(this, true);
+                RecursiveEnableControlsForm(this, true,true);
                 Cursor = Cursors.Default;
                 if (!loading.IsDisposed)
                     loading.Close();
