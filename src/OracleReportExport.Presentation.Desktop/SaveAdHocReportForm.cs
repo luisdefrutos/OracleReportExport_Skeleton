@@ -284,14 +284,13 @@ namespace OracleReportExport.Presentation.Desktop
         }
         private static List<string> ExtractParameterNames(string sql)
         {
+        
             if (string.IsNullOrWhiteSpace(sql))
                 return new List<string>();
 
-            // Busca :NombreParam (evitando ::)
-            var matches = Regex.Matches(sql, @"(?<!:):([A-Za-z_][A-Za-z0-9_]*)");
-
+            var matches = Regex.Matches(sql, @"(?<!:)(?<!\w):\s*([A-Za-z_][A-Za-z0-9_]*)");
             return matches
-                .Select(m => m.Groups[1].Value)
+                .Select(m => m.Groups[1].Value)  // el nombre limpio
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
         }

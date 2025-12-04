@@ -37,7 +37,7 @@ namespace OracleReportExport.Presentation.Desktop
         private readonly TabControl _tabControl = new();
         private TabPage _tabPredefinidos;
         private TabPage _tabAdHoc;
-        private static readonly Regex RegexParams = new(@"(?<!:):(?!\d)\w+", RegexOptions.Compiled);
+        private static readonly Regex RegexParams =new(@"(?<!:)(?<!\w):\s*([A-Za-z_][A-Za-z0-9_]*)", RegexOptions.Compiled);
         private FlowLayoutPanel paginationPanel;
 
         // Paginadores (uno por pestaña)
@@ -822,12 +822,13 @@ namespace OracleReportExport.Presentation.Desktop
 
         private List<string> DetectarParametros(string sql)
         {
-            var matches = RegexParams.Matches(sql);
+            if (string.IsNullOrWhiteSpace(sql))
+                return new List<string>();
 
-            return matches
+            return RegexParams.Matches(sql)
                 .Cast<Match>()
-                .Select(m => m.Value)
-                //.Distinct(StringComparer.OrdinalIgnoreCase)
+                .Select(m => m.Groups[1].Value)  // el nombre limpio
+                .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
         }
 
@@ -1081,7 +1082,7 @@ namespace OracleReportExport.Presentation.Desktop
         {
             var reports = (await _reportService.GetAvailableReportsAsync());
 
-            _cmbReports.DataSource = reports.OrderBy(x => x.Id).ToList();
+            _cmbReports.DataSource = reports.OrderBy(x => Convert.ToInt32(x.Id)).ToList();
             _cmbReports.DisplayMember = nameof(ReportDefinition.Name);
             _cmbReports.ValueMember = nameof(ReportDefinition.Id);
 
