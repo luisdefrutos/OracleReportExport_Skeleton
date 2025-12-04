@@ -182,6 +182,23 @@ namespace OracleReportExport.Infrastructure.Services
                 connection,
                 ct);
         }
+
+        public async Task SaveAsync(ReportDefinition report, CancellationToken ct = default)
+        {
+            try
+            {
+                if(report == null)
+                    throw new ArgumentNullException(nameof(report));
+                    await _definitions.SaveAsync(report, ct);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+
+        }
+
+      
     }
 }
 

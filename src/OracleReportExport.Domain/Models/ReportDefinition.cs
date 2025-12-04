@@ -4,7 +4,7 @@ namespace OracleReportExport.Domain.Models;
 
 public sealed class ReportDefinition
 {
-    public string Id { get; init; } = string.Empty;
+    public string ?Id { get; set; } 
     public string Name { get; init; } = string.Empty;
     public string Category { get; init; } = string.Empty;
     public string Description { get; init; } = string.Empty;

@@ -24,4 +24,5 @@ public interface IReportService
      string sql,
      ConnectionInfo connection,
      CancellationToken ct);
+    Task SaveAsync(ReportDefinition report, CancellationToken ct = default);
 }

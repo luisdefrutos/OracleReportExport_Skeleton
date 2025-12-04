@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Oracle.ManagedDataAccess.Client;
+using OracleReportExport.Application.Models;
 using OracleReportExport.Domain.Enums;
 using OracleReportExport.Domain.Models;
 using OracleReportExport.Infrastructure.Interfaces;
@@ -155,22 +156,22 @@ namespace OracleReportExport.Infrastructure.Data
             CancellationToken ct)
         {
             const string sql = @"
-SELECT
-    tm.TM_ID,
-    tm.REPORT_ID,
-    tm.NAME,
-    tm.LABEL,
-    tm.TYPE,
-    tm.IS_REQUIRED,
-    tm.ID_COLUMN,
-    tm.TEXT_COLUMN,
-    tm.SQL_QUERY_MASTER,
-    tr.REQUIRED_VALUE,
-    tr.ORDER_INDEX
-FROM RPT_REPORT_TABLE_MASTER tm
-LEFT JOIN RPT_REPORT_TM_REQUIRED_VALUE tr
-    ON tr.TM_ID = tm.TM_ID
-ORDER BY tm.REPORT_ID, tm.TM_ID, tr.ORDER_INDEX";
+                        SELECT
+                            tm.TM_ID,
+                            tm.REPORT_ID,
+                            tm.NAME,
+                            tm.LABEL,
+                            tm.TYPE,
+                            tm.IS_REQUIRED,
+                            tm.ID_COLUMN,
+                            tm.TEXT_COLUMN,
+                            tm.SQL_QUERY_MASTER,
+                            tr.REQUIRED_VALUE,
+                            tr.ORDER_INDEX
+                        FROM RPT_REPORT_TABLE_MASTER tm
+                        LEFT JOIN RPT_REPORT_TM_REQUIRED_VALUE tr
+                            ON tr.TM_ID = tm.TM_ID
+                        ORDER BY tm.REPORT_ID, tm.TM_ID, tr.ORDER_INDEX";
 
             using var cmd = new OracleCommand(sql, conn);
             using var reader = await cmd.ExecuteReaderAsync(CommandBehavior.Default, ct);
@@ -237,21 +238,21 @@ ORDER BY tm.REPORT_ID, tm.TM_ID, tr.ORDER_INDEX";
             CancellationToken ct)
         {
             const string sql = @"
-SELECT
-    p.PARAM_ID,
-    p.REPORT_ID,
-    p.NAME,
-    p.LABEL,
-    p.TYPE,
-    p.IS_REQUIRED,
-    p.ALLOWED_VALUES_JSON,
-    p.BUSQUEDA_LIKE,
-    v.KEY_INT,
-    v.VALUE_TEXT
-FROM RPT_REPORT_PARAMETER p
-LEFT JOIN RPT_REPORT_PARAM_VALUE v
-    ON v.PARAM_ID = p.PARAM_ID
-ORDER BY p.REPORT_ID, p.PARAM_ID, v.KEY_INT";
+                    SELECT
+                        p.PARAM_ID,
+                        p.REPORT_ID,
+                        p.NAME,
+                        p.LABEL,
+                        p.TYPE,
+                        p.IS_REQUIRED,
+                        p.ALLOWED_VALUES_JSON,
+                        p.BUSQUEDA_LIKE,
+                        v.KEY_INT,
+                        v.VALUE_TEXT
+                    FROM RPT_REPORT_PARAMETER p
+                    LEFT JOIN RPT_REPORT_PARAM_VALUE v
+                        ON v.PARAM_ID = p.PARAM_ID
+                    ORDER BY p.REPORT_ID, p.PARAM_ID, v.KEY_INT";
 
             using var cmd = new OracleCommand(sql, conn);
             using var reader = await cmd.ExecuteReaderAsync(CommandBehavior.Default, ct);
@@ -337,5 +338,55 @@ ORDER BY p.REPORT_ID, p.PARAM_ID, v.KEY_INT";
 
             return result;
         }
+
+        public async Task SaveAsync(ReportDefinition report, CancellationToken ct = default)
+        {
+            if (report == null)
+                throw new ArgumentNullException(nameof(report));
+            try
+            {
+
+                using var conn = (OracleConnection)_connectionFactory.CreateConnection(_connectionId);
+                await conn.OpenAsync(ct);
+                
+
+                using var tx = conn.BeginTransaction();
+
+                const string sql = @"
+                INSERT INTO RPT_REPORT_DEFINITION
+                    (REPORT_ID, NAME, CATEGORY, DESCRIPTION, SOURCE_TYPE,
+                     SQL_FOR_STATIONS, SQL_FOR_CENTRAL, IS_ACTIVE)
+                VALUES
+                    (:REPORT_ID, :NAME, :CATEGORY, :DESCRIPTION, :SOURCE_TYPE,
+                     :SQL_FOR_STATIONS, :SQL_FOR_CENTRAL, -1)";
+                using var cmd = new OracleCommand(sql, conn)
+                {
+                    BindByName = true 
+                };
+                cmd.Transaction=tx;
+                cmd.Parameters.Add("REPORT_ID", OracleDbType.Varchar2).Value = report.Id;
+                cmd.Parameters.Add("NAME", OracleDbType.Varchar2).Value = report.Name;
+                cmd.Parameters.Add("CATEGORY", OracleDbType.Varchar2).Value = report.Category;
+                cmd.Parameters.Add("DESCRIPTION", OracleDbType.Varchar2).Value =
+                    (object?)report.Description ?? DBNull.Value;
+                cmd.Parameters.Add("SOURCE_TYPE", OracleDbType.Varchar2).Value = report.SourceType.ToString();
+                cmd.Parameters.Add("SQL_FOR_STATIONS", OracleDbType.Clob).Value =
+                    (object?)report.SqlForStations ?? DBNull.Value;
+                cmd.Parameters.Add("SQL_FOR_CENTRAL", OracleDbType.Clob).Value =
+                    (object?)report.SqlForCentral ?? DBNull.Value;
+
+                using var registration = ct.Register(() => cmd.Cancel());
+
+                await cmd.ExecuteNonQueryAsync(ct);
+
+                tx.Commit();
+            }
+            catch (Exception ex)
+            {
+
+                throw ex;
+            }
+        }
+
     }
 }

@@ -1,9 +1,10 @@
 ﻿using ClosedXML.Excel;
+using DocumentFormat.OpenXml.Bibliography;
 using DocumentFormat.OpenXml.Drawing;
 using DocumentFormat.OpenXml.Drawing.Diagrams;
+using DocumentFormat.OpenXml.Drawing.Wordprocessing;
 using DocumentFormat.OpenXml.Office.PowerPoint.Y2021.M06.Main;
 using DocumentFormat.OpenXml.Office2016.Drawing.Charts;
-using Spre = DocumentFormat.OpenXml.Spreadsheet;
 using Oracle.ManagedDataAccess.Client;
 using OracleReportExport.Application.Interfaces;
 using OracleReportExport.Application.Models;
@@ -23,6 +24,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml;
+using Spre = DocumentFormat.OpenXml.Spreadsheet;
 
 namespace OracleReportExport.Presentation.Desktop
 {
@@ -36,6 +38,7 @@ namespace OracleReportExport.Presentation.Desktop
         private TabPage _tabPredefinidos;
         private TabPage _tabAdHoc;
         private static readonly Regex RegexParams = new(@"(?<!:):(?!\d)\w+", RegexOptions.Compiled);
+        private FlowLayoutPanel paginationPanel;
 
         // Paginadores (uno por pestaña)
         private PropertyGrid? _pagerPredef;
@@ -46,6 +49,15 @@ namespace OracleReportExport.Presentation.Desktop
 
         private readonly Button _btnPrevPageAdHoc = new() { Text = "< Anterior", Name = "_btnPrevPageAdHoc", AutoSize = true, Visible = false };
         private readonly Button _btnNextPageAdHoc = new() { Text = "Siguiente >", Name = "_btnNextPageAdHoc", AutoSize = true, Visible = false };
+
+
+        private readonly Button _btnSaveAdHocReport = new()
+        {
+            Text = "Guardar como informe",
+            AutoSize = true,
+            Enabled = false,
+            Visible = false
+        };
 
         private readonly DataGridView _grid = new()
         {
@@ -221,6 +233,7 @@ namespace OracleReportExport.Presentation.Desktop
         private readonly IReportDefinitionRepository _reportDefinitionRepository;
         private readonly IQueryExecutor _queryExecutor;
         private readonly IOracleConnectionFactory _connectionFactory;
+        private TableLayoutPanel layoutAdHoc;
 
         private ReportDefinition? _currentReport;
 
@@ -278,6 +291,7 @@ namespace OracleReportExport.Presentation.Desktop
                         _connectionFactory,
                         String.Concat(connectionDesa.Id,"_",connectionDesa.DisplayName));   // Id de Connections.json
             _reportService = new ReportService(_reportDefinitionRepository, _queryExecutor);
+            
 
             CargarConexiones();
             ConfigurarTopPanel();
@@ -337,14 +351,14 @@ namespace OracleReportExport.Presentation.Desktop
                 Dock = DockStyle.Fill
             };
 
-            var layoutAdHoc = new TableLayoutPanel
+             layoutAdHoc = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 1,
                 RowCount = 4
             };
 
-            var paginationPanel = new FlowLayoutPanel
+             paginationPanel = new FlowLayoutPanel
             {
                 FlowDirection = FlowDirection.RightToLeft,
                 Dock = DockStyle.Fill,
@@ -391,6 +405,8 @@ namespace OracleReportExport.Presentation.Desktop
 
             layoutAdHoc.Controls.Add(paginationPanel, 0, 3);
 
+            InitializeAdHocTab();
+
             rightPanelAdHoc.Controls.Add(layoutAdHoc);
 
             _tabAdHoc.Controls.Add(rightPanelAdHoc);
@@ -415,6 +431,64 @@ namespace OracleReportExport.Presentation.Desktop
 
 
             Load += MainForm_LoadAsync;
+        }
+        public void InitializeAdHocTab()
+        {
+            _btnSaveAdHocReport.Anchor = AnchorStyles.Bottom;
+            _btnSaveAdHocReport.Enabled = true;      
+            _btnSaveAdHocReport.Click += async (_, _) => await SaveCurrentAdHocReportAsync();
+            StylePrimaryButton(_btnSaveAdHocReport);
+            paginationPanel.Controls.Add(_btnSaveAdHocReport);
+        }
+
+        private async Task SaveCurrentAdHocReportAsync()
+        {
+            try
+            {
+                using var cts = new CancellationTokenSource();
+                var sql = _txtSqlAdHoc.Text; 
+
+                if (string.IsNullOrWhiteSpace(sql))
+                {
+                    MessageBox.Show("No hay SQL para guardar.", "Guardar informe",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                 using var form = new SaveAdHocReportForm(sql);
+                var dialogResult = form.ShowDialog(this);
+
+                if (dialogResult != DialogResult.OK || form.Result is null)
+                    return;
+
+                var report = form.Result;
+
+                List<ReportDefinition?> reports = (List<ReportDefinition?>)await _reportService.GetAvailableReportsAsync();
+                int nextId =
+                     reports
+                         .Select(r => r.Id)
+                         .Where(id => int.TryParse(id, out _))
+                         .Select(id => int.Parse(id))
+                         .DefaultIfEmpty(0)
+                         .Max() + 1;
+
+                  report.Id= nextId.ToString();
+                
+                await _reportService.SaveAsync(report, cts.Token);
+
+                MessageBox.Show("Informe guardado como predefinido.", "Guardar informe",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                // Recargar la lista de informes predefinidos
+                    await LoadReportsAsync();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    "Se ha producido un error al guardar el informe:\n" + ex.Message,
+                    "Guardar informe",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
         }
 
         private void _btnNextPage_Click(object? sender, EventArgs e)
@@ -504,7 +578,30 @@ namespace OracleReportExport.Presentation.Desktop
             }
         }
 
-        private async Task<bool> ErrorSintaxAdHoc_Click(object? sender, EventArgs e)
+        private  async Task<bool> ValidNameCountParameter(List<string> paramNames)
+        {
+            var duplicadosConContador = paramNames
+                .GroupBy(x => x, StringComparer.OrdinalIgnoreCase)
+                .Where(g => g.Count() >= 2)
+                .Select(g => new { Valor = g.Key, Repeticiones = g.Count() })
+                .ToList();
+            if (duplicadosConContador.Count > 0)
+            {
+                System.Text.StringBuilder message = new();
+                foreach (var item in duplicadosConContador)
+                    message.AppendLine($"{item.Valor.Trim()}, Número repeticiones: {item.Repeticiones}");
+
+                MessageBox.Show(
+                   $"Ha introducido en la consulta SQL parametros repetidos.\n\r\n\r{message.ToString()}",
+                   "Parámetros consulta",
+                   MessageBoxButtons.OK,
+                   MessageBoxIcon.Warning);
+                return false;
+            }
+            else
+                return true;
+        }
+        private async Task<ResultSintaxSql> ErrorSintaxAdHoc_Click(object? sender, EventArgs e)
         {
             bool stopProcess = false;
 
@@ -517,7 +614,7 @@ namespace OracleReportExport.Presentation.Desktop
                     "Sin selección",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Warning);
-                return true;
+                return new ResultSintaxSql { resultSintax = true };
             }
 
             var sqlAdHocRichTxt = _txtSqlAdHoc.Text;
@@ -528,10 +625,14 @@ namespace OracleReportExport.Presentation.Desktop
                     "SQL vacía",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Warning);
-                return true;
+                return new ResultSintaxSql { resultSintax = true };
             }
 
             var paramNames = DetectarParametros(sqlAdHocRichTxt);
+            var resultParm= await ValidNameCountParameter(paramNames);
+            if (!resultParm)
+                return new ResultSintaxSql { resultSintax = true };
+
             using var cts = new CancellationTokenSource();
             using (var loadingFormAdHoc = new LoadingForm("Validando sentencia ....", cts))
             {
@@ -546,14 +647,12 @@ namespace OracleReportExport.Presentation.Desktop
                     Enabled = false;
                     Cursor = Cursors.WaitCursor;
 
-                    if (paramNames.Count == 0)
-                    {
                         var connectionForValidation = listConnectionsActive.First();
 
-                        stopProcess = await ValidarSqlSinParametrosAsync(sqlAdHocRichTxt, connectionForValidation, cts.Token);
+                        stopProcess = await ValidateSqlSyntaxAsync(sqlAdHocRichTxt, connectionForValidation, cts.Token);
 
                         if (stopProcess)
-                            return true;
+                            return new ResultSintaxSql { resultSintax = true };
                         else
                         {
                             RecursiveEnableControlsForm(this, true);
@@ -570,21 +669,20 @@ namespace OracleReportExport.Presentation.Desktop
 
                             stopProcess = resp == DialogResult.No;
                         }
-                    }
 
-                    return stopProcess;
+                    return new ResultSintaxSql { resultSintax = stopProcess, parametros= paramNames } ;
                 }
                 catch (OperationCanceledException)
                 {
                     MessageBox.Show("Consulta cancelada por el usuario.", "Cancelado", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    return true;
+                    return new ResultSintaxSql { resultSintax = true }; ;
                 }
                 catch (OracleException ex) when (ex.Number == 942)
                 {
                     GlobalExceptionHandler.Handle(ex, null,
                         "La tabla o vista no existe en la sentencia ejecutada. Verifique que está ejecutando " +
                         "la sentencia correcta en la base de datos seleccionada.\n\n");
-                    return true;
+                    return new ResultSintaxSql { resultSintax = true }; ;
                 }
                 catch (OracleException ex) when (ex.Number == 1013)
                 {
@@ -593,7 +691,7 @@ namespace OracleReportExport.Presentation.Desktop
                         "Cancelado",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Information);
-                    return true;
+                    return new ResultSintaxSql { resultSintax = true }; ;
                 }
                 finally
                 {
@@ -609,12 +707,26 @@ namespace OracleReportExport.Presentation.Desktop
         private async void ButtonAdHoc_Click(object? sender, EventArgs e)
         {
             var resultSintax = await ErrorSintaxAdHoc_Click(sender, e);
-            if (resultSintax)
+            if (resultSintax.resultSintax)
                 return;
+
+            
 
             using var cts = new CancellationTokenSource();
             using (var loadingFormAdHoc = new LoadingForm("Cargando Datos Consulta ....", cts))
             {
+                using var form = new SaveAdHocReportForm(_txtSqlAdHoc.Text);
+                //todo: pasar parametros
+                if (resultSintax.parametros.Count > 0)
+                {
+                    var dialogResult = form.ShowDialog(this);
+
+                    if (dialogResult != DialogResult.OK || form.Result is null)
+                        return;
+                }
+                
+
+                //aqui
                 try
                 {
                     RemoveControlsTopGrid(_gridAdHoc, ResultTabUI.TabSecundary);
@@ -638,11 +750,13 @@ namespace OracleReportExport.Presentation.Desktop
                         _pagerAdHoc.PageChanged += Pager_PageChanged;
                         _pagerAdHoc.ShowFirstPage();
                         PaintControlsTopGrid(_gridAdHoc, ResultTabUI.TabSecundary, _pagerAdHoc);
+                        _btnSaveAdHocReport.Visible=true;
                     }
                 }
                 catch (OperationCanceledException)
                 {
                     _gridAdHoc.DataSource = null;
+                    _btnSaveAdHocReport.Visible = false;
                     MessageBox.Show("Consulta cancelada por el usuario.", "Cancelado", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 catch (OracleException ex) when (ex.Number == 942)
@@ -651,10 +765,12 @@ namespace OracleReportExport.Presentation.Desktop
                         "La tabla o vista no existe en la base de datos. Verifique que está ejecutando " +
                         "la sentencia correcta en la base de datos seleccionada.\n\n");
                     _gridAdHoc.DataSource = null;
+                    _btnSaveAdHocReport.Visible = false;
                 }
                 catch (OracleException ex) when (ex.Number == 1013)
                 {
                     _gridAdHoc.DataSource = null;
+                    _btnSaveAdHocReport.Visible = false;
                     MessageBox.Show("Consulta cancelada por el usuario.",
                         "Cancelado",
                         MessageBoxButtons.OK,
@@ -667,7 +783,6 @@ namespace OracleReportExport.Presentation.Desktop
                     if (!loadingFormAdHoc.IsDisposed)
                         loadingFormAdHoc.Close();
                     Enabled = true;
-                    _btnUnselectAllAdHoc.PerformClick();
                 }
             }
         }
@@ -692,7 +807,7 @@ namespace OracleReportExport.Presentation.Desktop
         }
 
 
-        private async Task<bool> ValidarSqlSinParametrosAsync(string sql, ConnectionInfo connectionForValidation, CancellationToken ct)
+        private async Task<bool> ValidateSqlSyntaxAsync(string sql, ConnectionInfo connectionForValidation, CancellationToken ct)
         {
             try
             {
@@ -712,7 +827,7 @@ namespace OracleReportExport.Presentation.Desktop
             return matches
                 .Cast<Match>()
                 .Select(m => m.Value)
-                .Distinct(StringComparer.OrdinalIgnoreCase)
+                //.Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
         }
 
@@ -964,9 +1079,9 @@ namespace OracleReportExport.Presentation.Desktop
 
         private async Task LoadReportsAsync()
         {
-            var reports = (await _reportService.GetAvailableReportsAsync()).ToList();
+            var reports = (await _reportService.GetAvailableReportsAsync());
 
-            _cmbReports.DataSource = reports;
+            _cmbReports.DataSource = reports.OrderBy(x => x.Id).ToList();
             _cmbReports.DisplayMember = nameof(ReportDefinition.Name);
             _cmbReports.ValueMember = nameof(ReportDefinition.Id);
 
@@ -1029,6 +1144,17 @@ namespace OracleReportExport.Presentation.Desktop
             _currentReport = report;
             RenderParameters(report);
             RemoveControlsTopGrid(_grid, ResultTabUI.TabInitial);
+            if (report.SourceType == ReportSourceType.Central || report.SourceType == ReportSourceType.Ambos)
+            {
+                var itemCentral = _chkConnections.Items.OfType<ConnectionInfo>().Where(x => x.Id.ToUpper().
+                                                                        Contains(ReportSourceType.Central.ToString().ToUpper()))
+                                                                        .FirstOrDefault();
+                if(itemCentral== null)
+                    return; 
+                var indexCentral = _chkConnections.Items.IndexOf(itemCentral);
+                if (indexCentral != -1)
+                    _chkConnections.SetItemChecked(indexCentral, true);
+            }
         }
 
         private async void BtnRunReport_Click(object? sender, EventArgs e)
@@ -1135,7 +1261,6 @@ namespace OracleReportExport.Presentation.Desktop
                 if (!loading.IsDisposed)
                     loading.Close();
                 Enabled = true;
-                _btnUnselectAll.PerformClick();
             }
         }
 
@@ -1314,12 +1439,28 @@ namespace OracleReportExport.Presentation.Desktop
 
             bool hasMaster = report.TableMasterForParameters != null && report.TableMasterForParameters.Count > 0;
             bool hasParams = report.Parameters != null && report.Parameters.Count > 0;
-
+         
             if (!hasMaster && !hasParams)
             {
+                string messageType = String.Empty;
+                switch (report.SourceType)
+                {
+                    case ReportSourceType.Estacion:
+                        messageType = String.Concat("Es un informe de ", ReportSourceType.Estacion.ToString());
+                        break;
+                    case ReportSourceType.Central:
+                        messageType = String.Concat("Es un informe de ", ReportSourceType.Central.ToString());
+                        break;
+                    case ReportSourceType.Ambos:
+                        messageType = String.Concat("Es un informe de ",ReportSourceType.Central.ToString()," y ", ReportSourceType.Estacion.ToString());
+                        break;
+
+                }
+ 
+            
                 var lbl = new Label
                 {
-                    Text = "Este informe no requiere parámetros.",
+                    Text = $"Este informe no requiere parámetros.{messageType}",
                     AutoSize = true,
                     Margin = new Padding(4, 8, 4, 4)
                 };
@@ -2093,6 +2234,14 @@ namespace OracleReportExport.Presentation.Desktop
 
         public override string ToString()
             => $"({Value}) -> {Text}";
+    }
+
+    public class ResultSintaxSql
+    {
+        public bool resultSintax { get; init; } =false;
+        public List<string> parametros { get; set; } = new List<string>();
+
+         
     }
 
     #endregion

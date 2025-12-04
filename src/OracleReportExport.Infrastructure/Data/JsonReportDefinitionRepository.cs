@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
+using OracleReportExport.Application.Models;
 using OracleReportExport.Domain.Models;
 using OracleReportExport.Infrastructure.Configuration;
 using OracleReportExport.Infrastructure.Interfaces;
@@ -92,6 +93,10 @@ namespace OracleReportExport.Infrastructure.Data
             var report = _reports
                 .FirstOrDefault(r => string.Equals(r.Id, id, StringComparison.OrdinalIgnoreCase));
             return Task.FromResult(report);
+        }
+        public Task SaveAsync(ReportDefinition report,CancellationToken ct = default)
+        {
+            throw new NotImplementedException();
         }
     }
 }
