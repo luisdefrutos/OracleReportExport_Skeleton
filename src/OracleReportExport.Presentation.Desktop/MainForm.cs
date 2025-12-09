@@ -15,6 +15,7 @@ using OracleReportExport.Infrastructure.Data;
 using OracleReportExport.Infrastructure.Interfaces;
 using OracleReportExport.Infrastructure.Services;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
@@ -706,6 +707,7 @@ namespace OracleReportExport.Presentation.Desktop
 
         private async void ButtonAdHoc_Click(object? sender, EventArgs e)
         {
+            Dictionary<string, object?> result = new Dictionary<string, object?>();
             var resultSintax = await ErrorSintaxAdHoc_Click(sender, e);
             if (resultSintax.resultSintax)
                 return;
@@ -716,74 +718,94 @@ namespace OracleReportExport.Presentation.Desktop
             using (var loadingFormAdHoc = new LoadingForm("Cargando Datos Consulta ....", cts))
             {
                 using var form = new SaveAdHocReportForm(_txtSqlAdHoc.Text);
+
+                if (form.ErrorParameter)
+                    return;
                 //todo: pasar parametros
-                if (resultSintax.parametros.Count > 0)
-                {
+                //if (resultSintax.parametros.Count > 0)
+                //{
                     var dialogResult = form.ShowDialog(this);
 
-                    if (dialogResult != DialogResult.OK || form.Result is null)
+                if (dialogResult != DialogResult.OK || form.Result is null)
+                    return;
+                else
+                {
+
+                    _currentReport = form.Result;
+                    //var parametros = BuildParametersFromUI();
+                    var parametros = form.RuntimeParameterValues;
+
+                    if (_currentReport.Parameters != null &&
+                        _currentReport.Parameters.Count > 0 &&
+                        parametros.Count == 0)
+                    {
                         return;
+                    }
+                    else
+                        result = parametros;
+
+
                 }
-                
+ 
 
                 //aqui
                 try
-                {
-                    RemoveControlsTopGrid(_gridAdHoc, ResultTabUI.TabSecundary);
-                    _gridAdHoc.DataSource = null;
-
-                    RecursiveEnableControlsForm(this, false);
-                    loadingFormAdHoc.Owner = this;
-                    loadingFormAdHoc.Show();
-                    loadingFormAdHoc.Refresh();
-                    Enabled = false;
-                    Cursor = Cursors.WaitCursor;
-
-                    var result = new Dictionary<string, object?>();
-                    var sqlAdHoc = _txtSqlAdHoc.Text;
-
-                    var resultQuery = await Task.Run(() => _reportService.ExecuteSQLAdHocAsync(sqlAdHoc, result, GetSelectedConnectionsAdHoc(), cts.Token));
-
-                    if (resultQuery != null && resultQuery.Data != null)
                     {
-                        _pagerAdHoc = new PropertyGrid(resultQuery.Data, _gridAdHoc, ResultTabUI.TabSecundary, null);
-                        _pagerAdHoc.PageChanged += Pager_PageChanged;
-                        _pagerAdHoc.ShowFirstPage();
-                        PaintControlsTopGrid(_gridAdHoc, ResultTabUI.TabSecundary, _pagerAdHoc);
-                        _btnSaveAdHocReport.Visible=true;
+                        RemoveControlsTopGrid(_gridAdHoc, ResultTabUI.TabSecundary);
+                        _gridAdHoc.DataSource = null;
+
+                        RecursiveEnableControlsForm(this, false);
+                        loadingFormAdHoc.Owner = this;
+                        loadingFormAdHoc.Show();
+                        loadingFormAdHoc.Refresh();
+                        Enabled = false;
+                        Cursor = Cursors.WaitCursor;
+
+                       // var result = new Dictionary<string, object?>();
+                        var sqlAdHoc = _txtSqlAdHoc.Text;
+
+                        var resultQuery = await Task.Run(() => _reportService.ExecuteSQLAdHocAsync(sqlAdHoc, result, GetSelectedConnectionsAdHoc(), cts.Token));
+
+                        if (resultQuery != null && resultQuery.Data != null)
+                        {
+                            _pagerAdHoc = new PropertyGrid(resultQuery.Data, _gridAdHoc, ResultTabUI.TabSecundary, null);
+                            _pagerAdHoc.PageChanged += Pager_PageChanged;
+                            _pagerAdHoc.ShowFirstPage();
+                            PaintControlsTopGrid(_gridAdHoc, ResultTabUI.TabSecundary, _pagerAdHoc);
+                            _btnSaveAdHocReport.Visible = true;
+                        }
                     }
-                }
-                catch (OperationCanceledException)
-                {
-                    _gridAdHoc.DataSource = null;
-                    _btnSaveAdHocReport.Visible = false;
-                    MessageBox.Show("Consulta cancelada por el usuario.", "Cancelado", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
-                catch (OracleException ex) when (ex.Number == 942)
-                {
-                    GlobalExceptionHandler.Handle(ex, null,
-                        "La tabla o vista no existe en la base de datos. Verifique que está ejecutando " +
-                        "la sentencia correcta en la base de datos seleccionada.\n\n");
-                    _gridAdHoc.DataSource = null;
-                    _btnSaveAdHocReport.Visible = false;
-                }
-                catch (OracleException ex) when (ex.Number == 1013)
-                {
-                    _gridAdHoc.DataSource = null;
-                    _btnSaveAdHocReport.Visible = false;
-                    MessageBox.Show("Consulta cancelada por el usuario.",
-                        "Cancelado",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Information);
-                }
-                finally
-                {
-                    RecursiveEnableControlsForm(this, true,true);
-                    Cursor = Cursors.Default;
-                    if (!loadingFormAdHoc.IsDisposed)
-                        loadingFormAdHoc.Close();
-                    Enabled = true;
-                }
+                    catch (OperationCanceledException)
+                    {
+                        _gridAdHoc.DataSource = null;
+                        _btnSaveAdHocReport.Visible = false;
+                        MessageBox.Show("Consulta cancelada por el usuario.", "Cancelado", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    catch (OracleException ex) when (ex.Number == 942)
+                    {
+                        GlobalExceptionHandler.Handle(ex, null,
+                            "La tabla o vista no existe en la base de datos. Verifique que está ejecutando " +
+                            "la sentencia correcta en la base de datos seleccionada.\n\n");
+                        _gridAdHoc.DataSource = null;
+                        _btnSaveAdHocReport.Visible = false;
+                    }
+                    catch (OracleException ex) when (ex.Number == 1013)
+                    {
+                        _gridAdHoc.DataSource = null;
+                        _btnSaveAdHocReport.Visible = false;
+                        MessageBox.Show("Consulta cancelada por el usuario.",
+                            "Cancelado",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Information);
+                    }
+                    finally
+                    {
+                        RecursiveEnableControlsForm(this, true, true);
+                        Cursor = Cursors.Default;
+                        if (!loadingFormAdHoc.IsDisposed)
+                            loadingFormAdHoc.Close();
+                        Enabled = true;
+                    }
             }
         }
 
@@ -1726,6 +1748,163 @@ namespace OracleReportExport.Presentation.Desktop
                 .ToList();
         }
 
+        //////private Dictionary<string, object?> BuildParametersFromUI()
+        //////{
+        //////    var result = new Dictionary<string, object?>();
+
+        //////    if (_currentReport == null)
+        //////        return result;
+
+        //////    if (_currentReport.Parameters != null && _currentReport.Parameters.Count > 0)
+        //////    {
+        //////        foreach (var p in _currentReport.Parameters)
+        //////        {
+        //////            if (!_parameterControls.TryGetValue(p.Name, out var ctrl))
+        //////                continue;
+
+        //////            object? value = ctrl switch
+        //////            {
+        //////                DateTimePicker dtp => dtp.Value,
+        //////                NumericUpDown nud => Convert.ToInt32(nud.Value),
+        //////                CheckBox chk => chk.Checked,
+        //////                TextBox txt => string.IsNullOrWhiteSpace(txt.Text) ? null : txt.Text,
+        //////                _ => null
+        //////            };
+
+        //////            if (p.IsRequired &&
+        //////                (value == null || (value is string s && string.IsNullOrWhiteSpace(s))))
+        //////            {
+        //////                MessageBox.Show(
+        //////                    $"El parámetro \"{p.Label ?? p.Name}\" es obligatorio.",
+        //////                    "Parámetros incompletos",
+        //////                    MessageBoxButtons.OK,
+        //////                    MessageBoxIcon.Warning);
+
+        //////                return new Dictionary<string, object?>();
+        //////            }
+
+        //////            if (value != null && value is bool)
+        //////            {
+        //////                if (p.Type == "funcion")
+        //////                {
+        //////                    int numberFromBoolean = value is bool b ? (b ? 1 : 0) : 0;
+        //////                    value = p.Values?
+        //////                        .Where(x => x.Key == numberFromBoolean)?
+        //////                        .FirstOrDefault()?
+        //////                        .Value ?? string.Empty;
+        //////                }
+        //////                else
+        //////                {
+        //////                    value = (bool)value ? -1 : 0;
+        //////                }
+        //////            }
+
+        //////            if (p.Type == "text")
+        //////            {
+        //////                if (ctrl.Parent is FlowLayoutPanel flp)
+        //////                {
+        //////                    var chkLike = flp.Controls.OfType<CheckBox>()
+        //////                        .FirstOrDefault(c => c.Name == "chkBusquedaLike");
+        //////                    if (chkLike != null && chkLike.Checked)
+        //////                    {
+        //////                        if (value != null)
+        //////                        {
+        //////                            value = string.Concat("%", value.ToString()!.Trim(), "%");
+        //////                            ReplaceSqlInput(p.Name, _currentReport, value);
+        //////                        }
+        //////                        else
+        //////                            value = "%%";
+        //////                    }
+        //////                    else
+        //////                    {
+        //////                        if (value != null)
+        //////                        {
+        //////                            value = value.ToString()!.Trim();
+        //////                            ReplaceSqlInput(p.Name, _currentReport, value);
+        //////                        }
+        //////                        else
+        //////                            value = "%%";
+        //////                    }
+        //////                }
+        //////                else
+        //////                    value = value?.ToString()!.Trim();
+        //////            }
+
+        //////            switch (p.Name.ToUpper())
+        //////            {
+        //////                case "FECHADESDE":
+        //////                    var fromDate = (DateTime)value!;
+        //////                    value = new DateTime(fromDate.Year, fromDate.Month, fromDate.Day);
+        //////                    break;
+
+        //////                case "FECHAHASTA":
+        //////                    var toDate = (DateTime)value!;
+        //////                    value = new DateTime(toDate.Year, toDate.Month, toDate.Day, 23, 59, 59);
+        //////                    break;
+        //////            }
+
+        //////            result[p.Name] = value;
+        //////        }
+        //////    }
+
+        //////    List<string> GetCheckedCodes(string controlKey)
+        //////    {
+        //////        if (_parameterControls.TryGetValue(controlKey, out var ctrl) &&
+        //////            ctrl is CheckedListBox clb)
+        //////        {
+        //////            return clb.CheckedItems
+        //////                      .Cast<MultiItem>()
+        //////                      .Select(i => i.Value)
+        //////                      .ToList();
+        //////        }
+
+        //////        return new List<string>();
+        //////    }
+
+        //////    string BuildInList(List<string> values)
+        //////    {
+        //////        if (values == null || values.Count == 0)
+        //////            return "''";
+
+        //////        return string.Join(", ",
+        //////                values.Select(v => $"'{v.Replace("'", "''")}'"));
+        //////    }
+
+        //////    var tiposVehiculo = GetCheckedCodes("TIPOSVEHICULO");
+        //////    if (tiposVehiculo != null && tiposVehiculo.Count > 0)
+        //////        result["TiposVehiculoList"] = BuildInList(tiposVehiculo);
+
+        //////    var categorias = GetCheckedCodes("CATEGORIAS");
+        //////    if (categorias != null && categorias.Count > 0)
+        //////        result["CategoriasList"] = BuildInList(categorias);
+
+        //////    if (_currentReport.Parameters != null)
+        //////    {
+        //////        foreach (var p in _currentReport.Parameters.Where(x => x.IsRequired))
+        //////        {
+        //////            if (!result.TryGetValue(p.Name, out var val) ||
+        //////                val == null ||
+        //////                (val is string s && string.IsNullOrWhiteSpace(s)))
+        //////            {
+        //////                MessageBox.Show(
+        //////                    $"El parámetro \"{p.Label ?? p.Name}\" es obligatorio.",
+        //////                    "Parámetros incompletos",
+        //////                    MessageBoxButtons.OK,
+        //////                    MessageBoxIcon.Warning);
+
+        //////                return new Dictionary<string, object?>();
+        //////            }
+        //////        }
+        //////    }
+
+        //////    return result;
+        //////}
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="nameParameter"></param>
+        /// <param name="currentReport"></param>
+        /// <param name="value"></param>
         private Dictionary<string, object?> BuildParametersFromUI()
         {
             var result = new Dictionary<string, object?>();
@@ -1733,13 +1912,16 @@ namespace OracleReportExport.Presentation.Desktop
             if (_currentReport == null)
                 return result;
 
+            // 1) Parámetros simples (una caja/selector por parámetro)
             if (_currentReport.Parameters != null && _currentReport.Parameters.Count > 0)
             {
                 foreach (var p in _currentReport.Parameters)
                 {
+                    // Buscar el control asociado a este parámetro
                     if (!_parameterControls.TryGetValue(p.Name, out var ctrl))
                         continue;
 
+                    // 1.1 Leer el valor según el tipo de control
                     object? value = ctrl switch
                     {
                         DateTimePicker dtp => dtp.Value,
@@ -1749,6 +1931,7 @@ namespace OracleReportExport.Presentation.Desktop
                         _ => null
                     };
 
+                    // 1.2 Validación de obligatorios (por parámetro)
                     if (p.IsRequired &&
                         (value == null || (value is string s && string.IsNullOrWhiteSpace(s))))
                     {
@@ -1761,28 +1944,33 @@ namespace OracleReportExport.Presentation.Desktop
                         return new Dictionary<string, object?>();
                     }
 
-                    if (value != null && value is bool)
+                    // 1.3 Tratamiento especial para booleanos
+                    if (value is bool boolValue)
                     {
                         if (p.Type == "funcion")
                         {
-                            int numberFromBoolean = value is bool b ? (b ? 1 : 0) : 0;
+                            // Mapear true/false a clave 1/0 y luego a un texto definido en p.Values
+                            int numberFromBoolean = boolValue ? 1 : 0;
                             value = p.Values?
-                                .Where(x => x.Key == numberFromBoolean)?
-                                .FirstOrDefault()?
-                                .Value ?? string.Empty;
+                                .Where(x => x.Key == numberFromBoolean)
+                                .FirstOrDefault()
+                                ?.Value ?? string.Empty;
                         }
                         else
                         {
-                            value = (bool)value ? -1 : 0;
+                            // Mismo comportamiento que tenías: -1 / 0
+                            value = boolValue ? -1 : 0;
                         }
                     }
 
+                    // 1.4 Tratamiento para textos + búsqueda LIKE
                     if (p.Type == "text")
                     {
                         if (ctrl.Parent is FlowLayoutPanel flp)
                         {
                             var chkLike = flp.Controls.OfType<CheckBox>()
                                 .FirstOrDefault(c => c.Name == "chkBusquedaLike");
+
                             if (chkLike != null && chkLike.Checked)
                             {
                                 if (value != null)
@@ -1791,7 +1979,9 @@ namespace OracleReportExport.Presentation.Desktop
                                     ReplaceSqlInput(p.Name, _currentReport, value);
                                 }
                                 else
+                                {
                                     value = "%%";
+                                }
                             }
                             else
                             {
@@ -1801,30 +1991,50 @@ namespace OracleReportExport.Presentation.Desktop
                                     ReplaceSqlInput(p.Name, _currentReport, value);
                                 }
                                 else
+                                {
                                     value = "%%";
+                                }
                             }
                         }
                         else
+                        {
                             value = value?.ToString()!.Trim();
+                        }
                     }
 
-                    switch (p.Name.ToUpper())
+                    // 1.5 Tratamiento genérico para FECHAS (sin nombres a fuego)
+                    if (value is DateTime dt &&
+                        p.Type.Equals("date", StringComparison.OrdinalIgnoreCase))
                     {
-                        case "FECHADESDE":
-                            var fromDate = (DateTime)value!;
-                            value = new DateTime(fromDate.Year, fromDate.Month, fromDate.Day);
-                            break;
+                        var nameUpper = p.Name.ToUpperInvariant();
 
-                        case "FECHAHASTA":
-                            var toDate = (DateTime)value!;
-                            value = new DateTime(toDate.Year, toDate.Month, toDate.Day, 23, 59, 59);
-                            break;
+                        // "FechaDesde", "FechaInicio", "From", "Start", etc.
+                        if (nameUpper.Contains("DESDE") ||
+                            nameUpper.Contains("INICIO") ||
+                            nameUpper.Contains("FROM") ||
+                            nameUpper.Contains("START"))
+                        {
+                            // Truncar a 00:00:00
+                            value = dt.Date;
+                        }
+                        // "FechaHasta", "FechaFin", "To", "End", etc.
+                        else if (nameUpper.Contains("HASTA") ||
+                                 nameUpper.Contains("FIN") ||
+                                 nameUpper.Contains("TO") ||
+                                 nameUpper.Contains("END"))
+                        {
+                            // Día completo hasta las 23:59:59
+                            value = dt.Date.AddHours(23).AddMinutes(59).AddSeconds(59);
+                        }
+                        // Si se llama "Fecha1", "Fecha2", "FechaCaducidad"... no tocamos la hora.
                     }
 
+                    // Añadir al diccionario final
                     result[p.Name] = value;
                 }
             }
 
+            // 2) Parámetros multi-selección con CheckedListBox (listas IN)
             List<string> GetCheckedCodes(string controlKey)
             {
                 if (_parameterControls.TryGetValue(controlKey, out var ctrl) &&
@@ -1845,17 +2055,18 @@ namespace OracleReportExport.Presentation.Desktop
                     return "''";
 
                 return string.Join(", ",
-                        values.Select(v => $"'{v.Replace("'", "''")}'"));
+                    values.Select(v => $"'{v.Replace("'", "''")}'"));
             }
 
             var tiposVehiculo = GetCheckedCodes("TIPOSVEHICULO");
-            if (tiposVehiculo != null && tiposVehiculo.Count > 0)
+            if (tiposVehiculo.Count > 0)
                 result["TiposVehiculoList"] = BuildInList(tiposVehiculo);
 
             var categorias = GetCheckedCodes("CATEGORIAS");
-            if (categorias != null && categorias.Count > 0)
+            if (categorias.Count > 0)
                 result["CategoriasList"] = BuildInList(categorias);
 
+            // 3) Validación global de obligatorios (por si faltara algo)
             if (_currentReport.Parameters != null)
             {
                 foreach (var p in _currentReport.Parameters.Where(x => x.IsRequired))
@@ -1877,6 +2088,7 @@ namespace OracleReportExport.Presentation.Desktop
 
             return result;
         }
+
 
         private void ReplaceSqlInput(string nameParameter, ReportDefinition? currentReport, object? value)
         {
