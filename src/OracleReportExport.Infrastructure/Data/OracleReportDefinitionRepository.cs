@@ -38,7 +38,7 @@ namespace OracleReportExport.Infrastructure.Data
             // Cargamos todo el resto de tablas (parametros y maestros)
             var mastersByReport = await LoadTableMastersAsync(conn, ct);
             var parametersByReport = await LoadParametersAsync(conn, ct);
-
+           
             // Componemos el modelo de dominio final
             var result = new List<ReportDefinition>();
 
@@ -61,7 +61,7 @@ namespace OracleReportExport.Infrastructure.Data
                     TableMasterForParameters = masters ?? Array.Empty<TableMasterParameterDefinition>(),
                     Parameters = parameters ?? Array.Empty<ReportParameterDefinition>()
                 };
-
+                report.DefaultConnectionIds= await LoadConnectionIdsForReport(report.Id, conn, ct);            
                 result.Add(report);
             }
 
@@ -231,12 +231,37 @@ namespace OracleReportExport.Infrastructure.Data
             return result;
         }
 
+        private static async Task<List<String>> LoadConnectionIdsForReport(String reportId,
+            OracleConnection conn,
+            CancellationToken ct)
+        {
+            List<string> result = new List<string>();
+            const string sql = @"
+                    SELECT CONNECTION_ID
+                FROM RPT_REPORT_CONNECTION
+                WHERE REPORT_ID = :REPORT_ID";
+
+            using (var cmd = new OracleCommand(sql, conn)
+            {
+                BindByName = true
+            })
+            {
+
+                cmd.Parameters.Add("REPORT_ID", OracleDbType.Varchar2).Value = reportId;
+                using var reader = await cmd.ExecuteReaderAsync(CommandBehavior.Default, ct);
+                while (await reader.ReadAsync(ct))
+                    result.Add(reader.GetString(0));
+            };
+        
+            return (List<String>)result;
+        }
         // ----- Carga de parámetros (Parameters) -----
 
         private static async Task<Dictionary<string, IReadOnlyList<ReportParameterDefinition>>> LoadParametersAsync(
             OracleConnection conn,
             CancellationToken ct)
         {
+            
             const string sql = @"
                     SELECT
                         p.PARAM_ID,
@@ -339,54 +364,304 @@ namespace OracleReportExport.Infrastructure.Data
             return result;
         }
 
+        ////public async Task SaveAsync(ReportDefinition report, CancellationToken ct = default)
+        ////{
+        ////    if (report == null)
+        ////        throw new ArgumentNullException(nameof(report));
+        ////    try
+        ////    {
+
+        ////        using var conn = (OracleConnection)_connectionFactory.CreateConnection(_connectionId);
+        ////        await conn.OpenAsync(ct);
+
+
+        ////        using var tx = conn.BeginTransaction();
+
+        ////        const string sql = @"
+        ////        INSERT INTO RPT_REPORT_DEFINITION
+        ////            (REPORT_ID, NAME, CATEGORY, DESCRIPTION, SOURCE_TYPE,
+        ////             SQL_FOR_STATIONS, SQL_FOR_CENTRAL, IS_ACTIVE)
+        ////        VALUES
+        ////            (:REPORT_ID, :NAME, :CATEGORY, :DESCRIPTION, :SOURCE_TYPE,
+        ////             :SQL_FOR_STATIONS, :SQL_FOR_CENTRAL, -1)";
+        ////        using var cmd = new OracleCommand(sql, conn)
+        ////        {
+        ////            BindByName = true 
+        ////        };
+        ////        cmd.Transaction=tx;
+        ////        cmd.Parameters.Add("REPORT_ID", OracleDbType.Varchar2).Value = report.Id;
+        ////        cmd.Parameters.Add("NAME", OracleDbType.Varchar2).Value = report.Name;
+        ////        cmd.Parameters.Add("CATEGORY", OracleDbType.Varchar2).Value = report.Category;
+        ////        cmd.Parameters.Add("DESCRIPTION", OracleDbType.Varchar2).Value =
+        ////            (object?)report.Description ?? DBNull.Value;
+        ////        cmd.Parameters.Add("SOURCE_TYPE", OracleDbType.Varchar2).Value = report.SourceType.ToString();
+        ////        cmd.Parameters.Add("SQL_FOR_STATIONS", OracleDbType.Clob).Value =
+        ////            (object?)report.SqlForStations ?? DBNull.Value;
+        ////        cmd.Parameters.Add("SQL_FOR_CENTRAL", OracleDbType.Clob).Value =
+        ////            (object?)report.SqlForCentral ?? DBNull.Value;
+
+        ////        using var registration = ct.Register(() => cmd.Cancel());
+
+        ////        await cmd.ExecuteNonQueryAsync(ct);
+
+        ////        tx.Commit();
+        ////    }
+        ////    catch (Exception ex)
+        ////    {
+
+        ////        throw ex;
+        ////    }
+        ////}
+        ///
+
         public async Task SaveAsync(ReportDefinition report, CancellationToken ct = default)
         {
             if (report == null)
                 throw new ArgumentNullException(nameof(report));
+
+            using var conn = (OracleConnection)_connectionFactory.CreateConnection(_connectionId);
+            await conn.OpenAsync(ct);
+
+            using var tx = conn.BeginTransaction();
+
             try
             {
+                // --------------------------------------------------------------------
+                // 1) INSERT PRINCIPAL: RPT_REPORT_DEFINITION
+                // --------------------------------------------------------------------
+                const string sqlReport = @"
+                                    INSERT INTO RPT_REPORT_DEFINITION
+                                        (REPORT_ID, NAME, CATEGORY, DESCRIPTION, SOURCE_TYPE,
+                                         SQL_FOR_STATIONS, SQL_FOR_CENTRAL, IS_ACTIVE)
+                                    VALUES
+                                        (:REPORT_ID, :NAME, :CATEGORY, :DESCRIPTION, :SOURCE_TYPE,
+                                         :SQL_FOR_STATIONS, :SQL_FOR_CENTRAL, -1)";
 
-                using var conn = (OracleConnection)_connectionFactory.CreateConnection(_connectionId);
-                await conn.OpenAsync(ct);
-                
-
-                using var tx = conn.BeginTransaction();
-
-                const string sql = @"
-                INSERT INTO RPT_REPORT_DEFINITION
-                    (REPORT_ID, NAME, CATEGORY, DESCRIPTION, SOURCE_TYPE,
-                     SQL_FOR_STATIONS, SQL_FOR_CENTRAL, IS_ACTIVE)
-                VALUES
-                    (:REPORT_ID, :NAME, :CATEGORY, :DESCRIPTION, :SOURCE_TYPE,
-                     :SQL_FOR_STATIONS, :SQL_FOR_CENTRAL, -1)";
-                using var cmd = new OracleCommand(sql, conn)
+                using (var cmd = new OracleCommand(sqlReport, conn)
                 {
-                    BindByName = true 
-                };
-                cmd.Transaction=tx;
-                cmd.Parameters.Add("REPORT_ID", OracleDbType.Varchar2).Value = report.Id;
-                cmd.Parameters.Add("NAME", OracleDbType.Varchar2).Value = report.Name;
-                cmd.Parameters.Add("CATEGORY", OracleDbType.Varchar2).Value = report.Category;
-                cmd.Parameters.Add("DESCRIPTION", OracleDbType.Varchar2).Value =
-                    (object?)report.Description ?? DBNull.Value;
-                cmd.Parameters.Add("SOURCE_TYPE", OracleDbType.Varchar2).Value = report.SourceType.ToString();
-                cmd.Parameters.Add("SQL_FOR_STATIONS", OracleDbType.Clob).Value =
-                    (object?)report.SqlForStations ?? DBNull.Value;
-                cmd.Parameters.Add("SQL_FOR_CENTRAL", OracleDbType.Clob).Value =
-                    (object?)report.SqlForCentral ?? DBNull.Value;
+                    BindByName = true
+                })
+                {
+                    cmd.Parameters.Add("REPORT_ID", OracleDbType.Varchar2).Value = report.Id;
+                    cmd.Parameters.Add("NAME", OracleDbType.Varchar2).Value = report.Name;
+                    cmd.Parameters.Add("CATEGORY", OracleDbType.Varchar2).Value = report.Category;
+                    cmd.Parameters.Add("DESCRIPTION", OracleDbType.Varchar2).Value =
+                        (object?)report.Description ?? DBNull.Value;
+                    cmd.Parameters.Add("SOURCE_TYPE", OracleDbType.Varchar2).Value = report.SourceType.ToString();
+                    cmd.Parameters.Add("SQL_FOR_STATIONS", OracleDbType.Clob).Value =
+                        (object?)report.SqlForStations ?? DBNull.Value;
+                    cmd.Parameters.Add("SQL_FOR_CENTRAL", OracleDbType.Clob).Value =
+                        (object?)report.SqlForCentral ?? DBNull.Value;
 
-                using var registration = ct.Register(() => cmd.Cancel());
+                    using var reg = ct.Register(() => cmd.Cancel());
+                    await cmd.ExecuteNonQueryAsync(ct);
+                }
 
-                await cmd.ExecuteNonQueryAsync(ct);
+                // --------------------------------------------------------------------
+                // 1.1) INSERT RPT_REPORT_CONNECTION Tabla intermedia
+                // --------------------------------------------------------------------
+                // Después del INSERT en RPT_REPORT_DEFINITION
+                if (report.DefaultConnectionIds != null && report.DefaultConnectionIds.Count > 0)
+                {
+                    const string sqlConn = @"
+                        INSERT INTO RPT_REPORT_CONNECTION (REPORT_ID, CONNECTION_ID)
+                        VALUES (:REPORT_ID, :CONNECTION_ID)";
 
+                    using var cmdConn = new OracleCommand(sqlConn, conn)
+                    {
+                        BindByName = true
+                    };
+                    cmdConn.Parameters.Add("REPORT_ID", OracleDbType.Varchar2);
+                    cmdConn.Parameters.Add("CONNECTION_ID", OracleDbType.Varchar2);
+
+                    foreach (var connId in report.DefaultConnectionIds.Distinct())
+                    {
+                        cmdConn.Parameters["REPORT_ID"].Value = report.Id;
+                        cmdConn.Parameters["CONNECTION_ID"].Value = connId;
+                        await cmdConn.ExecuteNonQueryAsync(ct);
+                    }
+                }
+
+
+
+
+                // --------------------------------------------------------------------
+                // 2) INSERT RPT_REPORT_PARAMETER + RPT_REPORT_PARAM_VALUE
+                // --------------------------------------------------------------------
+                if (report.Parameters != null && report.Parameters.Count > 0)
+                {
+                    const string sqlParam = @"
+                                INSERT INTO RPT_REPORT_PARAMETER
+                                    (PARAM_ID, REPORT_ID, NAME, LABEL, TYPE,
+                                     IS_REQUIRED, ALLOWED_VALUES_JSON, BUSQUEDA_LIKE)
+                                VALUES
+                                    (:PARAM_ID, :REPORT_ID, :NAME, :LABEL, :TYPE,
+                                     :IS_REQUIRED, :ALLOWED_VALUES_JSON, :BUSQUEDA_LIKE)";
+
+                    const string sqlParamValue = @"
+                                INSERT INTO RPT_REPORT_PARAM_VALUE
+                                    (PARAM_VALUE_ID, PARAM_ID, KEY_INT, VALUE_TEXT)
+                                VALUES
+                                    (:PARAM_VALUE_ID, :PARAM_ID, :KEY_INT, :VALUE_TEXT)";
+
+                    foreach (var p in report.Parameters)
+                    {
+                        // Obtener nuevo PARAM_ID desde la secuencia
+                        var paramId = await GetNextSequenceValueAsync("RPT_PARAM_SEQ", conn, tx, ct);
+
+                        // 2.1 Fila en RPT_REPORT_PARAMETER
+                        using (var cmdParam = new OracleCommand(sqlParam, conn)
+                        {
+                            BindByName = true
+                        })
+                        {
+                            cmdParam.Parameters.Add("PARAM_ID", OracleDbType.Int64).Value = paramId;
+                            cmdParam.Parameters.Add("REPORT_ID", OracleDbType.Varchar2).Value = report.Id;
+                            cmdParam.Parameters.Add("NAME", OracleDbType.Varchar2).Value = p.Name;
+                            cmdParam.Parameters.Add("LABEL", OracleDbType.Varchar2).Value =
+                                (object?)p.Label ?? DBNull.Value;
+                            cmdParam.Parameters.Add("TYPE", OracleDbType.Varchar2).Value = p.Type ?? "text";
+                            cmdParam.Parameters.Add("IS_REQUIRED", OracleDbType.Int16).Value = p.IsRequired ? -1 : 0;
+
+                            // De momento dejamos el JSON a NULL (para AdHoc normalmente no lo necesitas)
+                            cmdParam.Parameters.Add("ALLOWED_VALUES_JSON", OracleDbType.Clob).Value = DBNull.Value;
+
+                            if (p.BusquedaLike.HasValue)
+                                cmdParam.Parameters.Add("BUSQUEDA_LIKE", OracleDbType.Int16).Value =
+                                    p.BusquedaLike.Value ? -1 : 0;
+                            else
+                                cmdParam.Parameters.Add("BUSQUEDA_LIKE", OracleDbType.Int16).Value = DBNull.Value;
+
+                            using var regParam = ct.Register(() => cmdParam.Cancel());
+                            await cmdParam.ExecuteNonQueryAsync(ct);
+                        }
+
+                        // 2.2 Valores de parámetro (lista p.Values -> RPT_REPORT_PARAM_VALUE)
+                        if (p.Values != null && p.Values.Count > 0)
+                        {
+                            foreach (var v in p.Values)
+                            {
+                                var paramValueId = await GetNextSequenceValueAsync("RPT_PARAM_VALUE_SEQ", conn, tx, ct);
+
+                                using var cmdVal = new OracleCommand(sqlParamValue, conn)
+                                {
+                                    BindByName = true
+                                };
+
+                                cmdVal.Parameters.Add("PARAM_VALUE_ID", OracleDbType.Int64).Value = paramValueId;
+                                cmdVal.Parameters.Add("PARAM_ID", OracleDbType.Int64).Value = paramId;
+                                cmdVal.Parameters.Add("KEY_INT", OracleDbType.Int32).Value = v.Key;
+                                cmdVal.Parameters.Add("VALUE_TEXT", OracleDbType.Varchar2).Value =
+                                    (object?)v.Value ?? DBNull.Value;
+
+                                using var regVal = ct.Register(() => cmdVal.Cancel());
+                                await cmdVal.ExecuteNonQueryAsync(ct);
+                            }
+                        }
+                    }
+                }
+
+                // --------------------------------------------------------------------
+                // 3) INSERT RPT_REPORT_TABLE_MASTER + RPT_REPORT_TM_REQUIRED_VALUE
+                // --------------------------------------------------------------------
+                if (report.TableMasterForParameters != null &&
+                    report.TableMasterForParameters.Count > 0)
+                {
+                    const string sqlTm = @"
+                            INSERT INTO RPT_REPORT_TABLE_MASTER
+                                (TM_ID, REPORT_ID, NAME, LABEL, TYPE, IS_REQUIRED,
+                                 ID_COLUMN, TEXT_COLUMN, SQL_QUERY_MASTER)
+                            VALUES
+                                (:TM_ID, :REPORT_ID, :NAME, :LABEL, :TYPE, :IS_REQUIRED,
+                                 :ID_COLUMN, :TEXT_COLUMN, :SQL_QUERY_MASTER)";
+
+                    const string sqlTmReq = @"
+                        INSERT INTO RPT_REPORT_TM_REQUIRED_VALUE
+                            (TM_ID, TM_REQ_ID, REQUIRED_VALUE, ORDER_INDEX)
+                        VALUES
+                            (:TM_ID, :TM_REQ_ID, :REQUIRED_VALUE, :ORDER_INDEX)";
+
+                    foreach (var tm in report.TableMasterForParameters)
+                    {
+                        var tmId = await GetNextSequenceValueAsync("RPT_TM_SEQ", conn, tx, ct);
+
+                        // 3.1 Fila en RPT_REPORT_TABLE_MASTER
+                        using (var cmdTm = new OracleCommand(sqlTm, conn)
+                        {
+                            BindByName = true
+                        })
+                        {
+                            cmdTm.Parameters.Add("TM_ID", OracleDbType.Int64).Value = tmId;
+                            cmdTm.Parameters.Add("REPORT_ID", OracleDbType.Varchar2).Value = report.Id;
+                            cmdTm.Parameters.Add("NAME", OracleDbType.Varchar2).Value = tm.Name;
+                            cmdTm.Parameters.Add("LABEL", OracleDbType.Varchar2).Value =
+                                (object?)tm.Label ?? DBNull.Value;
+                            cmdTm.Parameters.Add("TYPE", OracleDbType.Varchar2).Value = tm.Type ?? "combobox";
+                            cmdTm.Parameters.Add("IS_REQUIRED", OracleDbType.Int16).Value = tm.IsRequired ? -1 : 0;
+                            cmdTm.Parameters.Add("ID_COLUMN", OracleDbType.Varchar2).Value =
+                                (object?)tm.Id ?? DBNull.Value;
+                            cmdTm.Parameters.Add("TEXT_COLUMN", OracleDbType.Varchar2).Value =
+                                (object?)tm.Text ?? DBNull.Value;
+                            cmdTm.Parameters.Add("SQL_QUERY_MASTER", OracleDbType.Clob).Value =
+                                (object?)tm.SqlQueryMaster ?? DBNull.Value;
+
+                            using var regTm = ct.Register(() => cmdTm.Cancel());
+                            await cmdTm.ExecuteNonQueryAsync(ct);
+                        }
+
+                        // 3.2 Valores requeridos (RPT_REPORT_TM_REQUIRED_VALUE)
+                        if (tm.ValuesRequired != null && tm.ValuesRequired.Count > 0)
+                        {
+                            int orderIndex = 1;
+
+                            foreach (var required in tm.ValuesRequired)
+                            {
+                                var tmReqId = await GetNextSequenceValueAsync("RPT_TM_REQUIRED_SEQ", conn, tx, ct);
+
+                                using var cmdReq = new OracleCommand(sqlTmReq, conn)
+                                {
+                                    BindByName = true
+                                };
+
+                                cmdReq.Parameters.Add("TM_ID", OracleDbType.Int64).Value = tmId;
+                                cmdReq.Parameters.Add("TM_REQ_ID", OracleDbType.Int64).Value = tmReqId;
+                                cmdReq.Parameters.Add("REQUIRED_VALUE", OracleDbType.Varchar2).Value = required;
+                                cmdReq.Parameters.Add("ORDER_INDEX", OracleDbType.Int32).Value = orderIndex++;
+
+                                using var regReq = ct.Register(() => cmdReq.Cancel());
+                                await cmdReq.ExecuteNonQueryAsync(ct);
+                            }
+                        }
+                    }
+                }
+
+                // --------------------------------------------------------------------
+                // 4) COMMIT FINAL
+                // --------------------------------------------------------------------
                 tx.Commit();
             }
-            catch (Exception ex)
+            catch
             {
-
-                throw ex;
+                try { tx.Rollback(); } catch { /* ignore */ }
+                throw; // re-lanza manteniendo el stack original
             }
         }
+
+        /// <summary>
+        /// Devuelve NEXTVAL de una secuencia dentro de la misma conexión+transacción.
+        /// </summary>
+        private static async Task<long> GetNextSequenceValueAsync(
+            string sequenceName,
+            OracleConnection conn,
+            OracleTransaction tx,
+            CancellationToken ct)
+        {
+            var sql = $"SELECT {sequenceName}.NEXTVAL FROM DUAL";
+            using var cmd = new OracleCommand(sql, conn);
+            var result = await cmd.ExecuteScalarAsync(ct);
+            return Convert.ToInt64(result);
+        }
+
 
     }
 }

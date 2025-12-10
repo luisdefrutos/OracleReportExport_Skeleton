@@ -7,4 +7,7 @@ public sealed class ConnectionInfo
     public string Type { get; init; } = string.Empty; // "Central" o "Estacion"
     public override string? ToString() =>
           Type == "Central" ? DisplayName : $"{DisplayName} ({Id})";
+
+    public string ExtendedId =>
+        String.Concat(Id,"_",DisplayName)??"";
 }

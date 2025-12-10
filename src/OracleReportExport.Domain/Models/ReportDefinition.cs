@@ -16,6 +16,8 @@ public sealed class ReportDefinition
     public string? SqlFileForStations { get; init; }
     public string? SqlFileForCentral { get; init; }
 
+    public IList<String> DefaultConnectionIds { get; set; } = new List<string>();
+
     public IReadOnlyList<TableMasterParameterDefinition>? TableMasterForParameters { get; set; }
         = Array.Empty<TableMasterParameterDefinition>();
 

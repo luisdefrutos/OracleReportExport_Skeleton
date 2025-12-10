@@ -4,7 +4,9 @@ using DocumentFormat.OpenXml.Drawing;
 using DocumentFormat.OpenXml.Drawing.Diagrams;
 using DocumentFormat.OpenXml.Drawing.Wordprocessing;
 using DocumentFormat.OpenXml.Office.PowerPoint.Y2021.M06.Main;
+using DocumentFormat.OpenXml.Office2010.Excel;
 using DocumentFormat.OpenXml.Office2016.Drawing.Charts;
+using DocumentFormat.OpenXml.Spreadsheet;
 using Oracle.ManagedDataAccess.Client;
 using OracleReportExport.Application.Interfaces;
 using OracleReportExport.Application.Models;
@@ -25,6 +27,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml;
+using Color = System.Drawing.Color;
+using Control = System.Windows.Forms.Control;
+using Font = System.Drawing.Font;
 using Spre = DocumentFormat.OpenXml.Spreadsheet;
 
 namespace OracleReportExport.Presentation.Desktop
@@ -447,7 +452,8 @@ namespace OracleReportExport.Presentation.Desktop
             try
             {
                 using var cts = new CancellationTokenSource();
-                var sql = _txtSqlAdHoc.Text; 
+                //var sql = _txtSqlAdHoc.Text; 
+                var sql = _currentReport?.SourceType == ReportSourceType.Central|| _currentReport?.SourceType == ReportSourceType.Ambos ? _currentReport.SqlForCentral : _currentReport.SqlForStations;
 
                 if (string.IsNullOrWhiteSpace(sql))
                 {
@@ -456,13 +462,13 @@ namespace OracleReportExport.Presentation.Desktop
                     return;
                 }
 
-                 using var form = new SaveAdHocReportForm(sql);
-                var dialogResult = form.ShowDialog(this);
+                ////// using var form = new SaveAdHocReportForm(sql);
+                //////var dialogResult = form.ShowDialog(this);
 
-                if (dialogResult != DialogResult.OK || form.Result is null)
-                    return;
+                //////if (dialogResult != DialogResult.OK || form.Result is null)
+                //////    return;
 
-                var report = form.Result;
+                //////var report = form.Result;
 
                 List<ReportDefinition?> reports = (List<ReportDefinition?>)await _reportService.GetAvailableReportsAsync();
                 int nextId =
@@ -473,9 +479,9 @@ namespace OracleReportExport.Presentation.Desktop
                          .DefaultIfEmpty(0)
                          .Max() + 1;
 
-                  report.Id= nextId.ToString();
+                _currentReport.Id= nextId.ToString();
                 
-                await _reportService.SaveAsync(report, cts.Token);
+                await _reportService.SaveAsync(_currentReport, cts.Token);
 
                 MessageBox.Show("Informe guardado como predefinido.", "Guardar informe",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -726,13 +732,18 @@ namespace OracleReportExport.Presentation.Desktop
                 //{
                     var dialogResult = form.ShowDialog(this);
 
+                
+
                 if (dialogResult != DialogResult.OK || form.Result is null)
                     return;
                 else
                 {
-
+                   
                     _currentReport = form.Result;
-                    //var parametros = BuildParametersFromUI();
+
+                   foreach ( var item in GetSelectedConnectionsAdHoc().Select(x => new { Id = x.ExtendedId }).ToList())
+                        _currentReport.DefaultConnectionIds.Add(item.Id);
+
                     var parametros = form.RuntimeParameterValues;
 
                     if (_currentReport.Parameters != null &&
@@ -881,7 +892,26 @@ namespace OracleReportExport.Presentation.Desktop
 
         private async void MainForm_LoadAsync(object? sender, EventArgs e)
         {
-            await LoadReportsAsync();
+            using var loading = new LoadingForm("Cargando datos ...");
+            try
+            {
+                RecursiveEnableControlsForm(this, false);
+                loading.Owner = this;
+                loading.Show();
+                loading.Refresh();
+                await LoadReportsAsync();
+            }
+            catch (Exception) { 
+                throw;
+            }
+            finally
+            {
+                RecursiveEnableControlsForm(this, true, true);
+                Cursor = Cursors.Default;
+                if (!loading.IsDisposed)
+                    loading.Close();
+                Enabled = true;
+            }
         }
 
         #endregion
@@ -1103,6 +1133,7 @@ namespace OracleReportExport.Presentation.Desktop
         private async Task LoadReportsAsync()
         {
             var reports = (await _reportService.GetAvailableReportsAsync());
+            //
 
             _cmbReports.DataSource = reports.OrderBy(x => Convert.ToInt32(x.Id)).ToList();
             _cmbReports.DisplayMember = nameof(ReportDefinition.Name);
@@ -1156,6 +1187,13 @@ namespace OracleReportExport.Presentation.Desktop
                 return;
 
             CargarConexiones();
+            foreach (var itemId in report.DefaultConnectionIds)
+            {
+                ConnectionInfo idSelected = _chkConnections.Items.OfType<ConnectionInfo>().Where(x => x.ExtendedId == itemId).FirstOrDefault();
+                var index = _chkConnections.Items.IndexOf(idSelected);
+                if (index >= 0)
+                    _chkConnections.SetItemChecked(index, true);
+            }
             _grid.DataSource = null;
 
             if (_btnExcel != null)
