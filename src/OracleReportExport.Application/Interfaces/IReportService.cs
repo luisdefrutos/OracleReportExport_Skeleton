@@ -25,4 +25,5 @@ public interface IReportService
      ConnectionInfo connection,
      CancellationToken ct);
     Task SaveAsync(ReportDefinition report, CancellationToken ct = default);
+     Task<ReportQueryResult> ExecuteNonQueryAsync(string? sql, IReadOnlyDictionary<string, object?>? parameterValues, List<ConnectionInfo> targetConnection, CancellationToken ct = default);
 }

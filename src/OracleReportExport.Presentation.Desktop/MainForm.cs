@@ -10,6 +10,7 @@ using DocumentFormat.OpenXml.Spreadsheet;
 using Oracle.ManagedDataAccess.Client;
 using OracleReportExport.Application.Interfaces;
 using OracleReportExport.Application.Models;
+using OracleReportExport.Domain.Class;
 using OracleReportExport.Domain.Enums;
 using OracleReportExport.Domain.Models;
 using OracleReportExport.Infrastructure.Configuration;
@@ -43,7 +44,7 @@ namespace OracleReportExport.Presentation.Desktop
         private readonly TabControl _tabControl = new();
         private TabPage _tabPredefinidos;
         private TabPage _tabAdHoc;
-        private static readonly Regex RegexParams =new(@"(?<!:)(?<!\w):\s*([A-Za-z_][A-Za-z0-9_]*)", RegexOptions.Compiled);
+        private static readonly Regex RegexParams = new(@"(?<!:)(?<!\w):\s*([A-Za-z_][A-Za-z0-9_]*)", RegexOptions.Compiled);
         private FlowLayoutPanel paginationPanel;
 
         // Paginadores (uno por pestaña)
@@ -225,7 +226,7 @@ namespace OracleReportExport.Presentation.Desktop
             ScrollBars = ScrollBars.Both
         };
 
-     
+
 
         private readonly Dictionary<string, Control> _parameterControls = new();
 
@@ -292,12 +293,12 @@ namespace OracleReportExport.Presentation.Desktop
             _queryExecutor = new OracleQueryExecutor(_connectionFactory);
             //_reportDefinitionRepository = new JsonReportDefinitionRepository();
 
-            var connectionDesa=_connectionCatalog.GetAllConnections().Where(x=>x.DisplayName.ToUpper().Contains("DESA")).FirstOrDefault();
+            var connectionDesa = _connectionCatalog.GetAllConnections().Where(x => x.DisplayName.ToUpper().Contains("DESA")).FirstOrDefault();
             _reportDefinitionRepository = new OracleReportDefinitionRepository(
                         _connectionFactory,
-                        String.Concat(connectionDesa.Id,"_",connectionDesa.DisplayName));   // Id de Connections.json
+                        String.Concat(connectionDesa.Id, "_", connectionDesa.DisplayName));   // Id de Connections.json
             _reportService = new ReportService(_reportDefinitionRepository, _queryExecutor);
-            
+
 
             CargarConexiones();
             ConfigurarTopPanel();
@@ -357,14 +358,14 @@ namespace OracleReportExport.Presentation.Desktop
                 Dock = DockStyle.Fill
             };
 
-             layoutAdHoc = new TableLayoutPanel
+            layoutAdHoc = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 1,
                 RowCount = 4
             };
 
-             paginationPanel = new FlowLayoutPanel
+            paginationPanel = new FlowLayoutPanel
             {
                 FlowDirection = FlowDirection.RightToLeft,
                 Dock = DockStyle.Fill,
@@ -441,7 +442,7 @@ namespace OracleReportExport.Presentation.Desktop
         public void InitializeAdHocTab()
         {
             _btnSaveAdHocReport.Anchor = AnchorStyles.Bottom;
-            _btnSaveAdHocReport.Enabled = true;      
+            _btnSaveAdHocReport.Enabled = true;
             _btnSaveAdHocReport.Click += async (_, _) => await SaveCurrentAdHocReportAsync();
             StylePrimaryButton(_btnSaveAdHocReport);
             paginationPanel.Controls.Add(_btnSaveAdHocReport);
@@ -453,7 +454,7 @@ namespace OracleReportExport.Presentation.Desktop
             {
                 using var cts = new CancellationTokenSource();
                 //var sql = _txtSqlAdHoc.Text; 
-                var sql = _currentReport?.SourceType == ReportSourceType.Central|| _currentReport?.SourceType == ReportSourceType.Ambos ? _currentReport.SqlForCentral : _currentReport.SqlForStations;
+                var sql = _currentReport?.SourceType == ReportSourceType.Central || _currentReport?.SourceType == ReportSourceType.Ambos ? _currentReport.SqlForCentral : _currentReport.SqlForStations;
 
                 if (string.IsNullOrWhiteSpace(sql))
                 {
@@ -479,14 +480,14 @@ namespace OracleReportExport.Presentation.Desktop
                          .DefaultIfEmpty(0)
                          .Max() + 1;
 
-                _currentReport.Id= nextId.ToString();
-                
+                _currentReport.Id = nextId.ToString();
+
                 await _reportService.SaveAsync(_currentReport, cts.Token);
 
                 MessageBox.Show("Informe guardado como predefinido.", "Guardar informe",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
                 // Recargar la lista de informes predefinidos
-                    await LoadReportsAsync();
+                await LoadReportsAsync();
             }
             catch (Exception ex)
             {
@@ -585,7 +586,7 @@ namespace OracleReportExport.Presentation.Desktop
             }
         }
 
-        private  async Task<bool> ValidNameCountParameter(List<string> paramNames)
+        private async Task<bool> ValidNameCountParameter(List<string> paramNames)
         {
             var duplicadosConContador = paramNames
                 .GroupBy(x => x, StringComparer.OrdinalIgnoreCase)
@@ -636,7 +637,7 @@ namespace OracleReportExport.Presentation.Desktop
             }
 
             var paramNames = DetectarParametros(sqlAdHocRichTxt);
-            var resultParm= await ValidNameCountParameter(paramNames);
+            var resultParm = await ValidNameCountParameter(paramNames);
             if (!resultParm)
                 return new ResultSintaxSql { resultSintax = true };
 
@@ -654,30 +655,30 @@ namespace OracleReportExport.Presentation.Desktop
                     Enabled = false;
                     Cursor = Cursors.WaitCursor;
 
-                        var connectionForValidation = listConnectionsActive.First();
+                    var connectionForValidation = listConnectionsActive.First();
 
-                        stopProcess = await ValidateSqlSyntaxAsync(sqlAdHocRichTxt, connectionForValidation, cts.Token);
+                    stopProcess = await ValidateSqlSyntaxAsync(sqlAdHocRichTxt, connectionForValidation, cts.Token);
 
-                        if (stopProcess)
-                            return new ResultSintaxSql { resultSintax = true };
-                        else
-                        {
-                            RecursiveEnableControlsForm(this, true);
-                            Cursor = Cursors.Default;
-                            if (!loadingFormAdHoc.IsDisposed)
-                                loadingFormAdHoc.Close();
-                            Enabled = true;
+                    if (stopProcess)
+                        return new ResultSintaxSql { resultSintax = true };
+                    else
+                    {
+                        RecursiveEnableControlsForm(this, true);
+                        Cursor = Cursors.Default;
+                        if (!loadingFormAdHoc.IsDisposed)
+                            loadingFormAdHoc.Close();
+                        Enabled = true;
 
-                            var resp = MessageBox.Show(
-                                "La sentencia SQL es sintácticamente correcta.\n\n¿Desea ejecutarla?",
-                                "Validación correcta",
-                                MessageBoxButtons.YesNo,
-                                MessageBoxIcon.Question);
+                        var resp = MessageBox.Show(
+                            "La sentencia SQL es sintácticamente correcta.\n\n¿Desea ejecutarla?",
+                            "Validación correcta",
+                            MessageBoxButtons.YesNo,
+                            MessageBoxIcon.Question);
 
-                            stopProcess = resp == DialogResult.No;
-                        }
+                        stopProcess = resp == DialogResult.No;
+                    }
 
-                    return new ResultSintaxSql { resultSintax = stopProcess, parametros= paramNames } ;
+                    return new ResultSintaxSql { resultSintax = stopProcess, parametros = paramNames };
                 }
                 catch (OperationCanceledException)
                 {
@@ -702,7 +703,7 @@ namespace OracleReportExport.Presentation.Desktop
                 }
                 finally
                 {
-                    RecursiveEnableControlsForm(this, true,true);
+                    RecursiveEnableControlsForm(this, true, true);
                     Cursor = Cursors.Default;
                     if (!loadingFormAdHoc.IsDisposed)
                         loadingFormAdHoc.Close();
@@ -713,39 +714,80 @@ namespace OracleReportExport.Presentation.Desktop
 
         private async void ButtonAdHoc_Click(object? sender, EventArgs e)
         {
-            Dictionary<string, object?> result = new Dictionary<string, object?>();
-            var resultSintax = await ErrorSintaxAdHoc_Click(sender, e);
-            if (resultSintax.resultSintax)
+            var kind = ClassSql.ClassifySql(_txtSqlAdHoc.Text);
+            bool evaluateSintax = false;
+            bool continueExecution = false;
+            DialogResult? resp;
+            switch (kind)
+            {
+                // SELECT y desconocidas -> validación normal + EXPLAIN PLAN
+                case SqlKind.Unknown:
+                case SqlKind.Select:
+                    continueExecution = true;
+                    evaluateSintax = true;
+                    break;
+                // DML: INSERT / UPDATE / DELETE / MERGE
+                case SqlKind.Dml:
+                    resp = MessageBox.Show(
+                        "La sentencia que has introducido es de modificación de datos (INSERT/UPDATE/DELETE/MERGE).\n\n" +
+                        "Ten en cuenta que puede afectar a los datos de la base.\n\n" +
+                        "¿Quieres ejecutarla igualmente?",
+                        "Sentencia DML",
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Warning);
+                    continueExecution = (resp == DialogResult.Yes);
+                    evaluateSintax = true;   // no hacemos EXPLAIN PLAN
+                   break;
+                // DDL “segura”: ALTER / CREATE / RENAME / COMMENT / GRANT / REVOKE
+                case SqlKind.DdlSafe:
+                    resp = MessageBox.Show(
+                        "La sentencia que vas a ejecutar es una sentencia DDL (ALTER / CREATE / etc.).\n\n" +
+                        "Este tipo de sentencias modifican la estructura de la base de datos.\n\n" +
+                        "¿Seguro que deseas ejecutarla?",
+                        "Ejecutar sentencia DDL",
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Warning);
+                    continueExecution = (resp == DialogResult.Yes);
+                    evaluateSintax = false;   // no tiene sentido EXPLAIN PLAN
+                   break;
+                // DDL “peligrosa”: DROP / TRUNCATE
+                case SqlKind.DdlDangerous:
+                    resp = MessageBox.Show(
+                        "ATENCIÓN: la sentencia que has introducido es una DDL potencialmente destructiva (DROP/TRUNCATE).\n\n" +
+                        "Puede eliminar datos u objetos de forma irreversible.\n\n" +
+                        "¿Estás COMPLETAMENTE seguro de que quieres ejecutarla?",
+                        "Sentencia DDL peligrosa",
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Stop);
+                    continueExecution = (resp == DialogResult.Yes);
+                    evaluateSintax = false;
+                    break;
+            }
+            if (!continueExecution)
                 return;
-
-            
-
+            if (evaluateSintax)
+            {
+                var resultSintax = await ErrorSintaxAdHoc_Click(sender, e);
+                if (resultSintax.resultSintax)
+                    return;
+            }
+            Dictionary<string, object?> result = new Dictionary<string, object?>();
             using var cts = new CancellationTokenSource();
             using (var loadingFormAdHoc = new LoadingForm("Cargando Datos Consulta ....", cts))
             {
                 using var form = new SaveAdHocReportForm(_txtSqlAdHoc.Text);
-
                 if (form.ErrorParameter)
                     return;
-                //todo: pasar parametros
-                //if (resultSintax.parametros.Count > 0)
-                //{
-                    var dialogResult = form.ShowDialog(this);
-
-                
-
+                var dialogResult = form.ShowDialog(this);
                 if (dialogResult != DialogResult.OK || form.Result is null)
                     return;
                 else
                 {
-                   
                     _currentReport = form.Result;
-
-                   foreach ( var item in GetSelectedConnectionsAdHoc().Select(x => new { Id = x.ExtendedId }).ToList())
+                    foreach (var item in GetSelectedConnectionsAdHoc().Select(x => new { Id = x.ExtendedId }).ToList())
                         _currentReport.DefaultConnectionIds.Add(item.Id);
 
-                    var parametros = form.RuntimeParameterValues;
-
+                   var parametros = form.RuntimeParameterValues;
                     if (_currentReport.Parameters != null &&
                         _currentReport.Parameters.Count > 0 &&
                         parametros.Count == 0)
@@ -754,69 +796,69 @@ namespace OracleReportExport.Presentation.Desktop
                     }
                     else
                         result = parametros;
-
-
                 }
- 
-
-                //aqui
                 try
+                {
+                    RemoveControlsTopGrid(_gridAdHoc, ResultTabUI.TabSecundary);
+                    _gridAdHoc.DataSource = null;
+                    RecursiveEnableControlsForm(this, false);
+                    loadingFormAdHoc.Owner = this;
+                    loadingFormAdHoc.Show();
+                    loadingFormAdHoc.Refresh();
+                    Enabled = false;
+                    Cursor = Cursors.WaitCursor;
+                    var sqlAdHoc = _txtSqlAdHoc.Text;
+                    if (kind == SqlKind.Select || kind == SqlKind.Unknown)
                     {
-                        RemoveControlsTopGrid(_gridAdHoc, ResultTabUI.TabSecundary);
-                        _gridAdHoc.DataSource = null;
-
-                        RecursiveEnableControlsForm(this, false);
-                        loadingFormAdHoc.Owner = this;
-                        loadingFormAdHoc.Show();
-                        loadingFormAdHoc.Refresh();
-                        Enabled = false;
-                        Cursor = Cursors.WaitCursor;
-
-                       // var result = new Dictionary<string, object?>();
-                        var sqlAdHoc = _txtSqlAdHoc.Text;
-
                         var resultQuery = await Task.Run(() => _reportService.ExecuteSQLAdHocAsync(sqlAdHoc, result, GetSelectedConnectionsAdHoc(), cts.Token));
-
                         if (resultQuery != null && resultQuery.Data != null)
                         {
                             _pagerAdHoc = new PropertyGrid(resultQuery.Data, _gridAdHoc, ResultTabUI.TabSecundary, null);
                             _pagerAdHoc.PageChanged += Pager_PageChanged;
                             _pagerAdHoc.ShowFirstPage();
+                            _gridAdHoc.Visible = true;
                             PaintControlsTopGrid(_gridAdHoc, ResultTabUI.TabSecundary, _pagerAdHoc);
                             _btnSaveAdHocReport.Visible = true;
                         }
                     }
-                    catch (OperationCanceledException)
+                    else
                     {
-                        _gridAdHoc.DataSource = null;
-                        _btnSaveAdHocReport.Visible = false;
-                        MessageBox.Show("Consulta cancelada por el usuario.", "Cancelado", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        var resultQuery = await Task.Run(() => _reportService.ExecuteNonQueryAsync(sqlAdHoc, result, GetSelectedConnectionsAdHoc(), cts.Token));
+                        PaintControlsTopGridUpdate(_gridAdHoc, ResultTabUI.TabSecundary, resultQuery.RowsAffected);
+                        _gridAdHoc.Visible = false;
                     }
-                    catch (OracleException ex) when (ex.Number == 942)
-                    {
-                        GlobalExceptionHandler.Handle(ex, null,
-                            "La tabla o vista no existe en la base de datos. Verifique que está ejecutando " +
-                            "la sentencia correcta en la base de datos seleccionada.\n\n");
-                        _gridAdHoc.DataSource = null;
-                        _btnSaveAdHocReport.Visible = false;
-                    }
-                    catch (OracleException ex) when (ex.Number == 1013)
-                    {
-                        _gridAdHoc.DataSource = null;
-                        _btnSaveAdHocReport.Visible = false;
-                        MessageBox.Show("Consulta cancelada por el usuario.",
-                            "Cancelado",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Information);
-                    }
-                    finally
-                    {
-                        RecursiveEnableControlsForm(this, true, true);
-                        Cursor = Cursors.Default;
-                        if (!loadingFormAdHoc.IsDisposed)
-                            loadingFormAdHoc.Close();
-                        Enabled = true;
-                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    _gridAdHoc.DataSource = null;
+                    _btnSaveAdHocReport.Visible = false;
+                    MessageBox.Show("Consulta cancelada por el usuario.", "Cancelado", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                catch (OracleException ex) when (ex.Number == 942)
+                {
+                    GlobalExceptionHandler.Handle(ex, null,
+                        "La tabla o vista no existe en la base de datos. Verifique que está ejecutando " +
+                        "la sentencia correcta en la base de datos seleccionada.\n\n");
+                    _gridAdHoc.DataSource = null;
+                    _btnSaveAdHocReport.Visible = false;
+                }
+                catch (OracleException ex) when (ex.Number == 1013)
+                {
+                    _gridAdHoc.DataSource = null;
+                    _btnSaveAdHocReport.Visible = false;
+                    MessageBox.Show("Consulta cancelada por el usuario.",
+                        "Cancelado",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+                }
+                finally
+                {
+                    RecursiveEnableControlsForm(this, true, true);
+                    Cursor = Cursors.Default;
+                    if (!loadingFormAdHoc.IsDisposed)
+                        loadingFormAdHoc.Close();
+                    Enabled = true;
+                }
             }
         }
 
@@ -865,7 +907,7 @@ namespace OracleReportExport.Presentation.Desktop
                 .ToList();
         }
 
-        private void RecursiveEnableControlsForm(Control control, bool changeStated,bool dataLoad=false)
+            private void RecursiveEnableControlsForm(Control control, bool changeStated,bool dataLoad=false)
         {
        
             if (control == null)
@@ -1453,6 +1495,46 @@ namespace OracleReportExport.Presentation.Desktop
 
         }
 
+
+        // Pintar número de registros afectados en consultas DML
+        private void PaintControlsTopGridUpdate(DataGridView? grid, ResultTabUI nameTab,int numReg)
+        {
+            if (grid == null || grid.Parent == null)
+                return;
+
+            Control parent = grid.Parent;
+
+            if (parent is TableLayoutPanel && parent.Parent != null)
+                parent = parent.Parent;
+
+            System.Drawing.Point gridLocationInParent = parent.PointToClient(
+                grid.Parent.PointToScreen(grid.Location));
+
+            string SufixLabel =nameTab.ToString();
+
+            _lblCountRows = new Label
+            {
+                Name = $"lblCountRows_{SufixLabel}",
+                AutoSize = true,
+                ForeColor = SystemColors.ControlText,
+                BackColor = Color.Transparent,
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                Margin = new Padding(4)
+            };
+            parent.Controls.Add(_lblCountRows);
+
+           
+                _lblCountRows.Text = $"Registros afectados : {numReg}";
+
+            if (_lblCountRows.Top == 0 && _lblCountRows.Left == 0)
+            {
+                _lblCountRows.Top = gridLocationInParent.Y - _lblCountRows.Height - 18;
+                _lblCountRows.Left = parent.ClientSize.Width - _lblCountRows.Width - 10;
+            }
+            _lblCountRows.BringToFront();
+         
+
+        }
         private void BtnVerConsulta_Click(object? sender, EventArgs e)
         {
             if (_currentReport == null)
@@ -1785,164 +1867,6 @@ namespace OracleReportExport.Presentation.Desktop
                 .OfType<ConnectionInfo>()
                 .ToList();
         }
-
-        //////private Dictionary<string, object?> BuildParametersFromUI()
-        //////{
-        //////    var result = new Dictionary<string, object?>();
-
-        //////    if (_currentReport == null)
-        //////        return result;
-
-        //////    if (_currentReport.Parameters != null && _currentReport.Parameters.Count > 0)
-        //////    {
-        //////        foreach (var p in _currentReport.Parameters)
-        //////        {
-        //////            if (!_parameterControls.TryGetValue(p.Name, out var ctrl))
-        //////                continue;
-
-        //////            object? value = ctrl switch
-        //////            {
-        //////                DateTimePicker dtp => dtp.Value,
-        //////                NumericUpDown nud => Convert.ToInt32(nud.Value),
-        //////                CheckBox chk => chk.Checked,
-        //////                TextBox txt => string.IsNullOrWhiteSpace(txt.Text) ? null : txt.Text,
-        //////                _ => null
-        //////            };
-
-        //////            if (p.IsRequired &&
-        //////                (value == null || (value is string s && string.IsNullOrWhiteSpace(s))))
-        //////            {
-        //////                MessageBox.Show(
-        //////                    $"El parámetro \"{p.Label ?? p.Name}\" es obligatorio.",
-        //////                    "Parámetros incompletos",
-        //////                    MessageBoxButtons.OK,
-        //////                    MessageBoxIcon.Warning);
-
-        //////                return new Dictionary<string, object?>();
-        //////            }
-
-        //////            if (value != null && value is bool)
-        //////            {
-        //////                if (p.Type == "funcion")
-        //////                {
-        //////                    int numberFromBoolean = value is bool b ? (b ? 1 : 0) : 0;
-        //////                    value = p.Values?
-        //////                        .Where(x => x.Key == numberFromBoolean)?
-        //////                        .FirstOrDefault()?
-        //////                        .Value ?? string.Empty;
-        //////                }
-        //////                else
-        //////                {
-        //////                    value = (bool)value ? -1 : 0;
-        //////                }
-        //////            }
-
-        //////            if (p.Type == "text")
-        //////            {
-        //////                if (ctrl.Parent is FlowLayoutPanel flp)
-        //////                {
-        //////                    var chkLike = flp.Controls.OfType<CheckBox>()
-        //////                        .FirstOrDefault(c => c.Name == "chkBusquedaLike");
-        //////                    if (chkLike != null && chkLike.Checked)
-        //////                    {
-        //////                        if (value != null)
-        //////                        {
-        //////                            value = string.Concat("%", value.ToString()!.Trim(), "%");
-        //////                            ReplaceSqlInput(p.Name, _currentReport, value);
-        //////                        }
-        //////                        else
-        //////                            value = "%%";
-        //////                    }
-        //////                    else
-        //////                    {
-        //////                        if (value != null)
-        //////                        {
-        //////                            value = value.ToString()!.Trim();
-        //////                            ReplaceSqlInput(p.Name, _currentReport, value);
-        //////                        }
-        //////                        else
-        //////                            value = "%%";
-        //////                    }
-        //////                }
-        //////                else
-        //////                    value = value?.ToString()!.Trim();
-        //////            }
-
-        //////            switch (p.Name.ToUpper())
-        //////            {
-        //////                case "FECHADESDE":
-        //////                    var fromDate = (DateTime)value!;
-        //////                    value = new DateTime(fromDate.Year, fromDate.Month, fromDate.Day);
-        //////                    break;
-
-        //////                case "FECHAHASTA":
-        //////                    var toDate = (DateTime)value!;
-        //////                    value = new DateTime(toDate.Year, toDate.Month, toDate.Day, 23, 59, 59);
-        //////                    break;
-        //////            }
-
-        //////            result[p.Name] = value;
-        //////        }
-        //////    }
-
-        //////    List<string> GetCheckedCodes(string controlKey)
-        //////    {
-        //////        if (_parameterControls.TryGetValue(controlKey, out var ctrl) &&
-        //////            ctrl is CheckedListBox clb)
-        //////        {
-        //////            return clb.CheckedItems
-        //////                      .Cast<MultiItem>()
-        //////                      .Select(i => i.Value)
-        //////                      .ToList();
-        //////        }
-
-        //////        return new List<string>();
-        //////    }
-
-        //////    string BuildInList(List<string> values)
-        //////    {
-        //////        if (values == null || values.Count == 0)
-        //////            return "''";
-
-        //////        return string.Join(", ",
-        //////                values.Select(v => $"'{v.Replace("'", "''")}'"));
-        //////    }
-
-        //////    var tiposVehiculo = GetCheckedCodes("TIPOSVEHICULO");
-        //////    if (tiposVehiculo != null && tiposVehiculo.Count > 0)
-        //////        result["TiposVehiculoList"] = BuildInList(tiposVehiculo);
-
-        //////    var categorias = GetCheckedCodes("CATEGORIAS");
-        //////    if (categorias != null && categorias.Count > 0)
-        //////        result["CategoriasList"] = BuildInList(categorias);
-
-        //////    if (_currentReport.Parameters != null)
-        //////    {
-        //////        foreach (var p in _currentReport.Parameters.Where(x => x.IsRequired))
-        //////        {
-        //////            if (!result.TryGetValue(p.Name, out var val) ||
-        //////                val == null ||
-        //////                (val is string s && string.IsNullOrWhiteSpace(s)))
-        //////            {
-        //////                MessageBox.Show(
-        //////                    $"El parámetro \"{p.Label ?? p.Name}\" es obligatorio.",
-        //////                    "Parámetros incompletos",
-        //////                    MessageBoxButtons.OK,
-        //////                    MessageBoxIcon.Warning);
-
-        //////                return new Dictionary<string, object?>();
-        //////            }
-        //////        }
-        //////    }
-
-        //////    return result;
-        //////}
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="nameParameter"></param>
-        /// <param name="currentReport"></param>
-        /// <param name="value"></param>
         private Dictionary<string, object?> BuildParametersFromUI()
         {
             var result = new Dictionary<string, object?>();

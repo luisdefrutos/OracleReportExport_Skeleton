@@ -1,6 +1,8 @@
 ﻿using Oracle.ManagedDataAccess.Client;
 using OracleReportExport.Application.Interfaces;
 using OracleReportExport.Application.Models;
+using OracleReportExport.Domain.Class;
+using OracleReportExport.Domain.Enums;
 using OracleReportExport.Domain.Models;
 using OracleReportExport.Infrastructure.Interfaces;
 using Serilog;
@@ -121,6 +123,54 @@ namespace OracleReportExport.Infrastructure.Services
                 TimeoutConnections = timeoutConnections
             };
 
+        }
+
+
+        public async Task<ReportQueryResult> ExecuteNonQueryAsync(string? sql, IReadOnlyDictionary<string, object?>? parameterValues, List<ConnectionInfo> targetConnection, CancellationToken ct = default)
+        {
+            DataTable? combined = null;
+            int resultNonQuery = 0;
+            var timeoutConnections = new List<string>();
+            if (string.IsNullOrWhiteSpace(sql))
+                throw new ArgumentNullException(nameof(sql), "La consulta SQL no puede estar vacía.");
+
+            var kind = ClassSql.ClassifySql(sql);
+
+            foreach (var connectionId in targetConnection.ToList())
+            {
+                try
+                {
+                    resultNonQuery += await _queryExecutor.ExecuteNonQueryAsync(
+                                sql,
+                                parameterValues,
+                                connectionId,
+                                String.Empty,
+                                ct);
+                    if(kind==SqlKind.DdlSafe || kind==SqlKind.DdlDangerous)
+                    {
+                        //si es un alter sumo uno
+                        //porque no devuelve filas afectadas las sentencias DDL
+                        if (resultNonQuery == -1)
+                            resultNonQuery = 0;
+                        else
+                            resultNonQuery += 1;
+                    }
+                }
+                catch (OracleException ex) when (ex.Number == 50000) //Timeout
+                {
+                    Log.Warning(ex,
+                        "Timeout en la conexión {ConnectionId} para la consulta ejecutada");
+                    timeoutConnections.Add(connectionId.ToString());
+                }
+            }
+
+            return new ReportQueryResult
+            {
+                Data = null,
+                TimeoutConnections = timeoutConnections,
+                RowsAffected = resultNonQuery,
+                Kind = kind
+            };
         }
 
 

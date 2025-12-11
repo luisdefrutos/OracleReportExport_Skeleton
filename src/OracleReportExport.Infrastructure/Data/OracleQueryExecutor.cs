@@ -9,7 +9,9 @@ using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
- 
+using OracleReportExport.Domain.Class;
+
+
 
 namespace OracleReportExport.Infrastructure.Data
 {
@@ -22,6 +24,38 @@ namespace OracleReportExport.Infrastructure.Data
             _connectionFactory = connectionFactory;
         }
 
+        public async Task<int> ExecuteNonQueryAsync(string sql, IReadOnlyDictionary<string, object?> parameters, ConnectionInfo connectionInfo, string reportId, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(sql))
+                throw new ArgumentException("La SQL no puede estar vacía.", nameof(sql));
+            await using var conn = _connectionFactory.CreateConnection(String.Concat(connectionInfo.Id, "_", connectionInfo.DisplayName)) as OracleConnection
+                                   ?? throw new InvalidOperationException("La conexión devuelta no es OracleConnection.");
+            await conn.OpenAsync(ct);
+            await using var cmd = conn.CreateCommand();
+            cmd.BindByName = true;
+            cmd.CommandText = sql;
+            // Parámetros opcionales
+            if (parameters is not null)
+            {
+                foreach (var kvp in parameters)
+                {
+                    var param = cmd.CreateParameter();
+                    // En Oracle suelen ir con :, pero por si acaso lo añadimos si falta
+                    param.ParameterName = kvp.Key.StartsWith(":", StringComparison.Ordinal)
+                        ? kvp.Key
+                        : ":" + kvp.Key;
+
+                    param.Value = kvp.Value ?? DBNull.Value;
+                    cmd.Parameters.Add(param);
+                }
+            }
+
+            var debugSql = BuildDebugSql(cmd);
+            Log.Information($"Ejecutando SQL de '{reportId}' en {connectionInfo.ToString()}:\n{debugSql}");
+            using var registration = ct.Register(() => cmd.Cancel());
+             var resultNonQuery = await cmd.ExecuteNonQueryAsync(ct);
+             return resultNonQuery;
+        }
         public async Task<DataTable> ExecuteQueryAsync(
             string sql,
             IReadOnlyDictionary<string, object?> parameters,
@@ -33,7 +67,7 @@ namespace OracleReportExport.Infrastructure.Data
                 throw new ArgumentException("La SQL no puede estar vacía.", nameof(sql));
 
             var result = new DataTable();
-
+           
             await using var conn = _connectionFactory.CreateConnection(String.Concat(connectionInfo.Id,"_",connectionInfo.DisplayName)) as OracleConnection
                                    ?? throw new InvalidOperationException("La conexión devuelta no es OracleConnection.");
 
@@ -65,7 +99,7 @@ namespace OracleReportExport.Infrastructure.Data
             Log.Information($"Ejecutando SQL de '{reportId}' en {connectionInfo.ToString()}:\n{debugSql}");
 
             using var registration = ct.Register(() => cmd.Cancel());
-
+     
             using var reader = await cmd.ExecuteReaderAsync(ct);
             result.Load(reader);
 
@@ -130,6 +164,6 @@ namespace OracleReportExport.Infrastructure.Data
                           return result >= 0;
             // Si la sintaxis es mala -> OracleException ORA-009xx
         }
-
+     
     }
 }

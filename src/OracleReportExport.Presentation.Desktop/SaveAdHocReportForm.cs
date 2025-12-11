@@ -44,7 +44,7 @@ namespace OracleReportExport.Presentation.Desktop
 
         private void MyInitializeComponent()
         {
-            Text = "Guardar informe AdHoc";
+            Text = "Datos necesarios para poder guardar informe AdHoc";
             StartPosition = FormStartPosition.CenterParent;
             FormBorderStyle = FormBorderStyle.FixedDialog;
             MaximizeBox = false;
