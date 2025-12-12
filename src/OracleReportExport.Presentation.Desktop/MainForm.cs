@@ -762,6 +762,10 @@ namespace OracleReportExport.Presentation.Desktop
                     continueExecution = (resp == DialogResult.Yes);
                     evaluateSintax = false;
                     break;
+                case SqlKind.PlSqlBlock:
+                    evaluateSintax = false;   // no hacemos EXPLAIN PLAN
+                    continueExecution = true;
+                    break;
             }
             if (!continueExecution)
                 return;
@@ -775,7 +779,7 @@ namespace OracleReportExport.Presentation.Desktop
             using var cts = new CancellationTokenSource();
             using (var loadingFormAdHoc = new LoadingForm("Cargando Datos Consulta ....", cts))
             {
-                using var form = new SaveAdHocReportForm(_txtSqlAdHoc.Text);
+                using var form = new SaveAdHocReportForm(_txtSqlAdHoc.Text, GetSelectedConnectionsAdHoc());
                 if (form.ErrorParameter)
                     return;
                 var dialogResult = form.ShowDialog(this);
@@ -1294,7 +1298,7 @@ namespace OracleReportExport.Presentation.Desktop
             {
                 return;
             }
-
+            //falta executeNonQueryAsync en los predefinidos
             using var cts = new CancellationTokenSource();
             using var loading = new LoadingForm("Cargando datos...", cts);
 

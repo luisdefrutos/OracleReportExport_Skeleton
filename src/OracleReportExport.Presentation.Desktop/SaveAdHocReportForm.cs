@@ -1,10 +1,11 @@
-﻿using System;
+﻿using OracleReportExport.Application.Models;
+using OracleReportExport.Domain.Enums;
+using OracleReportExport.Domain.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
-using OracleReportExport.Domain.Enums;
-using OracleReportExport.Domain.Models;
 
 namespace OracleReportExport.Presentation.Desktop
 {
@@ -33,18 +34,44 @@ namespace OracleReportExport.Presentation.Desktop
         // Valores introducidos por el usuario para esta ejecución AdHoc
         public Dictionary<string, object?> RuntimeParameterValues { get; } = new();
 
-        public SaveAdHocReportForm(string sql)
+        public SaveAdHocReportForm(string sql, List<ConnectionInfo> listConnectionSelected)
         {
             _sql = sql ?? throw new ArgumentNullException(nameof(sql));
             MyInitializeComponent();
             LoadParametersFromSql();
+            selectedTypeConnection(listConnectionSelected);
+
+
+
+        }
+
+        private void selectedTypeConnection(List<ConnectionInfo> listConnectionSelected)
+        {
+            bool bothConnection = listConnectionSelected.Any(x => x.Type == ReportSourceType.Central.ToString()) &&
+                                    listConnectionSelected.Any(x => x.Type == ReportSourceType.Estacion.ToString());
+
+            bool tieneCentral = listConnectionSelected
+                             .Any(x => x.Type.Equals(ReportSourceType.Central.ToString(), StringComparison.OrdinalIgnoreCase));
+
+            bool tieneEstacion = listConnectionSelected
+                             .Any(x => x.Type.Equals(ReportSourceType.Estacion.ToString(), StringComparison.OrdinalIgnoreCase));
+
+            bool soloCentral = tieneCentral && !tieneEstacion;
+            bool soloEstacion = tieneEstacion && !tieneCentral;
+            bool hayAmbos = tieneCentral && tieneEstacion;
+            if (hayAmbos)
+                _cboSourceType.SelectedItem = ReportSourceType.Ambos.ToString();
+            else if (soloCentral)
+                _cboSourceType.SelectedItem = ReportSourceType.Central.ToString();
+            else
+                _cboSourceType.SelectedItem = ReportSourceType.Estacion.ToString();
         }
 
         // ----- Inicialización de controles -----
 
         private void MyInitializeComponent()
         {
-            Text = "Datos necesarios para poder guardar informe AdHoc";
+            Text = "Datos necesarios para poder ejecutar informe AdHoc";
             StartPosition = FormStartPosition.CenterParent;
             FormBorderStyle = FormBorderStyle.FixedDialog;
             MaximizeBox = false;
@@ -176,7 +203,7 @@ namespace OracleReportExport.Presentation.Desktop
 
             _btnOk = new Button
             {
-                Text = "Guardar",
+                Text = "Ejecutar",
                 DialogResult = DialogResult.OK,
                 AutoSize = true
             };
@@ -187,7 +214,7 @@ namespace OracleReportExport.Presentation.Desktop
             {
                 Text = "Cancelar",
                 DialogResult = DialogResult.Cancel,
-                AutoSize = true
+                Height=30
             };
 
             buttonPanel.Controls.Add(_btnOk);

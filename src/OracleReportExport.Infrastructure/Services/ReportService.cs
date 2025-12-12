@@ -135,6 +135,7 @@ namespace OracleReportExport.Infrastructure.Services
                 throw new ArgumentNullException(nameof(sql), "La consulta SQL no puede estar vacía.");
 
             var kind = ClassSql.ClassifySql(sql);
+            int totalAffectedRows = 0;
 
             foreach (var connectionId in targetConnection.ToList())
             {
@@ -146,14 +147,17 @@ namespace OracleReportExport.Infrastructure.Services
                                 connectionId,
                                 String.Empty,
                                 ct);
-                    if(kind==SqlKind.DdlSafe || kind==SqlKind.DdlDangerous)
+                    if(kind==SqlKind.DdlSafe || kind==SqlKind.DdlDangerous || kind==SqlKind.PlSqlBlock)
                     {
                         //si es un alter sumo uno
                         //porque no devuelve filas afectadas las sentencias DDL
                         if (resultNonQuery == -1)
-                            resultNonQuery = 0;
+                        {
+                            resultNonQuery = 1;
+                            totalAffectedRows+= resultNonQuery;
+                        }
                         else
-                            resultNonQuery += 1;
+                            totalAffectedRows += 1;
                     }
                 }
                 catch (OracleException ex) when (ex.Number == 50000) //Timeout
@@ -168,7 +172,7 @@ namespace OracleReportExport.Infrastructure.Services
             {
                 Data = null,
                 TimeoutConnections = timeoutConnections,
-                RowsAffected = resultNonQuery,
+                RowsAffected = totalAffectedRows,
                 Kind = kind
             };
         }

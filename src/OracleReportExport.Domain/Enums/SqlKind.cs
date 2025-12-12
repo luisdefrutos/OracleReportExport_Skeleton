@@ -12,6 +12,7 @@ namespace OracleReportExport.Domain.Enums
         Select,
         Dml,           // INSERT / UPDATE / DELETE / MERGE
         DdlSafe,       // ALTER / CREATE / RENAME / COMMENT / GRANT / REVOKE
-        DdlDangerous   // DROP / TRUNCATE
+        DdlDangerous,   // DROP / TRUNCATE
+        PlSqlBlock
     }
 }

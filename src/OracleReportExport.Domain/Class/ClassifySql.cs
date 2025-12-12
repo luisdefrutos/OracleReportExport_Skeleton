@@ -33,6 +33,8 @@ namespace OracleReportExport.Domain.Class
 
             var firstToken = parts[0].ToUpperInvariant();
 
+         
+
             switch (firstToken)
             {
                 case "SELECT":
@@ -58,6 +60,10 @@ namespace OracleReportExport.Domain.Class
                 case "DROP":
                 case "TRUNCATE":
                     return SqlKind.DdlDangerous;
+
+                case "BEGIN":
+                case "DECLARE":
+                    return SqlKind.PlSqlBlock;
 
                 default:
                     return SqlKind.Unknown;
