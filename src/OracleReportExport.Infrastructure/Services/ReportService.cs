@@ -141,24 +141,26 @@ namespace OracleReportExport.Infrastructure.Services
             {
                 try
                 {
-                    resultNonQuery += await _queryExecutor.ExecuteNonQueryAsync(
+                    resultNonQuery = await _queryExecutor.ExecuteNonQueryAsync(
                                 sql,
                                 parameterValues,
                                 connectionId,
                                 String.Empty,
                                 ct);
-                    if(kind==SqlKind.DdlSafe || kind==SqlKind.DdlDangerous || kind==SqlKind.PlSqlBlock )
+                    if (kind == SqlKind.DdlSafe || kind == SqlKind.DdlDangerous || kind == SqlKind.PlSqlBlock)
                     {
                         //si es un alter sumo uno
                         //porque no devuelve filas afectadas las sentencias DDL
                         if (resultNonQuery == -1)
                         {
                             resultNonQuery = 1;
-                            totalAffectedRows+= resultNonQuery;
+                            totalAffectedRows += resultNonQuery;
                         }
                         else
                             totalAffectedRows += 1;
                     }
+                    else
+                        totalAffectedRows += resultNonQuery;
                 }
                 catch (OracleException ex) when (ex.Number == 50000) //Timeout
                 {
