@@ -89,6 +89,11 @@ namespace OracleReportExport.Infrastructure.Data
                         : ":" + kvp.Key;
 
                     param.Value = kvp.Value ?? DBNull.Value;
+                    if (param.Value is bool bValue)
+                    {
+                        param.Value = bValue ? -1 : 0; // Oracle no tiene tipo booleano
+                        param.OracleDbType = Oracle.ManagedDataAccess.Client.OracleDbType.Int32;
+                    }
                     cmd.Parameters.Add(param);
                 }
             }
@@ -112,14 +117,14 @@ namespace OracleReportExport.Infrastructure.Data
             string txtReplaced=sb.ToString();
             foreach (OracleParameter p in cmd.Parameters)
             {
-                txtReplaced= txtReplaced.ToString().Replace(p.ParameterName, FormatParameterValue(p.Value));
+                txtReplaced= txtReplaced.ToString().Replace(p.ParameterName, FormatParameterValue(p.Value).ToString());
             }
             sb.Clear();
             sb.AppendLine(txtReplaced);
             return sb.ToString();
             }
 
-    private static string FormatParameterValue(object? value)
+    private static object FormatParameterValue(object? value)
     {
         if (value is null || value == DBNull.Value)
             return "NULL";
@@ -135,7 +140,7 @@ namespace OracleReportExport.Infrastructure.Data
                 return $"'{s.Replace("'", "''")}'";
 
             case bool b:
-                return b ? "1" : "0";
+                return b ? -1 : 0;
 
             case int or long or short or decimal or double or float:
                 // Usar punto como separador decimal

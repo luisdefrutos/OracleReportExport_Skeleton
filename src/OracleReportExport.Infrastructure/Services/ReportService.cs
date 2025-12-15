@@ -147,7 +147,7 @@ namespace OracleReportExport.Infrastructure.Services
                                 connectionId,
                                 String.Empty,
                                 ct);
-                    if(kind==SqlKind.DdlSafe || kind==SqlKind.DdlDangerous || kind==SqlKind.PlSqlBlock)
+                    if(kind==SqlKind.DdlSafe || kind==SqlKind.DdlDangerous || kind==SqlKind.PlSqlBlock )
                     {
                         //si es un alter sumo uno
                         //porque no devuelve filas afectadas las sentencias DDL

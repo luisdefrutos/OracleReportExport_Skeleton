@@ -409,7 +409,7 @@ namespace OracleReportExport.Presentation.Desktop
                 case "bool":
                     return new CheckBox
                     {
-                        Text = "Sí / No",
+                        Text = "-1 (marcado)/ 0 (desmarcado)",
                         AutoSize = true,
                         Name = $"{parameterName}_{type}"
                     };

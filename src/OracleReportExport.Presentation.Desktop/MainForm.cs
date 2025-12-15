@@ -5,6 +5,7 @@ using DocumentFormat.OpenXml.Drawing.Diagrams;
 using DocumentFormat.OpenXml.Drawing.Wordprocessing;
 using DocumentFormat.OpenXml.Office.PowerPoint.Y2021.M06.Main;
 using DocumentFormat.OpenXml.Office2010.Excel;
+using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using DocumentFormat.OpenXml.Office2016.Drawing.Charts;
 using DocumentFormat.OpenXml.Spreadsheet;
 using Oracle.ManagedDataAccess.Client;
@@ -388,6 +389,7 @@ namespace OracleReportExport.Presentation.Desktop
             layoutAdHoc.RowStyles.Add(new RowStyle(SizeType.AutoSize));       // Paginación
 
             _txtSqlAdHoc.Dock = DockStyle.Fill;
+            _txtSqlAdHoc.KeyDown += _txtSqlAdHoc_KeyDown;  
             var menu = new ContextMenuStrip();
             menu.Items.Add("Copiar", null, new EventHandler((_, __) => _txtSqlAdHoc.Copy()));
             menu.Items.Add("Pegar", null, new EventHandler((_, __) => _txtSqlAdHoc.Paste()));
@@ -439,6 +441,20 @@ namespace OracleReportExport.Presentation.Desktop
 
             Load += MainForm_LoadAsync;
         }
+
+        private void _txtSqlAdHoc_KeyDown(object? sender, KeyEventArgs e)
+        {
+            if (e.Control && e.KeyCode == Keys.V)
+            {
+                e.SuppressKeyPress = true;
+
+                if (Clipboard.ContainsText())
+                {
+                    _txtSqlAdHoc.SelectedText = Clipboard.GetText(TextDataFormat.Text);
+                }
+            }
+        }
+
         public void InitializeAdHocTab()
         {
             _btnSaveAdHocReport.Anchor = AnchorStyles.Bottom;
@@ -766,6 +782,10 @@ namespace OracleReportExport.Presentation.Desktop
                     evaluateSintax = false;   // no hacemos EXPLAIN PLAN
                     continueExecution = true;
                     break;
+                case SqlKind.CatalogQuery:
+                    evaluateSintax = false;   // no hacemos EXPLAIN PLAN
+                    continueExecution = true;
+                    break;
             }
             if (!continueExecution)
                 return;
@@ -812,12 +832,16 @@ namespace OracleReportExport.Presentation.Desktop
                     Enabled = false;
                     Cursor = Cursors.WaitCursor;
                     var sqlAdHoc = _txtSqlAdHoc.Text;
-                    if (kind == SqlKind.Select || kind == SqlKind.Unknown)
+                    if (kind == SqlKind.Select || kind == SqlKind.Unknown|| kind==SqlKind.CatalogQuery)
                     {
                         var resultQuery = await Task.Run(() => _reportService.ExecuteSQLAdHocAsync(sqlAdHoc, result, GetSelectedConnectionsAdHoc(), cts.Token));
                         if (resultQuery != null && resultQuery.Data != null)
                         {
                             _pagerAdHoc = new PropertyGrid(resultQuery.Data, _gridAdHoc, ResultTabUI.TabSecundary, null);
+                            StylePrimaryButton(_btnPrevPageAdHoc);
+                            StylePrimaryButton(_btnNextPageAdHoc);
+                            StylePrimaryButton(_btnPrevPage);
+                            StylePrimaryButton(_btnNextPage);
                             _pagerAdHoc.PageChanged += Pager_PageChanged;
                             _pagerAdHoc.ShowFirstPage();
                             _gridAdHoc.Visible = true;
@@ -872,13 +896,13 @@ namespace OracleReportExport.Presentation.Desktop
             {
                 if (propPag == _pagerAdHoc)
                 {
-                    _btnPrevPageAdHoc.Enabled = propPag.CurrentPage==0?true: propPag.CurrentPage > 0;
+                    _btnPrevPageAdHoc.Enabled = propPag.CurrentPage==0?false: propPag.CurrentPage > 0;
                     _btnNextPageAdHoc.Enabled = propPag.CurrentPage < propPag.TotalPages - 1;
                     RemoveControlsTopGrid(_gridAdHoc, ResultTabUI.TabSecundary);
                 }
                 else if (propPag == _pagerPredef)
                 {
-                    _btnPrevPage.Enabled = propPag.CurrentPage==0?true:propPag.CurrentPage > 0;
+                    _btnPrevPage.Enabled = propPag.CurrentPage==0?false:propPag.CurrentPage > 0;
                     _btnNextPage.Enabled = propPag.CurrentPage < propPag.TotalPages - 1;
                     RemoveControlsTopGrid(_grid, ResultTabUI.TabInitial);
                 }
