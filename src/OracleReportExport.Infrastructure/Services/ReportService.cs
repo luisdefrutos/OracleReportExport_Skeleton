@@ -249,7 +249,7 @@ namespace OracleReportExport.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                throw ex;
+                throw;
             }
 
         }
