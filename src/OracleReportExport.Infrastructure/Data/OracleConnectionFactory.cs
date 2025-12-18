@@ -39,8 +39,8 @@ namespace OracleReportExport.Infrastructure.Data
                                              c => c,
                                              StringComparer.OrdinalIgnoreCase);
 
-            if(File.Exists(configPath))
-                File.Delete(configPath);
+            ////if(File.Exists(configPath))
+            ////    File.Delete(configPath);
         }
 
         public DbConnection CreateConnection(string connectionId)

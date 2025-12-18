@@ -1,0 +1,28 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
+
+	<Fragment>
+
+		<!-- Subcarpeta Configuration dentro de INSTALLFOLDER -->
+		<DirectoryRef Id="INSTALLFOLDER">
+			<Directory Id="CONFIGDIR" Name="Configuration" />
+		</DirectoryRef>
+
+		<!-- Crea la carpeta y le da permisos de escritura a Everyone -->
+		<DirectoryRef Id="CONFIGDIR">
+			<Component Id="cmp_ConfigPermissions"
+					   Guid="{A6EA53C9-CF7B-4D9A-A2BE-E24F1E6F77D1}">
+
+				<CreateFolder>
+					<util:PermissionEx User="Everyone" GenericAll="yes" />
+				</CreateFolder>
+
+			</Component>
+		</DirectoryRef>
+
+	</Fragment>
+
+</Wix>
+
+
+

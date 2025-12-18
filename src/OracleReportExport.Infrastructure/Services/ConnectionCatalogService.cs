@@ -105,8 +105,8 @@ namespace OracleReportExport.Infrastructure.Services
                 var outputPath = Path.Combine(basePath, "Configuration", "Connections.json");
                 var outJson = JsonSerializer.Serialize(outputRoot, options);
                 File.WriteAllText(outputPath, outJson);
-                if(File.Exists(centralConfigPath))
-                    File.Delete(centralConfigPath);
+                //if(File.Exists(centralConfigPath))
+                //    File.Delete(centralConfigPath);
             }
             catch
             {

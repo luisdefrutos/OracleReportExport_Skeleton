@@ -1,0 +1,10 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+	<Fragment>
+		<ComponentGroup Id="AppFilesGroup" Directory="INSTALLFOLDER">
+			<Files Include="$(var.OracleReportExport.Presentation.Desktop.TargetDir)publish\win-x64\**\*.*" />
+		</ComponentGroup>
+	</Fragment>
+</Wix>
+
+
+

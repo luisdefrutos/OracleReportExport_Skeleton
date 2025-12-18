@@ -1,0 +1,42 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+	<Fragment>
+
+		<!-- Menú Inicio -->
+		<StandardDirectory Id="ProgramMenuFolder">
+			<Directory Id="ProgramMenuDir" Name="OracleReportExport" />
+		</StandardDirectory>
+
+		<DirectoryRef Id="ProgramMenuDir">
+			<Component Id="cmp_StartMenuShortcut" Guid="*">
+				<Shortcut
+				  Id="sc_StartMenu"
+				  Name="OracleReportExport"
+				  Target="[INSTALLFOLDER]OracleReportExport.Presentation.Desktop.exe"
+				  WorkingDirectory="INSTALLFOLDER" />
+				<RemoveFolder Id="rm_ProgramMenuDir" On="uninstall" />
+				<RegistryValue Root="HKCU" Key="Software\LuisDeFrutos\OracleReportExport" Name="Installed" Type="integer" Value="1" KeyPath="yes" />
+			</Component>
+		</DirectoryRef>
+
+		<!-- Escritorio (opcional) -->
+		<StandardDirectory Id="DesktopFolder" />
+
+		<DirectoryRef Id="DesktopFolder">
+			<Component Id="cmp_DesktopShortcut" Guid="*">
+				<Shortcut
+				  Id="sc_Desktop"
+				  Name="OracleReportExport"
+				  Target="[INSTALLFOLDER]OracleReportExport.Presentation.Desktop.exe"
+				  WorkingDirectory="INSTALLFOLDER" />
+				<RegistryValue Root="HKCU" Key="Software\LuisDeFrutos\OracleReportExport" Name="DesktopShortcut" Type="integer" Value="1" KeyPath="yes" />
+			</Component>
+		</DirectoryRef>
+
+		<ComponentGroup Id="ShortcutsGroup">
+			<ComponentRef Id="cmp_StartMenuShortcut" />
+			<ComponentRef Id="cmp_DesktopShortcut" />
+		</ComponentGroup>
+
+	</Fragment>
+</Wix>
+

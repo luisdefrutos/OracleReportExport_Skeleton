@@ -1,0 +1,20 @@
+﻿<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package
+    Name="OracleReportExport"
+    Manufacturer="LuisDeFrutos"
+    Version="1.0.0.0"
+    UpgradeCode="{20AA0703-4000-472B-97F0-FF2EF382D335}"
+    Scope="perMachine">
+
+    <MajorUpgrade DowngradeErrorMessage="Ya hay una versión más nueva instalada." />
+    <MediaTemplate />
+
+    <Feature Id="MainFeature" Title="OracleReportExport" Level="1">
+      <ComponentGroupRef Id="AppFilesGroup" />
+      <ComponentRef Id="cmp_ConfigPermissions" />
+	  <ComponentGroupRef Id="ShortcutsGroup" />
+    </Feature>
+
+  </Package>
+</Wix>
+
