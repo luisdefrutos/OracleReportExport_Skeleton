@@ -94,6 +94,7 @@ namespace OracleReportExport.Presentation.Desktop
             Width = 260,
             CheckOnClick = true,
             ScrollAlwaysVisible = true
+            
         };
 
         private readonly Button _btnSelectAll = new()
@@ -315,6 +316,7 @@ namespace OracleReportExport.Presentation.Desktop
             _chkConnectionsAdHoc.Items.AddRange(
                 _chkConnections.Items.OfType<ConnectionInfo>().ToArray()
             );
+            _chkConnectionsAdHoc.AutoAdjustWidth();
 
             _topPanelAdHoc.Controls.Add(new Label
             {
@@ -1197,7 +1199,8 @@ namespace OracleReportExport.Presentation.Desktop
             foreach (ConnectionInfo c in connectionUma)
                 _chkConnections.Items.Add(c, false);
 
-            _chkConnections.AutoAdjustWidth();
+            _chkConnections.AutoAdjustWidth(); 
+           _chkConnections.ScrollAlwaysVisible= true;
         }
 
         private async Task LoadReportsAsync()
