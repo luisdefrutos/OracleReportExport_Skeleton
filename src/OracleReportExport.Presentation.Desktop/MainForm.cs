@@ -1281,7 +1281,7 @@ namespace OracleReportExport.Presentation.Desktop
             var reports = (await _reportService.GetAvailableReportsAsync());
 
             //Filtro solo para esta versión 
-            reports = reports.Where(r => r.Id == "25").ToList();
+            reports = reports.Where(r => r.Id == "25" || r.Id == "28").ToList();
 
             _cmbReports.DataSource = reports.OrderBy(x => Convert.ToInt32(x.Id)).ToList();
             _cmbReports.DisplayMember = nameof(ReportDefinition.Name);
