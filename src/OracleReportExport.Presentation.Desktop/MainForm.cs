@@ -24,6 +24,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Resources;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -94,7 +95,7 @@ namespace OracleReportExport.Presentation.Desktop
             Width = 260,
             CheckOnClick = true,
             ScrollAlwaysVisible = true
-            
+
         };
 
         private readonly Button _btnSelectAll = new()
@@ -148,7 +149,8 @@ namespace OracleReportExport.Presentation.Desktop
         {
             Text = "Ver Consulta",
             AutoSize = true,
-            Visible = true
+            Visible = false
+            // por defecto no se muestra en esta versión
         };
 
         private readonly ComboBox _cmbReports = new()
@@ -254,7 +256,11 @@ namespace OracleReportExport.Presentation.Desktop
 
         public MainForm()
         {
-            Text = "Oracle Report Export";
+            Text = "Informes Soporte IT";
+            var resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
+            Icon = (Icon)resources.GetObject("Icono_itv"); 
+
+
             WindowState = FormWindowState.Maximized;
             MaximizeBox = true;
             FormBorderStyle = FormBorderStyle.Sizable;
@@ -263,6 +269,7 @@ namespace OracleReportExport.Presentation.Desktop
 
             _tabPredefinidos = new TabPage("Informes predefinidos");
             _tabAdHoc = new TabPage("SQL avanzada");
+
 
             // --- Pestaña de informes predefinidos ---
             _tabPredefinidos.Controls.Add(_grid);
@@ -391,7 +398,7 @@ namespace OracleReportExport.Presentation.Desktop
             layoutAdHoc.RowStyles.Add(new RowStyle(SizeType.AutoSize));       // Paginación
 
             _txtSqlAdHoc.Dock = DockStyle.Fill;
-            _txtSqlAdHoc.KeyDown += _txtSqlAdHoc_KeyDown;  
+            _txtSqlAdHoc.KeyDown += _txtSqlAdHoc_KeyDown;
             var menu = new ContextMenuStrip();
             menu.Items.Add("Copiar", null, new EventHandler((_, __) => _txtSqlAdHoc.Copy()));
             menu.Items.Add("Pegar", null, new EventHandler((_, __) => _txtSqlAdHoc.Paste()));
@@ -425,7 +432,9 @@ namespace OracleReportExport.Presentation.Desktop
             _tabAdHoc.Controls.Add(_topPanelAdHoc);
 
             _tabControl.TabPages.Add(_tabPredefinidos);
-            _tabControl.TabPages.Add(_tabAdHoc);
+            //no lo agrego a la coleccion de controles hasta no cargar los informes
+            // _tabControl.TabPages.Add(_tabAdHoc);
+
 
             Controls.Add(_tabControl);
 
@@ -440,10 +449,69 @@ namespace OracleReportExport.Presentation.Desktop
             // Aplicar tema visual
             ApplyTheme();
 
+            ApplyCorporateStyle();   // <--- AÑADE ESTA LÍNEA
+
 
             Load += MainForm_LoadAsync;
         }
 
+        private void ApplyCorporateStyle()
+        {
+            // Paleta moderna y discreta
+            Color secondaryGrayBlue = Color.FromArgb(220, 227, 236); // Gris azulado suave
+            Color secondaryGrayBlueHover = Color.FromArgb(205, 215, 228);
+            Color verySoftBorder = Color.FromArgb(174, 183, 193); // Borde suave
+            Color textDark = Color.FromArgb(40, 40, 40);
+
+            Color primaryBlue = Color.FromArgb(45, 108, 223);        // Azul del botón principal
+            Color primaryBlueHover = Color.FromArgb(35, 90, 190);
+            this.Font = new Font("Segoe UI", 9F);
+
+            ConfigureSoftButton(this._btnSelectAll, secondaryGrayBlue, secondaryGrayBlueHover, verySoftBorder, textDark);
+            ConfigureSoftButton(this._btnUnselectAll, secondaryGrayBlue, secondaryGrayBlueHover, verySoftBorder, textDark);
+            ConfigureSoftButton(this._btnRunReport);
+
+        }
+        private void ConfigureSoftButton(Button btn, Color baseColor, Color hoverColor, Color borderColor, Color textColor)
+        {
+            if (btn == null) return;
+
+            btn.FlatStyle = FlatStyle.Flat;
+            btn.FlatAppearance.BorderSize = 1;
+            btn.FlatAppearance.BorderColor = borderColor;    // Borde suave, NO negro
+
+            btn.BackColor = baseColor;
+            btn.ForeColor = textColor;
+            btn.UseVisualStyleBackColor = false;
+
+            btn.MouseEnter += (s, e) => btn.BackColor = hoverColor;
+            btn.MouseLeave += (s, e) => btn.BackColor = baseColor;
+        }
+
+        private void ConfigureSoftButton(Button btn)
+        {
+            if (btn == null) return;
+
+            Color normalColor = Color.FromArgb(224, 232, 242);   // normal
+            Color hoverColor = Color.FromArgb(202, 219, 235);    // hover (se nota bien)
+            Color clickColor = Color.FromArgb(183, 205, 229);    // click
+
+            Color borderColor = Color.FromArgb(175, 185, 195);   // borde suave empresarial
+
+            btn.FlatStyle = FlatStyle.Flat;
+            btn.FlatAppearance.BorderSize = 1;
+            btn.FlatAppearance.BorderColor = borderColor;
+
+            btn.BackColor = normalColor;
+            btn.ForeColor = Color.FromArgb(40, 40, 40);
+            btn.UseVisualStyleBackColor = false;
+
+            // Eventos de color
+            btn.MouseEnter += (s, e) => btn.BackColor = hoverColor;
+            btn.MouseLeave += (s, e) => btn.BackColor = normalColor;
+            btn.MouseDown += (s, e) => btn.BackColor = clickColor;
+            btn.MouseUp += (s, e) => btn.BackColor = hoverColor;
+        }
         private void _txtSqlAdHoc_KeyDown(object? sender, KeyEventArgs e)
         {
             if (e.Control && e.KeyCode == Keys.V)
@@ -755,7 +823,7 @@ namespace OracleReportExport.Presentation.Desktop
                         MessageBoxIcon.Warning);
                     continueExecution = (resp == DialogResult.Yes);
                     evaluateSintax = true;   // no hacemos EXPLAIN PLAN
-                   break;
+                    break;
                 // DDL “segura”: ALTER / CREATE / RENAME / COMMENT / GRANT / REVOKE
                 case SqlKind.DdlSafe:
                     resp = MessageBox.Show(
@@ -767,7 +835,7 @@ namespace OracleReportExport.Presentation.Desktop
                         MessageBoxIcon.Warning);
                     continueExecution = (resp == DialogResult.Yes);
                     evaluateSintax = false;   // no tiene sentido EXPLAIN PLAN
-                   break;
+                    break;
                 // DDL “peligrosa”: DROP / TRUNCATE
                 case SqlKind.DdlDangerous:
                     resp = MessageBox.Show(
@@ -813,7 +881,7 @@ namespace OracleReportExport.Presentation.Desktop
                     foreach (var item in GetSelectedConnectionsAdHoc().Select(x => new { Id = x.ExtendedId }).ToList())
                         _currentReport.DefaultConnectionIds.Add(item.Id);
 
-                   var parametros = form.RuntimeParameterValues;
+                    var parametros = form.RuntimeParameterValues;
                     if (_currentReport.Parameters != null &&
                         _currentReport.Parameters.Count > 0 &&
                         parametros.Count == 0)
@@ -834,7 +902,7 @@ namespace OracleReportExport.Presentation.Desktop
                     Enabled = false;
                     Cursor = Cursors.WaitCursor;
                     var sqlAdHoc = _txtSqlAdHoc.Text;
-                    if (kind == SqlKind.Select || kind == SqlKind.Unknown|| kind==SqlKind.CatalogQuery)
+                    if (kind == SqlKind.Select || kind == SqlKind.Unknown || kind == SqlKind.CatalogQuery)
                     {
                         var resultQuery = await Task.Run(() => _reportService.ExecuteSQLAdHocAsync(sqlAdHoc, result, GetSelectedConnectionsAdHoc(), cts.Token));
                         if (resultQuery != null && resultQuery.Data != null)
@@ -898,13 +966,13 @@ namespace OracleReportExport.Presentation.Desktop
             {
                 if (propPag == _pagerAdHoc)
                 {
-                    _btnPrevPageAdHoc.Enabled = propPag.CurrentPage==0?false: propPag.CurrentPage > 0;
+                    _btnPrevPageAdHoc.Enabled = propPag.CurrentPage == 0 ? false : propPag.CurrentPage > 0;
                     _btnNextPageAdHoc.Enabled = propPag.CurrentPage < propPag.TotalPages - 1;
                     RemoveControlsTopGrid(_gridAdHoc, ResultTabUI.TabSecundary);
                 }
                 else if (propPag == _pagerPredef)
                 {
-                    _btnPrevPage.Enabled = propPag.CurrentPage==0?false:propPag.CurrentPage > 0;
+                    _btnPrevPage.Enabled = propPag.CurrentPage == 0 ? false : propPag.CurrentPage > 0;
                     _btnNextPage.Enabled = propPag.CurrentPage < propPag.TotalPages - 1;
                     RemoveControlsTopGrid(_grid, ResultTabUI.TabInitial);
                 }
@@ -937,29 +1005,29 @@ namespace OracleReportExport.Presentation.Desktop
                 .ToList();
         }
 
-            private void RecursiveEnableControlsForm(Control control, bool changeStated,bool dataLoad=false)
+        private void RecursiveEnableControlsForm(Control control, bool changeStated, bool dataLoad = false)
         {
-       
+
             if (control == null)
                 return;
 
-          
-                control.Enabled = changeStated;
-          
-                foreach (Control child in control.Controls)
-                {
 
-                     bool   skipSetting =
-                                control.Name.Contains("_btnPrevPageAdHoc") ||
-                                control.Name.Contains("_btnPrevPage") ||
-                                control.Name.Contains("_btnNextPageAdHoc") ||
-                                control.Name.Contains("_btnNextPage");
+            control.Enabled = changeStated;
 
-                        if (!skipSetting)
-                            continue;
-                    RecursiveEnableControlsForm(child, changeStated);
-                }
-            
+            foreach (Control child in control.Controls)
+            {
+
+                bool skipSetting =
+                           control.Name.Contains("_btnPrevPageAdHoc") ||
+                           control.Name.Contains("_btnPrevPage") ||
+                           control.Name.Contains("_btnNextPageAdHoc") ||
+                           control.Name.Contains("_btnNextPage");
+
+                if (!skipSetting)
+                    continue;
+                RecursiveEnableControlsForm(child, changeStated);
+            }
+
         }
 
         private async void MainForm_LoadAsync(object? sender, EventArgs e)
@@ -973,7 +1041,8 @@ namespace OracleReportExport.Presentation.Desktop
                 loading.Refresh();
                 await LoadReportsAsync();
             }
-            catch (Exception) { 
+            catch (Exception)
+            {
                 throw;
             }
             finally
@@ -1038,7 +1107,7 @@ namespace OracleReportExport.Presentation.Desktop
         {
             this.BackColor = AppTheme.FormBackColor;
 
-            _topPanel.BackColor = AppTheme.TopPanelBackColor;
+            ///_topPanel.BackColor = AppTheme.TopPanelBackColor;
             _topPanelAdHoc.BackColor = AppTheme.TopPanelBackColor;
             _grpParametros.BackColor = AppTheme.GroupBoxBackColor;
 
@@ -1056,8 +1125,8 @@ namespace OracleReportExport.Presentation.Desktop
             StyleSecondaryButton(_btnVerConsulta);
             StyleSecondaryButton(_btnPrevPageAdHoc);
             StyleSecondaryButton(_btnNextPageAdHoc);
-            StyleSecondaryButton(_btnPrevPage);       
-            StyleSecondaryButton(_btnNextPage);       
+            StyleSecondaryButton(_btnPrevPage);
+            StyleSecondaryButton(_btnNextPage);
         }
 
         private static void ApplyAlternateRowStyle(DataGridView dgv)
@@ -1181,32 +1250,38 @@ namespace OracleReportExport.Presentation.Desktop
 
             _chkConnections.Items.Clear();
 
-            var connectionCentral = conexiones.Where(x => !string.IsNullOrEmpty(x.DisplayName) &&
-                x.DisplayName.IndexOf("Central", StringComparison.OrdinalIgnoreCase) >= 0).ToList();
-            foreach (ConnectionInfo c in connectionCentral)
-            {
-                c.DisplayName = c.DisplayName!.ToUpperInvariant().Trim();
-                _chkConnections.Items.Add(c, false);
-            }
+            //NO CARGAR LAS CONEXIONES DE CENTRAL
+
+            ////var connectionCentral = conexiones.Where(x => !string.IsNullOrEmpty(x.DisplayName) &&
+            ////    x.DisplayName.IndexOf("Central", StringComparison.OrdinalIgnoreCase) >= 0).ToList();
+            ////foreach (ConnectionInfo c in connectionCentral)
+            ////{
+            ////    c.DisplayName = c.DisplayName!.ToUpperInvariant().Trim();
+            ////    _chkConnections.Items.Add(c, false);
+            ////}
 
             var connectionStation = conexiones.Where(x => !string.IsNullOrEmpty(x.DisplayName) &&
                 x.DisplayName.IndexOf("I.T.V.", StringComparison.OrdinalIgnoreCase) >= 0).ToList();
             foreach (ConnectionInfo c in connectionStation)
                 _chkConnections.Items.Add(c, false);
 
-            var connectionUma = conexiones.Where(x => !string.IsNullOrEmpty(x.DisplayName) &&
-                x.DisplayName.IndexOf("U.M.A.", StringComparison.OrdinalIgnoreCase) >= 0).ToList();
-            foreach (ConnectionInfo c in connectionUma)
-                _chkConnections.Items.Add(c, false);
+            //NO CARGAR LAS CONEXIONES DE UMA
 
-            _chkConnections.AutoAdjustWidth(); 
-           _chkConnections.ScrollAlwaysVisible= true;
+            ////var connectionUma = conexiones.Where(x => !string.IsNullOrEmpty(x.DisplayName) &&
+            ////    x.DisplayName.IndexOf("U.M.A.", StringComparison.OrdinalIgnoreCase) >= 0).ToList();
+            ////foreach (ConnectionInfo c in connectionUma)
+            ////    _chkConnections.Items.Add(c, false);
+
+            _chkConnections.AutoAdjustWidth();
+            _chkConnections.ScrollAlwaysVisible = true;
         }
 
         private async Task LoadReportsAsync()
         {
             var reports = (await _reportService.GetAvailableReportsAsync());
-            //
+
+            //Filtro solo para esta versión 
+            reports = reports.Where(r => r.Id == "25").ToList();
 
             _cmbReports.DataSource = reports.OrderBy(x => Convert.ToInt32(x.Id)).ToList();
             _cmbReports.DisplayMember = nameof(ReportDefinition.Name);
@@ -1283,8 +1358,8 @@ namespace OracleReportExport.Presentation.Desktop
                 var itemCentral = _chkConnections.Items.OfType<ConnectionInfo>().Where(x => x.Id.ToUpper().
                                                                         Contains(ReportSourceType.Central.ToString().ToUpper()))
                                                                         .FirstOrDefault();
-                if(itemCentral== null)
-                    return; 
+                if (itemCentral == null)
+                    return;
                 var indexCentral = _chkConnections.Items.IndexOf(itemCentral);
                 if (indexCentral != -1)
                     _chkConnections.SetItemChecked(indexCentral, true);
@@ -1363,7 +1438,7 @@ namespace OracleReportExport.Presentation.Desktop
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Warning);
                 }
-                
+
             }
             catch (OperationCanceledException)
             {
@@ -1528,7 +1603,7 @@ namespace OracleReportExport.Presentation.Desktop
 
 
         // Pintar número de registros afectados en consultas DML
-        private void PaintControlsTopGridUpdate(DataGridView? grid, ResultTabUI nameTab,int numReg)
+        private void PaintControlsTopGridUpdate(DataGridView? grid, ResultTabUI nameTab, int numReg)
         {
             if (grid == null || grid.Parent == null)
                 return;
@@ -1541,7 +1616,7 @@ namespace OracleReportExport.Presentation.Desktop
             System.Drawing.Point gridLocationInParent = parent.PointToClient(
                 grid.Parent.PointToScreen(grid.Location));
 
-            string SufixLabel =nameTab.ToString();
+            string SufixLabel = nameTab.ToString();
 
             _lblCountRows = new Label
             {
@@ -1554,8 +1629,8 @@ namespace OracleReportExport.Presentation.Desktop
             };
             parent.Controls.Add(_lblCountRows);
 
-           
-                _lblCountRows.Text = $"Registros afectados : {numReg}";
+
+            _lblCountRows.Text = $"Registros afectados : {numReg}";
 
             if (_lblCountRows.Top == 0 && _lblCountRows.Left == 0)
             {
@@ -1563,7 +1638,7 @@ namespace OracleReportExport.Presentation.Desktop
                 _lblCountRows.Left = parent.ClientSize.Width - _lblCountRows.Width - 10;
             }
             _lblCountRows.BringToFront();
-         
+
 
         }
         private void BtnVerConsulta_Click(object? sender, EventArgs e)
@@ -1613,7 +1688,7 @@ namespace OracleReportExport.Presentation.Desktop
 
             bool hasMaster = report.TableMasterForParameters != null && report.TableMasterForParameters.Count > 0;
             bool hasParams = report.Parameters != null && report.Parameters.Count > 0;
-         
+
             if (!hasMaster && !hasParams)
             {
                 string messageType = String.Empty;
@@ -1626,12 +1701,12 @@ namespace OracleReportExport.Presentation.Desktop
                         messageType = String.Concat("Es un informe de ", ReportSourceType.Central.ToString());
                         break;
                     case ReportSourceType.Ambos:
-                        messageType = String.Concat("Es un informe de ",ReportSourceType.Central.ToString()," y ", ReportSourceType.Estacion.ToString());
+                        messageType = String.Concat("Es un informe de ", ReportSourceType.Central.ToString(), " y ", ReportSourceType.Estacion.ToString());
                         break;
 
                 }
- 
-            
+
+
                 var lbl = new Label
                 {
                     Text = $"Este informe no requiere parámetros.{messageType}",
@@ -2112,6 +2187,20 @@ namespace OracleReportExport.Presentation.Desktop
             }
         }
 
+        private void InitializeComponent()
+        {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
+            SuspendLayout();
+            // 
+            // MainForm
+            // 
+            ClientSize = new Size(282, 253);
+            Icon = (Icon)resources.GetObject("$this.Icon");
+            Name = "MainForm";
+            ResumeLayout(false);
+
+        }
+
         private void ExportGridWithClosedXml(object? sender, EventArgs e)
         {
             using var loading = new LoadingForm("Exportando datos a Excel ...");
@@ -2216,7 +2305,7 @@ namespace OracleReportExport.Presentation.Desktop
             }
             finally
             {
-                RecursiveEnableControlsForm(this, true,true);
+                RecursiveEnableControlsForm(this, true, true);
                 Cursor = Cursors.Default;
                 if (!loading.IsDisposed)
                     loading.Close();
