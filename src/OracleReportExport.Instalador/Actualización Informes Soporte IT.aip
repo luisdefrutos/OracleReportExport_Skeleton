@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<DOCUMENT Type="Advanced Installer" CreateVersion="23.3" version="23.3" Modules="simple" RootPath="." Language="es" Id="{68CE04C1-3822-4F97-99CA-C66F256BD4F8}">
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiPropsComponent">
+    <ROW Property="AI_BITMAP_DISPLAY_MODE" Value="0"/>
+    <ROW Property="ALLUSERS" Value="1"/>
+    <ROW Property="ARPCOMMENTS" Value="Esta base de datos del instalador contiene la lógica y los datos necesarios para instalar [|ProductName]." ValueLocId="*"/>
+    <ROW Property="Manufacturer" Value="TÜV SÜD"/>
+    <ROW Property="ProductCode" Value="3082:{08D17529-7C57-4C2D-8C06-BF874850F9C1} " Type="16"/>
+    <ROW Property="ProductLanguage" Value="1033"/>
+    <ROW Property="ProductName" Value="Actualización Informes Soporte IT"/>
+    <ROW Property="ProductVersion" Value="1.0.0" Options="32"/>
+    <ROW Property="SecureCustomProperties" Value="OLDPRODUCTS;AI_NEWERPRODUCTFOUND"/>
+    <ROW Property="UpgradeCode" Value="{1E097208-9929-42CA-8F86-55070869B100}"/>
+    <ROW Property="WindowsType9X" MultiBuildValue="DefaultBuild:Windows 9x/ME" ValueLocId="-"/>
+    <ROW Property="WindowsType9XDisplay" MultiBuildValue="DefaultBuild:Windows 9x/ME" ValueLocId="-"/>
+    <ROW Property="WindowsTypeNT40" MultiBuildValue="DefaultBuild:Windows NT 4.0" ValueLocId="-"/>
+    <ROW Property="WindowsTypeNT40Display" MultiBuildValue="DefaultBuild:Windows NT 4.0" ValueLocId="-"/>
+    <ROW Property="WindowsTypeNT50" MultiBuildValue="DefaultBuild:Windows 2000" ValueLocId="-"/>
+    <ROW Property="WindowsTypeNT50Display" MultiBuildValue="DefaultBuild:Windows 2000" ValueLocId="-"/>
+    <ROW Property="WindowsTypeNT5X" MultiBuildValue="DefaultBuild:Windows XP/2003" ValueLocId="-"/>
+    <ROW Property="WindowsTypeNT5XDisplay" MultiBuildValue="DefaultBuild:Windows XP/2003" ValueLocId="-"/>
+    <ROW Property="WindowsTypeNT60" MultiBuildValue="DefaultBuild:Windows Vista/Server 2008" ValueLocId="-"/>
+    <ROW Property="WindowsTypeNT60Display" MultiBuildValue="DefaultBuild:Windows Vista/Server 2008" ValueLocId="-"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiDirsComponent">
+    <ROW Directory="APPDIR" Directory_Parent="TARGETDIR" DefaultDir="APPDIR:." IsPseudoRoot="1"/>
+    <ROW Directory="Configuration_Dir" Directory_Parent="APPDIR" DefaultDir="CONFIG~1|Configuration" DirectoryOptions="3"/>
+    <ROW Directory="ProgramMenuFolder" Directory_Parent="TARGETDIR" DefaultDir="PROGRA~1|ProgramMenuFolder" IsPseudoRoot="1"/>
+    <ROW Directory="SHORTCUTDIR" Directory_Parent="TARGETDIR" DefaultDir="SHORTC~1|SHORTCUTDIR" IsPseudoRoot="1"/>
+    <ROW Directory="SQL_Dir" Directory_Parent="APPDIR" DefaultDir="SQL" DirectoryOptions="3"/>
+    <ROW Directory="TARGETDIR" DefaultDir="SourceDir"/>
+    <ROW Directory="cs_Dir" Directory_Parent="APPDIR" DefaultDir="cs" DirectoryOptions="3"/>
+    <ROW Directory="de_Dir" Directory_Parent="APPDIR" DefaultDir="de" DirectoryOptions="3"/>
+    <ROW Directory="es_Dir" Directory_Parent="APPDIR" DefaultDir="es" DirectoryOptions="3"/>
+    <ROW Directory="fr_Dir" Directory_Parent="APPDIR" DefaultDir="fr" DirectoryOptions="3"/>
+    <ROW Directory="it_Dir" Directory_Parent="APPDIR" DefaultDir="it" DirectoryOptions="3"/>
+    <ROW Directory="ja_Dir" Directory_Parent="APPDIR" DefaultDir="ja" DirectoryOptions="3"/>
+    <ROW Directory="ko_Dir" Directory_Parent="APPDIR" DefaultDir="ko" DirectoryOptions="3"/>
+    <ROW Directory="logs_Dir" Directory_Parent="APPDIR" DefaultDir="logs" DirectoryOptions="3"/>
+    <ROW Directory="pl_Dir" Directory_Parent="APPDIR" DefaultDir="pl" DirectoryOptions="3"/>
+    <ROW Directory="ptBR_Dir" Directory_Parent="APPDIR" DefaultDir="pt-BR" DirectoryOptions="3"/>
+    <ROW Directory="ru_Dir" Directory_Parent="APPDIR" DefaultDir="ru" DirectoryOptions="3"/>
+    <ROW Directory="tr_Dir" Directory_Parent="APPDIR" DefaultDir="tr" DirectoryOptions="3"/>
+    <ROW Directory="zhHans_Dir" Directory_Parent="APPDIR" DefaultDir="zh-Hans" DirectoryOptions="3"/>
+    <ROW Directory="zhHant_Dir" Directory_Parent="APPDIR" DefaultDir="zh-Hant" DirectoryOptions="3"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.SideBySideGuidComponent">
+    <ROW Component="APPDIR" Value="{39DC542E-CF9A-4845-B4E5-73FC66BDA21D}"/>
+    <ROW Component="ProductInformation" Value="{56F4EFB6-42B4-4445-BCDB-3C366D49D23C}"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiCompsComponent">
+    <ROW Component="APPDIR" ComponentId="{39DC542E-CF9A-4845-B4E5-73FC66BDA21D}" Directory_="APPDIR" Attributes="0"/>
+    <ROW Component="Connections.json" ComponentId="{4BE4578F-1AE6-4639-BFAD-2C41EA9B8324}" Directory_="Configuration_Dir" Attributes="0" KeyPath="ConnectionsCentral.json" Type="0"/>
+    <ROW Component="D3DCompiler_47_cor3.dll" ComponentId="{7A69EF08-DEFE-4AC1-91C1-BBAB348EB013}" Directory_="APPDIR" Attributes="256" KeyPath="D3DCompiler_47_cor3.dll"/>
+    <ROW Component="EmpleadosConFirmaEnVigor.txt" ComponentId="{DDDC15E4-C16B-4707-8280-9CFA2F0EA5EF}" Directory_="SQL_Dir" Attributes="0" KeyPath="EmpleadosConFirmaEnVigor.txt" Type="0"/>
+    <ROW Component="ITV.ICO" ComponentId="{D208F262-B5AF-48B7-B19A-4FFFE8091DB5}" Directory_="APPDIR" Attributes="0" KeyPath="ITV.ICO" Type="0"/>
+    <ROW Component="OracleReportExport.Presentation.Desktop.exe" ComponentId="{BE1A959D-95DB-4ABD-8939-C5B311678B68}" Directory_="APPDIR" Attributes="256" KeyPath="OracleReportExport.Presentation.Desktop.exe"/>
+    <ROW Component="PenImc_cor3.dll" ComponentId="{3B0CCE3C-6591-4A53-BC04-E4C59F94F8EE}" Directory_="APPDIR" Attributes="256" KeyPath="PenImc_cor3.dll"/>
+    <ROW Component="PresentationNative_cor3.dll" ComponentId="{2842F5A5-2BD3-4ECB-9D5F-0BAE784CD058}" Directory_="APPDIR" Attributes="256" KeyPath="PresentationNative_cor3.dll"/>
+    <ROW Component="ProductInformation" ComponentId="{56F4EFB6-42B4-4445-BCDB-3C366D49D23C}" Directory_="APPDIR" Attributes="4" KeyPath="Version"/>
+    <ROW Component="SHORTCUTDIR" ComponentId="{D8E51D98-66D0-4FB2-AD80-4D354A1D5C32}" Directory_="SHORTCUTDIR" Attributes="0"/>
+    <ROW Component="app20251217.log" ComponentId="{50D33120-5611-4DD9-8DE6-FBEEDC9EEC85}" Directory_="logs_Dir" Attributes="0" KeyPath="app20251217.log" Type="0"/>
+    <ROW Component="cs" ComponentId="{219425E6-84F4-4001-9207-0C462B7D298C}" Directory_="cs_Dir" Attributes="0"/>
+    <ROW Component="de" ComponentId="{CBF8A229-A1B0-40C6-AFEA-89407EAC4735}" Directory_="de_Dir" Attributes="0"/>
+    <ROW Component="es" ComponentId="{000459E8-63BF-4FB6-89EB-872B4373283C}" Directory_="es_Dir" Attributes="0"/>
+    <ROW Component="fr" ComponentId="{E8019C4A-80CC-4B7E-95AC-302812634013}" Directory_="fr_Dir" Attributes="0"/>
+    <ROW Component="it" ComponentId="{9E46D289-3CDB-4B26-9B27-DF0448A09A21}" Directory_="it_Dir" Attributes="0"/>
+    <ROW Component="ja" ComponentId="{63B253A0-B0C0-4623-AF7A-36A9D58231B0}" Directory_="ja_Dir" Attributes="0"/>
+    <ROW Component="ko" ComponentId="{7316130F-0BF5-407E-B3C5-F8C1545A1BC3}" Directory_="ko_Dir" Attributes="0"/>
+    <ROW Component="pl" ComponentId="{381E1AD8-08E0-49DD-B2FE-C18871B87FBC}" Directory_="pl_Dir" Attributes="0"/>
+    <ROW Component="ptBR" ComponentId="{3B0D2A5B-2089-44F1-A993-1E00FEEF0062}" Directory_="ptBR_Dir" Attributes="0"/>
+    <ROW Component="ru" ComponentId="{19F68BFF-C24E-48B1-B84C-E825065E8BA7}" Directory_="ru_Dir" Attributes="0"/>
+    <ROW Component="tr" ComponentId="{7048D4D7-868D-4570-9E9C-7FC5423E2B04}" Directory_="tr_Dir" Attributes="0"/>
+    <ROW Component="vcruntime140_cor3.dll" ComponentId="{59B6CD00-C3A8-4791-A54D-D201D00E19D2}" Directory_="APPDIR" Attributes="256" KeyPath="vcruntime140_cor3.dll"/>
+    <ROW Component="wpfgfx_cor3.dll" ComponentId="{E83A81BD-E64D-44C4-BA6C-D13DC39ED8EC}" Directory_="APPDIR" Attributes="256" KeyPath="wpfgfx_cor3.dll"/>
+    <ROW Component="zhHans" ComponentId="{A763BA9E-1487-4C4D-92A9-776955FADE4D}" Directory_="zhHans_Dir" Attributes="0"/>
+    <ROW Component="zhHant" ComponentId="{704DDD26-459F-4953-A349-6D4E45973799}" Directory_="zhHant_Dir" Attributes="0"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiFeatsComponent">
+    <ROW Feature="MainFeature" Title="MainFeature" Description="Description" Display="1" Level="1" Directory_="APPDIR" Attributes="0"/>
+    <ATTRIBUTE name="CurrentFeature" value="MainFeature"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiFilesComponent">
+    <ROW File="D3DCompiler_47_cor3.dll" Component_="D3DCompiler_47_cor3.dll" FileName="D3DCOM~1.DLL|D3DCompiler_47_cor3.dll" Attributes="0" SourcePath="..\OracleReportExport.Presentation.Desktop\bin\Release\net8.0-windows\publish\win-x64\D3DCompiler_47_cor3.dll" SelfReg="false"/>
+    <ROW File="OracleReportExport.Presentation.Desktop.exe" Component_="OracleReportExport.Presentation.Desktop.exe" FileName="ORACLE~1.EXE|OracleReportExport.Presentation.Desktop.exe" Attributes="0" SourcePath="..\OracleReportExport.Presentation.Desktop\bin\Release\net8.0-windows\publish\win-x64\OracleReportExport.Presentation.Desktop.exe" SelfReg="false" DigSign="true"/>
+    <ROW File="PenImc_cor3.dll" Component_="PenImc_cor3.dll" FileName="PENIMC~1.DLL|PenImc_cor3.dll" Attributes="0" SourcePath="..\OracleReportExport.Presentation.Desktop\bin\Release\net8.0-windows\publish\win-x64\PenImc_cor3.dll" SelfReg="false"/>
+    <ROW File="PresentationNative_cor3.dll" Component_="PresentationNative_cor3.dll" FileName="PRESEN~1.DLL|PresentationNative_cor3.dll" Attributes="0" SourcePath="..\OracleReportExport.Presentation.Desktop\bin\Release\net8.0-windows\publish\win-x64\PresentationNative_cor3.dll" SelfReg="false"/>
+    <ROW File="vcruntime140_cor3.dll" Component_="vcruntime140_cor3.dll" FileName="VCRUNT~1.DLL|vcruntime140_cor3.dll" Attributes="0" SourcePath="..\OracleReportExport.Presentation.Desktop\bin\Release\net8.0-windows\publish\win-x64\vcruntime140_cor3.dll" SelfReg="false"/>
+    <ROW File="wpfgfx_cor3.dll" Component_="wpfgfx_cor3.dll" FileName="WPFGFX~1.DLL|wpfgfx_cor3.dll" Attributes="0" SourcePath="..\OracleReportExport.Presentation.Desktop\bin\Release\net8.0-windows\publish\win-x64\wpfgfx_cor3.dll" SelfReg="false"/>
+    <ROW File="ConnectionsCentral.json" Component_="Connections.json" FileName="CONNEC~2.JSO|ConnectionsCentral.json" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\OracleReportExport.Presentation.Desktop\bin\Release\net8.0-windows\publish\win-x64\Configuration\ConnectionsCentral.json" SelfReg="false"/>
+    <ROW File="ReportsCopia.json" Component_="Connections.json" FileName="REPORT~1.JSO|Reports - Copia.json" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\OracleReportExport.Presentation.Desktop\bin\Release\net8.0-windows\publish\win-x64\Configuration\Reports - Copia.json" SelfReg="false"/>
+    <ROW File="Reports.json" Component_="Connections.json" FileName="REPORT~2.JSO|Reports.json" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\OracleReportExport.Presentation.Desktop\bin\Release\net8.0-windows\publish\win-x64\Configuration\Reports.json" SelfReg="false"/>
+    <ROW File="app20251217.log" Component_="app20251217.log" FileName="APP-20~1.LOG|app-20251217.log" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\OracleReportExport.Presentation.Desktop\bin\Release\net8.0-windows\publish\win-x64\logs\app-20251217.log" SelfReg="false"/>
+    <ROW File="EmpleadosConFirmaEnVigor.txt" Component_="EmpleadosConFirmaEnVigor.txt" FileName="EMPLEA~1.TXT|EmpleadosConFirmaEnVigor.txt" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\OracleReportExport.Presentation.Desktop\bin\Release\net8.0-windows\publish\win-x64\SQL\EmpleadosConFirmaEnVigor.txt" SelfReg="false"/>
+    <ROW File="ENAC_InspeccionesNoPeriodicas.txt" Component_="EmpleadosConFirmaEnVigor.txt" FileName="ENAC_I~1.TXT|ENAC_InspeccionesNoPeriodicas.txt" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\OracleReportExport.Presentation.Desktop\bin\Release\net8.0-windows\publish\win-x64\SQL\ENAC_InspeccionesNoPeriodicas.txt" SelfReg="false"/>
+    <ROW File="ExpedientesConReforma.txt" Component_="EmpleadosConFirmaEnVigor.txt" FileName="EXPEDI~1.TXT|ExpedientesConReforma.txt" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\OracleReportExport.Presentation.Desktop\bin\Release\net8.0-windows\publish\win-x64\SQL\ExpedientesConReforma.txt" SelfReg="false"/>
+    <ROW File="InspeccinesPorNumeroEquipo.txt" Component_="EmpleadosConFirmaEnVigor.txt" FileName="INSPEC~1.TXT|InspeccinesPorNumeroEquipo.txt" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\OracleReportExport.Presentation.Desktop\bin\Release\net8.0-windows\publish\win-x64\SQL\InspeccinesPorNumeroEquipo.txt" SelfReg="false"/>
+    <ROW File="ListadoEstacionesActivas.txt" Component_="EmpleadosConFirmaEnVigor.txt" FileName="LISTAD~1.TXT|ListadoEstacionesActivas.txt" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\OracleReportExport.Presentation.Desktop\bin\Release\net8.0-windows\publish\win-x64\SQL\ListadoEstacionesActivas.txt" SelfReg="false"/>
+    <ROW File="ListadoMotocicletasPorCategoriayFechas.txt" Component_="EmpleadosConFirmaEnVigor.txt" FileName="LISTAD~2.TXT|ListadoMotocicletasPorCategoriayFechas.txt" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\OracleReportExport.Presentation.Desktop\bin\Release\net8.0-windows\publish\win-x64\SQL\ListadoMotocicletasPorCategoriayFechas.txt" SelfReg="false"/>
+    <ROW File="Connections.json" Component_="Connections.json" FileName="CONNEC~1.JSO|Connections.json" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\OracleReportExport.Presentation.Desktop\bin\Release\net8.0-windows\publish\win-x64\Configuration\Connections.json" SelfReg="false"/>
+    <ROW File="ITV.ICO" Component_="ITV.ICO" FileName="ITV.ICO" Attributes="0" SourcePath="..\OracleReportExport.Presentation.Desktop\Icons\ITV.ICO" SelfReg="false"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.BuildComponent">
+    <ROW BuildKey="DefaultBuild" BuildName="DefaultBuild" BuildOrder="1" BuildType="0" Languages="es" InstallationType="4" UseLargeSchema="true"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.DictionaryComponent">
+    <ROW Path="&lt;AI_DICTS&gt;ui.ail"/>
+    <ROW Path="&lt;AI_DICTS&gt;ui_es.ail"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.FragmentComponent">
+    <ROW Fragment="CommonUI.aip" Path="&lt;AI_FRAGS&gt;CommonUI.aip"/>
+    <ROW Fragment="FolderDlg.aip" Path="&lt;AI_THEMES&gt;classic\fragments\FolderDlg.aip"/>
+    <ROW Fragment="MaintenanceTypeDlg.aip" Path="&lt;AI_THEMES&gt;classic\fragments\MaintenanceTypeDlg.aip"/>
+    <ROW Fragment="MaintenanceWelcomeDlg.aip" Path="&lt;AI_THEMES&gt;classic\fragments\MaintenanceWelcomeDlg.aip"/>
+    <ROW Fragment="SequenceDialogs.aip" Path="&lt;AI_THEMES&gt;classic\fragments\SequenceDialogs.aip"/>
+    <ROW Fragment="Sequences.aip" Path="&lt;AI_FRAGS&gt;Sequences.aip"/>
+    <ROW Fragment="StaticUIStrings.aip" Path="&lt;AI_FRAGS&gt;StaticUIStrings.aip"/>
+    <ROW Fragment="Themes.aip" Path="&lt;AI_FRAGS&gt;Themes.aip"/>
+    <ROW Fragment="UI.aip" Path="&lt;AI_THEMES&gt;classic\fragments\UI.aip"/>
+    <ROW Fragment="Validation.aip" Path="&lt;AI_FRAGS&gt;Validation.aip"/>
+    <ROW Fragment="VerifyRemoveDlg.aip" Path="&lt;AI_THEMES&gt;classic\fragments\VerifyRemoveDlg.aip"/>
+    <ROW Fragment="VerifyRepairDlg.aip" Path="&lt;AI_THEMES&gt;classic\fragments\VerifyRepairDlg.aip"/>
+    <ROW Fragment="WelcomeDlg.aip" Path="&lt;AI_THEMES&gt;classic\fragments\WelcomeDlg.aip"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiBinaryComponent">
+    <ROW Name="aicustact.dll" SourcePath="&lt;AI_CUSTACTS&gt;aicustact.dll"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiControlEventComponent">
+    <ROW Dialog_="WelcomeDlg" Control_="Next" Event="NewDialog" Argument="FolderDlg" Condition="AI_INSTALL" Ordering="1"/>
+    <ROW Dialog_="FolderDlg" Control_="Next" Event="NewDialog" Argument="VerifyReadyDlg" Condition="AI_INSTALL" Ordering="201"/>
+    <ROW Dialog_="FolderDlg" Control_="Back" Event="NewDialog" Argument="WelcomeDlg" Condition="AI_INSTALL" Ordering="1"/>
+    <ROW Dialog_="MaintenanceWelcomeDlg" Control_="Next" Event="NewDialog" Argument="MaintenanceTypeDlg" Condition="AI_MAINT" Ordering="99"/>
+    <ROW Dialog_="VerifyReadyDlg" Control_="Install" Event="EndDialog" Argument="Return" Condition="AI_MAINT" Ordering="198"/>
+    <ROW Dialog_="VerifyReadyDlg" Control_="Back" Event="NewDialog" Argument="CustomizeDlg" Condition="AI_MAINT" Ordering="202"/>
+    <ROW Dialog_="VerifyReadyDlg" Control_="Install" Event="EndDialog" Argument="Return" Condition="AI_INSTALL" Ordering="197"/>
+    <ROW Dialog_="VerifyReadyDlg" Control_="Back" Event="NewDialog" Argument="FolderDlg" Condition="AI_INSTALL" Ordering="201"/>
+    <ROW Dialog_="CustomizeDlg" Control_="Next" Event="NewDialog" Argument="VerifyReadyDlg" Condition="AI_MAINT" Ordering="101"/>
+    <ROW Dialog_="CustomizeDlg" Control_="Back" Event="NewDialog" Argument="MaintenanceTypeDlg" Condition="AI_MAINT" Ordering="1"/>
+    <ROW Dialog_="MaintenanceTypeDlg" Control_="ChangeButton" Event="NewDialog" Argument="CustomizeDlg" Condition="AI_MAINT" Ordering="501"/>
+    <ROW Dialog_="MaintenanceTypeDlg" Control_="Back" Event="NewDialog" Argument="MaintenanceWelcomeDlg" Condition="AI_MAINT" Ordering="1"/>
+    <ROW Dialog_="MaintenanceTypeDlg" Control_="RemoveButton" Event="NewDialog" Argument="VerifyRemoveDlg" Condition="AI_MAINT AND InstallMode=&quot;Remove&quot;" Ordering="601"/>
+    <ROW Dialog_="VerifyRemoveDlg" Control_="Back" Event="NewDialog" Argument="MaintenanceTypeDlg" Condition="AI_MAINT AND InstallMode=&quot;Remove&quot;" Ordering="1"/>
+    <ROW Dialog_="MaintenanceTypeDlg" Control_="RepairButton" Event="NewDialog" Argument="VerifyRepairDlg" Condition="AI_MAINT AND InstallMode=&quot;Repair&quot;" Ordering="601"/>
+    <ROW Dialog_="VerifyRepairDlg" Control_="Back" Event="NewDialog" Argument="MaintenanceTypeDlg" Condition="AI_MAINT AND InstallMode=&quot;Repair&quot;" Ordering="1"/>
+    <ROW Dialog_="VerifyRepairDlg" Control_="Repair" Event="EndDialog" Argument="Return" Condition="AI_MAINT AND InstallMode=&quot;Repair&quot;" Ordering="399" Options="1"/>
+    <ROW Dialog_="VerifyRemoveDlg" Control_="Remove" Event="EndDialog" Argument="Return" Condition="AI_MAINT AND InstallMode=&quot;Remove&quot;" Ordering="299" Options="1"/>
+    <ROW Dialog_="PatchWelcomeDlg" Control_="Next" Event="NewDialog" Argument="VerifyReadyDlg" Condition="AI_PATCH" Ordering="201"/>
+    <ROW Dialog_="ResumeDlg" Control_="Install" Event="EndDialog" Argument="Return" Condition="AI_RESUME" Ordering="299"/>
+    <ROW Dialog_="VerifyReadyDlg" Control_="Install" Event="EndDialog" Argument="Return" Condition="AI_PATCH" Ordering="199"/>
+    <ROW Dialog_="VerifyReadyDlg" Control_="Back" Event="NewDialog" Argument="PatchWelcomeDlg" Condition="AI_PATCH" Ordering="203"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiCreateFolderComponent">
+    <ROW Directory_="APPDIR" Component_="APPDIR" ManualDelete="true"/>
+    <ROW Directory_="cs_Dir" Component_="cs" ManualDelete="false"/>
+    <ROW Directory_="de_Dir" Component_="de" ManualDelete="false"/>
+    <ROW Directory_="es_Dir" Component_="es" ManualDelete="false"/>
+    <ROW Directory_="fr_Dir" Component_="fr" ManualDelete="false"/>
+    <ROW Directory_="it_Dir" Component_="it" ManualDelete="false"/>
+    <ROW Directory_="ja_Dir" Component_="ja" ManualDelete="false"/>
+    <ROW Directory_="ko_Dir" Component_="ko" ManualDelete="false"/>
+    <ROW Directory_="pl_Dir" Component_="pl" ManualDelete="false"/>
+    <ROW Directory_="ptBR_Dir" Component_="ptBR" ManualDelete="false"/>
+    <ROW Directory_="ru_Dir" Component_="ru" ManualDelete="false"/>
+    <ROW Directory_="tr_Dir" Component_="tr" ManualDelete="false"/>
+    <ROW Directory_="zhHans_Dir" Component_="zhHans" ManualDelete="false"/>
+    <ROW Directory_="zhHant_Dir" Component_="zhHant" ManualDelete="false"/>
+    <ROW Directory_="SHORTCUTDIR" Component_="SHORTCUTDIR" ManualDelete="false"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiCustActComponent">
+    <ROW Action="AI_DOWNGRADE" Type="19" Target="4010"/>
+    <ROW Action="AI_DpiContentScale" Type="1" Source="aicustact.dll" Target="DpiContentScale"/>
+    <ROW Action="AI_EnableDebugLog" Type="321" Source="aicustact.dll" Target="EnableDebugLog"/>
+    <ROW Action="AI_InstallModeCheck" Type="1" Source="aicustact.dll" Target="UpdateInstallMode" WithoutSeq="true"/>
+    <ROW Action="AI_PREPARE_UPGRADE" Type="65" Source="aicustact.dll" Target="PrepareUpgrade"/>
+    <ROW Action="AI_PRESERVE_INSTALL_TYPE" Type="65" Source="aicustact.dll" Target="PreserveInstallType"/>
+    <ROW Action="AI_RESTORE_LOCATION" Type="65" Source="aicustact.dll" Target="RestoreLocation"/>
+    <ROW Action="AI_ResolveKnownFolders" Type="1" Source="aicustact.dll" Target="AI_ResolveKnownFolders"/>
+    <ROW Action="AI_SHOW_LOG" Type="65" Source="aicustact.dll" Target="LaunchLogFile" WithoutSeq="true"/>
+    <ROW Action="AI_STORE_LOCATION" Type="51" Source="ARPINSTALLLOCATION" Target="[APPDIR]"/>
+    <ROW Action="SET_APPDIR" Type="307" Source="APPDIR" Target="[ProgramFilesFolder][Manufacturer]\[ProductName]"/>
+    <ROW Action="SET_SHORTCUTDIR" Type="307" Source="SHORTCUTDIR" Target="[ProgramMenuFolder][ProductName]"/>
+    <ROW Action="SET_TARGETDIR_TO_APPDIR" Type="51" Source="TARGETDIR" Target="[APPDIR]"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiFeatCompsComponent">
+    <ROW Feature_="MainFeature" Component_="APPDIR"/>
+    <ROW Feature_="MainFeature" Component_="ProductInformation"/>
+    <ROW Feature_="MainFeature" Component_="D3DCompiler_47_cor3.dll"/>
+    <ROW Feature_="MainFeature" Component_="OracleReportExport.Presentation.Desktop.exe"/>
+    <ROW Feature_="MainFeature" Component_="PenImc_cor3.dll"/>
+    <ROW Feature_="MainFeature" Component_="PresentationNative_cor3.dll"/>
+    <ROW Feature_="MainFeature" Component_="vcruntime140_cor3.dll"/>
+    <ROW Feature_="MainFeature" Component_="wpfgfx_cor3.dll"/>
+    <ROW Feature_="MainFeature" Component_="Connections.json"/>
+    <ROW Feature_="MainFeature" Component_="cs"/>
+    <ROW Feature_="MainFeature" Component_="de"/>
+    <ROW Feature_="MainFeature" Component_="es"/>
+    <ROW Feature_="MainFeature" Component_="fr"/>
+    <ROW Feature_="MainFeature" Component_="it"/>
+    <ROW Feature_="MainFeature" Component_="ja"/>
+    <ROW Feature_="MainFeature" Component_="ko"/>
+    <ROW Feature_="MainFeature" Component_="pl"/>
+    <ROW Feature_="MainFeature" Component_="app20251217.log"/>
+    <ROW Feature_="MainFeature" Component_="ptBR"/>
+    <ROW Feature_="MainFeature" Component_="ru"/>
+    <ROW Feature_="MainFeature" Component_="tr"/>
+    <ROW Feature_="MainFeature" Component_="EmpleadosConFirmaEnVigor.txt"/>
+    <ROW Feature_="MainFeature" Component_="zhHans"/>
+    <ROW Feature_="MainFeature" Component_="zhHant"/>
+    <ROW Feature_="MainFeature" Component_="SHORTCUTDIR"/>
+    <ROW Feature_="MainFeature" Component_="ITV.ICO"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiIconsComponent">
+    <ROW Name="OracleReportExport.Presentation.De.exe_sktop" SourcePath="..\OracleReportExport.Presentation.Desktop\bin\Release\net8.0-windows\publish\win-x64\ITV.ICO" Index="0"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiInstExSeqComponent">
+    <ROW Action="AI_DOWNGRADE" Condition="AI_NEWERPRODUCTFOUND AND (UILevel &lt;&gt; 5)" Sequence="210"/>
+    <ROW Action="AI_RESTORE_LOCATION" Condition="APPDIR=&quot;&quot;" Sequence="749"/>
+    <ROW Action="AI_STORE_LOCATION" Condition="(Not Installed) OR REINSTALL" Sequence="1501"/>
+    <ROW Action="AI_PREPARE_UPGRADE" Condition="AI_UPGRADE=&quot;No&quot; AND (Not Installed)" Sequence="1399"/>
+    <ROW Action="AI_ResolveKnownFolders" Sequence="52"/>
+    <ROW Action="AI_EnableDebugLog" Sequence="51"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiInstallUISequenceComponent">
+    <ROW Action="AI_PRESERVE_INSTALL_TYPE" Sequence="199"/>
+    <ROW Action="AI_RESTORE_LOCATION" Condition="APPDIR=&quot;&quot;" Sequence="749"/>
+    <ROW Action="AI_ResolveKnownFolders" Sequence="53"/>
+    <ROW Action="AI_DpiContentScale" Sequence="52"/>
+    <ROW Action="AI_EnableDebugLog" Sequence="51"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiLaunchConditionsComponent">
+    <ROW Condition="((VersionNT &lt;&gt; 501) AND (VersionNT &lt;&gt; 502))" Description="[ProductName] no se puede instalar en [WindowsTypeNT5XDisplay]." DescriptionLocId="AI.LaunchCondition.NoNT5X" IsPredefined="true" Builds="DefaultBuild"/>
+    <ROW Condition="(VersionNT &lt;&gt; 400)" Description="[ProductName] no se puede instalar en [WindowsTypeNT40Display]." DescriptionLocId="AI.LaunchCondition.NoNT40" IsPredefined="true" Builds="DefaultBuild"/>
+    <ROW Condition="(VersionNT &lt;&gt; 500)" Description="[ProductName] no se puede instalar en [WindowsTypeNT50Display]." DescriptionLocId="AI.LaunchCondition.NoNT50" IsPredefined="true" Builds="DefaultBuild"/>
+    <ROW Condition="(VersionNT &lt;&gt; 600)" Description="[ProductName] no se puede instalar en [WindowsTypeNT60Display]." DescriptionLocId="AI.LaunchCondition.NoNT60" IsPredefined="true" Builds="DefaultBuild"/>
+    <ROW Condition="VersionNT" Description="[ProductName] no se puede instalar en [WindowsType9XDisplay]." DescriptionLocId="AI.LaunchCondition.No9X" IsPredefined="true" Builds="DefaultBuild"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiRegsComponent">
+    <ROW Registry="Manufacturer" Root="-1" Key="Software\[Manufacturer]" Name="\"/>
+    <ROW Registry="Path" Root="-1" Key="Software\[Manufacturer]\[ProductName]" Name="Path" Value="[APPDIR]" Component_="ProductInformation"/>
+    <ROW Registry="ProductName" Root="-1" Key="Software\[Manufacturer]\[ProductName]" Name="\"/>
+    <ROW Registry="Software" Root="-1" Key="Software" Name="\"/>
+    <ROW Registry="Version" Root="-1" Key="Software\[Manufacturer]\[ProductName]" Name="Version" Value="[ProductVersion]" Component_="ProductInformation"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiShortsComponent">
+    <ROW Shortcut="VinculoaOracleReportExport.Presen_1" Directory_="ProgramMenuFolder" Name="INFORM~1|Informes Soporte IT" Component_="OracleReportExport.Presentation.Desktop.exe" Target="[#OracleReportExport.Presentation.Desktop.exe]" Hotkey="0" Icon_="OracleReportExport.Presentation.De.exe_sktop" IconIndex="0" ShowCmd="1" WkDir="APPDIR"/>
+    <ROW Shortcut="VinculoaOracleReportExport.Presenta" Directory_="SHORTCUTDIR" Name="INFORM~1|Informes Soporte IT" Component_="OracleReportExport.Presentation.Desktop.exe" Target="[#OracleReportExport.Presentation.Desktop.exe]" Hotkey="0" Icon_="OracleReportExport.Presentation.De.exe_sktop" IconIndex="0" ShowCmd="1" WkDir="APPDIR"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiThemeComponent">
+    <ATTRIBUTE name="UsedTheme" value="classic"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiUpgradeComponent">
+    <ROW UpgradeCode="[|UpgradeCode]" VersionMin="0.0.1" VersionMax="[|ProductVersion]" Attributes="257" ActionProperty="OLDPRODUCTS"/>
+    <ROW UpgradeCode="[|UpgradeCode]" VersionMin="[|ProductVersion]" Attributes="2" ActionProperty="AI_NEWERPRODUCTFOUND"/>
+  </COMPONENT>
+</DOCUMENT>

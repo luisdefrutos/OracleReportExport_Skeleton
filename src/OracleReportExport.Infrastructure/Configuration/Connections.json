@@ -5,6 +5,312 @@
       "DisplayName": "Central de Datos",
       "ConnectionString": "user id=CENTRALITV;password=CentralItv.-20;Data Source=(DESCRIPTION=(SDU=65535)(ADDRESS=(PROTOCOL=TCP)(HOST=10.108.206.3)(PORT=1521))(CONNECT_DATA=(SERVER=dedicated)(SERVICE_NAME=orclpr.snprivate.vcnatisae.oraclevcn.com)))",
       "Type": "Central"
+    },
+    {
+      "Id": "0202",
+      "DisplayName": "I.T.V. - ALBACETE",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = SESALBE10001.WW001.ITGR.NET)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=ITV;Password=ItvitV.-20;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "0292",
+      "DisplayName": "U.M.A. - ALBACETE NUEVO PORT\u00C1TIL EXTERIOR",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = MESALBE24342.mobile.itgr.net)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=UMA;Password=UMA-MARMOL;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "0292",
+      "DisplayName": "U.M.A. - ALBACETE NUEVO PORT\u00C1TIL",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = MESALBE24342)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=UMA;Password=UMA-MARMOL;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "0292",
+      "DisplayName": "U.M.A. - ALBACETE COPIA",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = SESALBE20001.WW001.ITGR.NET)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=UMA;Password=UMA-MARMOL;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "0826",
+      "DisplayName": "I.T.V. - SANT CELONI",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = SESCLIE10001.WW001.ITGR.NET)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=ITV;Password=ItvitV.-20;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "09A2",
+      "DisplayName": "U.M.A. - MIRANDA COPIA",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = SESMIXE20001.WW001.ITGR.NET)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=UMA;Password=UMA-MARMOL;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "09A2",
+      "DisplayName": "U.M.A. - MIRANDA PORT\u00C1TIL NUEVO",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = MESMIXE24098)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=UMA;Password=UMA-MARMOL;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "0902",
+      "DisplayName": "I.T.V. - MIRANDA DE EBRO",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = SESMIXE10001.WW001.ITGR.NET)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=ITV;Password=ItvitV.-20;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "0905",
+      "DisplayName": "I.T.V. - VILLASANTE DE MONTIJA",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = SESVISE10001.WW001.ITGR.NET)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=ITV;Password=ItvitV.-20;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "0906",
+      "DisplayName": "I.T.V. - BELORADO",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = SESZCXE10001.WW001.ITGR.NET)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=ITV;Password=ItvitV.-20;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "0908",
+      "DisplayName": "I.T.V. - BRIVIESCA",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = SESBRVE10001.WW001.ITGR.NET)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=ITV;Password=ItvitV.-20;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "1302",
+      "DisplayName": "I.T.V. - ALC\u00C1ZAR",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = SESAKZE10001.WW001.ITGR.NET)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=ITV;Password=ItvitV.-20;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "1304",
+      "DisplayName": "I.T.V. - PUERTOLLANO",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = SESPUOE10001.WW001.ITGR.NET)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=ITV;Password=ItvitV.-20;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "1392",
+      "DisplayName": "U.M.A. - ALC\u00C1ZAR PORT\u00C1TIL NUEVO",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = MESAKZE23106)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=UMA;Password=UMA-MARMOL;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "1392",
+      "DisplayName": "U.M.A. - ALC\u00C1ZAR COPIA",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = SESAKZE20001.WW001.ITGR.NET)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=UMA;Password=UMA-MARMOL;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "1392",
+      "DisplayName": "U.M.A. - ALC\u00C1ZAR PORT\u00C1TIL EXTERIOR",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = MESAKZE23106.mobile.itgr.net)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=UMA;Password=UMA-MARMOL;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "2511",
+      "DisplayName": "I.T.V. - BORGES BLANQUES",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = SESLBBE10001.WW001.ITGR.NET)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=ITV;Password=ItvitV.-20;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "2605",
+      "DisplayName": "I.T.V. - LOGRO\u00D1O",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = SESLGRE10001.WW001.ITGR.NET)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=ITV;Password=ItvitV.-20;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "2607",
+      "DisplayName": "I.T.V. - N\u00C1JERA",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = SESNJEE10001.WW001.ITGR.NET)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=ITV;Password=ItvitV.-20;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "2653",
+      "DisplayName": "U.M.A. - N\u00C1JERA PORT\u00C1TIL NUEVO",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = MESNJEE19409)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=UMA;Password=UMA-MARMOL;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "2653",
+      "DisplayName": "U.M.A. - N\u00C1JERA COPIA",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = SESNJEE20001.WW001.ITGR.NET)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=UMA;Password=UMA-MARMOL;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "2811",
+      "DisplayName": "I.T.V. - TRES CANTOS",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = SESTRCE10001.WW001.ITGR.NET)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=ITV;Password=ItvitV.-20;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "2812",
+      "DisplayName": "I.T.V. - LOZOYUELA",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = SESLOZE10001.WW001.ITGR.NET)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=ITV;Password=ItvitV.-20;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "2812",
+      "DisplayName": "U.M.A. - LOZOYUELA",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = MESLOZE23634)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=UMA;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "2812",
+      "DisplayName": "U.M.A. - LOZOYUELA-EXTERIOR",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = MESLOZE23634.mobile.itgr.net)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=UMA;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "2813",
+      "DisplayName": "I.T.V. - VILLALBA",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = SESCVBE10001.WW001.ITGR.NET)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=ITV;Password=ItvitV.-20;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "2814",
+      "DisplayName": "I.T.V. - ALCOBENDAS",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = SESABZE10001.WW001.ITGR.NET)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=ITV;Password=ItvitV.-20;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "2815",
+      "DisplayName": "I.T.V. - COSLADA",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = SESCXQE10002.ww001.itgr.net)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=ITV;Password=ItvitV.-20;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "2816",
+      "DisplayName": "I.T.V. - LAS ROZAS",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = SESLROE10001.WW001.ITGR.NET)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=ITV;Password=ItvitV.-20;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "2819",
+      "DisplayName": "I.T.V. - DESA",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = 10.108.206.7)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = ORCLDV.snprivate.vcnatisae.oraclevcn.com)));User Id=ITV;Password=ItvitV.-20;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "2873",
+      "DisplayName": "I.T.V. - ARROYOMOLINOS",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = SESAYSE10001.WW001.ITGR.NET)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=ITV;Password=ItvitV.-20;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "2875",
+      "DisplayName": "I.T.V. - FUENLABRADA",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = SESFBDE10001.WW001.ITGR.NET)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=ITV;Password=ItvitV.-20;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "2878",
+      "DisplayName": "I.T.V. - ALCAL\u00C1",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = SESACLE10001.WW001.ITGR.NET)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=ITV;Password=ItvitV.-20;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "2879",
+      "DisplayName": "I.T.V. - ARROYOSUR",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = SESLEGE10001.WW001.ITGR.NET)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=ITV;Password=ItvitV.-20;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "2887",
+      "DisplayName": "I.T.V. - CUATRO VIENTOS",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = SES4VIE10001.WW001.ITGR.NET)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=ITV;Password=ItvitV.-20;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "40A1",
+      "DisplayName": "U.M.A. - 40A1 VIEJA PORT\u00C1TIL",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = MESVDME25047)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=UMA40A1;Password=UMA40A1-MARMOL;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "40A1",
+      "DisplayName": "U.M.A. - 40A1 CONEXI\u00D3N ESTACI\u00D3N",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = SESVDME10001.WW001.ITGR.NET)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=UMA40A1;Password=UMA40A1-MARMOL;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "40A1",
+      "DisplayName": "U.M.A. - 40A1 VIEJA EXTERIOR",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = MESVDME25047.mobile.itgr.net)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=UMA40A1;Password=UMA40A1-MARMOL;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "40A2",
+      "DisplayName": "U.M.A. - VALVERDE COPIA",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = SESVDME20001.WW001.ITGR.NET)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=UMA;Password=UMA-MARMOL;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "40A2",
+      "DisplayName": "U.M.A. - VALVERDE NUEVO PORTATIL",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = MESVDME24866.mobile.itgr.net)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=UMA;Password=UMA-MARMOL;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "4002",
+      "DisplayName": "I.T.V. - VALVERDE",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = SESVDME10001.WW001.ITGR.NET)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=ITV;Password=ItvitV.-20;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "4003",
+      "DisplayName": "I.T.V. - CUELLAR",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = SESCULE10001.WW001.ITGR.NET)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=ITV;Password=ItvitV.-20;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "4004",
+      "DisplayName": "I.T.V. - EL ESPINAR",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = SESELEE10001.WW001.ITGR.NET)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=ITV;Password=ItvitV.-20;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "4308",
+      "DisplayName": "I.T.V. - AMPOSTA",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = SESAZPE10001.WW001.ITGR.NET)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=ITV;Password=ItvitV.-20;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "4504",
+      "DisplayName": "I.T.V. - LOS Y\u00C9BENES",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = SESLOYE10001.WW001.ITGR.NET)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=ITV;Password=ItvitV.-20;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "4514",
+      "DisplayName": "I.T.V. - ILLESCAS",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = SESILSE10001.WW001.ITGR.NET)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=ITV;Password=ItvitV.-20;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "4518",
+      "DisplayName": "I.T.V. - TOLEDO",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = SESTOLE10001.WW001.ITGR.NET)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=ITV;Password=ItvitV.-20;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "9912",
+      "DisplayName": "U.M.A. - AMPOSTA NUEVO PORTATIL",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = 10.108.234.111)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=UMA;Password=UMA-MARMOL;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "9912",
+      "DisplayName": "U.M.A. - AMPOSTA COPIA",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = SESAZPE20001.WW001.ITGR.NET)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=UMA;Password=UMA-MARMOL;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "9913",
+      "DisplayName": "U.M.A. - LES BORGES NUEVO PORTATIL",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = MESLBBE25175.mobile.itgr.net)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=UMA;Password=UMA-MARMOL;",
+      "Type": "Estacion"
+    },
+    {
+      "Id": "9913",
+      "DisplayName": "U.M.A. - LES BORGES COPIA",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = SESLBBE20001.WW001.ITGR.NET)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = XEPDB1)));User Id=UMA;Password=UMA-MARMOL;",
+      "Type": "Estacion"
     }
   ]
 }
