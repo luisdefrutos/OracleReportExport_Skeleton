@@ -77,7 +77,7 @@ namespace OracleReportExport.Presentation.Desktop
             AllowUserToResizeRows = false,
             ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing,
             RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.DisableResizing,
-            AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells,
+            AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
             ScrollBars = ScrollBars.Both
         };
 
@@ -1426,6 +1426,7 @@ namespace OracleReportExport.Presentation.Desktop
                     _pagerPredef = new PropertyGrid(resultReport.Data, _grid, ResultTabUI.TabInitial, (ReportDefinition)_cmbReports.SelectedItem);
                     _pagerPredef.PageChanged += Pager_PageChanged;
                     _pagerPredef.ShowFirstPage();
+                    AutoSizeColumnsGrid(_grid);
                     PaintControlsTopGrid(_grid, ResultTabUI.TabInitial, _pagerPredef);
                 }
 
@@ -1472,7 +1473,16 @@ namespace OracleReportExport.Presentation.Desktop
                 Enabled = true;
             }
         }
-
+        private void AutoSizeColumnsGrid(DataGridView grid)
+        {
+            foreach (DataGridViewColumn col in grid.Columns)
+            {
+                col.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                col.MinimumWidth = 50;
+            }
+            grid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            grid.AutoResizeColumns();
+        }
         private void RemoveControlsTopGrid(DataGridView grid, ResultTabUI nameTab)
         {
             if (grid == null || grid.Parent == null)
