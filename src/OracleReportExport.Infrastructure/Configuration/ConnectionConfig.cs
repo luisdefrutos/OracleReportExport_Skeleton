@@ -6,8 +6,8 @@ namespace OracleReportExport.Infrastructure.Configuration
     public sealed class ConnectionConfig
     {
         public string Id { get; set; } = string.Empty;
-        public string DisplayName { get; set; } = string.Empty;
-        public string ConnectionString { get; set; } = string.Empty;
+        public string ?DisplayName { get; set; } = string.Empty;
+        public string ?ConnectionString { get; set; } = string.Empty;
         public string Type { get; set; } = string.Empty; // "Central" o "Estacion"
     }
 

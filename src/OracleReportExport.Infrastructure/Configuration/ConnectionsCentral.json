@@ -5,6 +5,12 @@
       "DisplayName": "Central de Datos",
       "ConnectionString": "user id=CENTRALITV;password=CentralItv.-20;Data Source=(DESCRIPTION=(SDU=65535)(ADDRESS=(PROTOCOL=TCP)(HOST=10.108.206.3)(PORT=1521))(CONNECT_DATA=(SERVER=dedicated)(SERVICE_NAME=orclpr.snprivate.vcnatisae.oraclevcn.com)))",
       "Type": "Central"
+    },
+    {
+      "Id": "2819",
+      "DisplayName": "I.T.V. - DESA",
+      "ConnectionString": "Data Source=(DESCRIPTION =(SDU=65535)(ADDRESS = (PROTOCOL = TCP)(HOST = 10.108.206.7)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = ORCLDV.snprivate.vcnatisae.oraclevcn.com)));User Id=ITV;Password=ItvitV.-20;",
+      "Type": "Estacion"
     }
   ]
 }

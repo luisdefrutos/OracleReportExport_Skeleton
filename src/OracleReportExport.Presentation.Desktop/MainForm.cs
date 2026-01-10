@@ -5,6 +5,7 @@ using DocumentFormat.OpenXml.Drawing.Diagrams;
 using DocumentFormat.OpenXml.Drawing.Wordprocessing;
 using DocumentFormat.OpenXml.Office.PowerPoint.Y2021.M06.Main;
 using DocumentFormat.OpenXml.Office2010.Excel;
+using DocumentFormat.OpenXml.Office2013.Excel;
 using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using DocumentFormat.OpenXml.Office2016.Drawing.Charts;
 using DocumentFormat.OpenXml.Spreadsheet;
@@ -39,7 +40,7 @@ namespace OracleReportExport.Presentation.Desktop
 {
 
 
-    public class MainForm : Form
+      public class MainForm : Form
     {
         #region Campos privados
 
@@ -254,7 +255,7 @@ namespace OracleReportExport.Presentation.Desktop
 
         #region Constructor y carga inicial
 
-        public MainForm()
+       public   MainForm()
         {
             Text = "Informes Soporte IT";
             var resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
@@ -293,165 +294,17 @@ namespace OracleReportExport.Presentation.Desktop
 
             paginationPanelPredef.Controls.Add(_btnNextPage);
             paginationPanelPredef.Controls.Add(_btnPrevPage);
-
             _tabPredefinidos.Controls.Add(paginationPanelPredef);
 
-
-            _connectionCatalog = new ConnectionCatalogService();
-            _connectionFactory = new OracleConnectionFactory();
+            _connectionCatalog = new ConnectionCatalogService(); 
+            _connectionFactory = new OracleConnectionFactory(_connectionCatalog);
             _queryExecutor = new OracleQueryExecutor(_connectionFactory);
-            //_reportDefinitionRepository = new JsonReportDefinitionRepository();
-
-            var connectionDesa = _connectionCatalog.GetAllConnections().Where(x => x.DisplayName.ToUpper().Contains("DESA")).FirstOrDefault();
+            var connectionDesa = _connectionCatalog.GetAllConnections().Where(x => x.DisplayName.ToUpper().Contains("DESA"))
+                .FirstOrDefault();
             _reportDefinitionRepository = new OracleReportDefinitionRepository(
                         _connectionFactory,
                         String.Concat(connectionDesa.Id, "_", connectionDesa.DisplayName));   // Id de Connections.json
             _reportService = new ReportService(_reportDefinitionRepository, _queryExecutor);
-
-
-            CargarConexiones();
-            ConfigurarTopPanel();
-            ConfigurarGrupoParametros();
-
-            // --- Pestaña de informes predefinidos ---
-            _tabPredefinidos.Controls.Add(_grid);
-            _tabPredefinidos.Controls.Add(_chkConnections);
-            _tabPredefinidos.Controls.Add(_grpParametros);
-            _tabPredefinidos.Controls.Add(_topPanel);
-
-            // --- Pestaña SQL avanzada ---
-            _chkConnectionsAdHoc.Items.AddRange(
-                _chkConnections.Items.OfType<ConnectionInfo>().ToArray()
-            );
-            _chkConnectionsAdHoc.AutoAdjustWidth();
-
-            _topPanelAdHoc.Controls.Add(new Label
-            {
-                Text = "Creación de Consultas Personalizadas",
-                AutoSize = true,
-                Padding = new Padding(8, 10, 8, 8)
-            });
-
-            var sepAdHoc = new Label
-            {
-                AutoSize = true,
-                Margin = new Padding(20, 10, 10, 0),
-                Text = "|"
-            };
-            _topPanelAdHoc.Controls.Add(sepAdHoc);
-
-            _btnSelectAllAdHoc.Anchor = AnchorStyles.Left;
-            _btnSelectAllAdHoc.Margin = new Padding(0, 5, 10, 5);
-            _btnSelectAllAdHoc.Tag = ResultTabUI.TabSecundary;
-            _btnSelectAllAdHoc.Click += _btnSelectAllAdHoc_Click;
-            _topPanelAdHoc.Controls.Add(_btnSelectAllAdHoc);
-
-            _btnUnselectAllAdHoc.Anchor = AnchorStyles.Left;
-            _btnUnselectAllAdHoc.Margin = new Padding(0, 5, 10, 5);
-            _btnUnselectAllAdHoc.Tag = ResultTabUI.TabSecundary;
-            _btnUnselectAllAdHoc.Click += _btnUnselectAllAdHoc_Click;
-            _topPanelAdHoc.Controls.Add(_btnUnselectAllAdHoc);
-
-            _btnClearAdHoc.Anchor = AnchorStyles.Left;
-            _btnClearAdHoc.Margin = new Padding(0, 5, 10, 5);
-            _btnClearAdHoc.Tag = ResultTabUI.TabSecundary;
-            _btnClearAdHoc.Click += _btnClearAdHoc_Click;
-            _topPanelAdHoc.Controls.Add(_btnClearAdHoc);
-
-            ButtonAdHoc.Anchor = AnchorStyles.Left;
-            ButtonAdHoc.Margin = new Padding(0, 5, 10, 5);
-            ButtonAdHoc.Click += ButtonAdHoc_Click;
-            _topPanelAdHoc.Controls.Add(ButtonAdHoc);
-
-            var rightPanelAdHoc = new Panel
-            {
-                Dock = DockStyle.Fill
-            };
-
-            layoutAdHoc = new TableLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                ColumnCount = 1,
-                RowCount = 4
-            };
-
-            paginationPanel = new FlowLayoutPanel
-            {
-                FlowDirection = FlowDirection.RightToLeft,
-                Dock = DockStyle.Fill,
-                AutoSize = true,
-                Padding = new Padding(5),
-                Margin = new Padding(0),
-                WrapContents = false
-            };
-
-            var separationPanel = new FlowLayoutPanel
-            {
-                FlowDirection = FlowDirection.RightToLeft,
-                Dock = DockStyle.None,
-                Height = 20
-            };
-
-            layoutAdHoc.RowStyles.Add(new RowStyle(SizeType.Percent, 40f));   // RichTextBox
-            layoutAdHoc.RowStyles.Add(new RowStyle(SizeType.AutoSize));       // Separación
-            layoutAdHoc.RowStyles.Add(new RowStyle(SizeType.Percent, 40f));   // Grid
-            layoutAdHoc.RowStyles.Add(new RowStyle(SizeType.AutoSize));       // Paginación
-
-            _txtSqlAdHoc.Dock = DockStyle.Fill;
-            _txtSqlAdHoc.KeyDown += _txtSqlAdHoc_KeyDown;
-            var menu = new ContextMenuStrip();
-            menu.Items.Add("Copiar", null, new EventHandler((_, __) => _txtSqlAdHoc.Copy()));
-            menu.Items.Add("Pegar", null, new EventHandler((_, __) => _txtSqlAdHoc.Paste()));
-            menu.Items.Add("Cortar", null, new EventHandler((_, __) => _txtSqlAdHoc.Cut()));
-            menu.Items.Add("Seleccionar todo", null, new EventHandler((_, __) => _txtSqlAdHoc.SelectAll()));
-            _txtSqlAdHoc.ContextMenuStrip = menu;
-            _txtSqlAdHoc.Enter += _txtSqlAdHoc_Enter;
-            _txtSqlAdHoc.Leave += _txtSqlAdHoc_Leave;
-
-            layoutAdHoc.Controls.Add(_txtSqlAdHoc, 0, 0);
-
-            _gridAdHoc.Dock = DockStyle.Fill;
-            layoutAdHoc.Controls.Add(_gridAdHoc, 0, 2);
-
-            layoutAdHoc.Controls.Add(separationPanel, 0, 1);
-
-            _btnPrevPageAdHoc.Click += _btnPrevPageAdHoc_Click;
-            _btnNextPageAdHoc.Click += _btnNextPageAdHoc_Click;
-
-            paginationPanel.Controls.Add(_btnNextPageAdHoc);
-            paginationPanel.Controls.Add(_btnPrevPageAdHoc);
-
-            layoutAdHoc.Controls.Add(paginationPanel, 0, 3);
-
-            InitializeAdHocTab();
-
-            rightPanelAdHoc.Controls.Add(layoutAdHoc);
-
-            _tabAdHoc.Controls.Add(rightPanelAdHoc);
-            _tabAdHoc.Controls.Add(_chkConnectionsAdHoc);
-            _tabAdHoc.Controls.Add(_topPanelAdHoc);
-
-            _tabControl.TabPages.Add(_tabPredefinidos);
-            //no lo agrego a la coleccion de controles hasta no cargar los informes
-            // _tabControl.TabPages.Add(_tabAdHoc);
-
-
-            Controls.Add(_tabControl);
-
-            // OwnerDraw para colorear pestaña activa
-            _tabControl.DrawMode = TabDrawMode.OwnerDrawFixed;
-            _tabControl.DrawItem += TabControl_DrawItem;
-            _tabControl.SelectedIndexChanged += TabControl_SelectedIndexChanged;
-
-            // Botón por defecto inicial: informes predefinidos
-            this.AcceptButton = _btnRunReport;
-
-            // Aplicar tema visual
-            ApplyTheme();
-
-            ApplyCorporateStyle();   // <--- AÑADE ESTA LÍNEA
-
-
             Load += MainForm_LoadAsync;
         }
 
@@ -1039,6 +892,201 @@ namespace OracleReportExport.Presentation.Desktop
                 loading.Owner = this;
                 loading.Show();
                 loading.Refresh();
+
+                ReportDefinition result=   await _reportDefinitionRepository.GetByIdAsync("1");
+                ConnectionInfo connectionCentral= null;
+                if (result != null)
+                {
+                      connectionCentral = _connectionCatalog.GetAllConnections().Where(x => x.DisplayName.ToUpper().Contains("CENTRAL"))
+                    .FirstOrDefault();
+                    var _reportDefinitionRepository = new OracleReportDefinitionRepository(
+                                _connectionFactory,
+                                String.Concat(connectionCentral.Id, "_", connectionCentral.DisplayName));
+                }
+
+                var table = await _queryExecutor.ExecuteQueryAsync(
+                               result.SqlForCentral,
+                               null,
+                               connectionCentral,
+                               result.Id);
+                foreach (DataRow itemRow in table.Rows)
+                {
+                    var stationId = itemRow["CODESTACION"]?.ToString()?.Trim();
+                    if (string.IsNullOrEmpty(stationId))
+                        continue;
+                    if (_connectionCatalog._connections.Any(x => string.Equals(x.Id, stationId, StringComparison.OrdinalIgnoreCase)))
+                        continue;
+                    _connectionCatalog.AddConnection = new ConnectionInfo() { 
+                                ConnectionString = itemRow["CONNECTION_STRING"].ToString()?? string.Empty
+                                .Replace("UID=", "User Id=")
+                                .Replace("PWD=", "Password=")
+                                .Replace("SERVER=", "Data Source="),
+                                Id = String.Concat(itemRow["CODESTACION"].ToString()),
+                                DisplayName = itemRow["DESESTACION"].ToString(), 
+                                Type = ReportSourceType.Estacion.ToString()};
+                }
+
+                var _connectionsStation = new Dictionary<string, ConnectionConfig>();
+                foreach (ConnectionInfo itemConnection in _connectionCatalog.GetAllConnections())
+                {
+                    _connectionsStation.Add(String.Concat(itemConnection.Id, "_", itemConnection.DisplayName), new ConnectionConfig()
+                    {
+                        ConnectionString = itemConnection.ConnectionString.Replace("UID=", "User Id=")
+                                .Replace("PWD=", "Password=")
+                                .Replace("SERVER=", "Data Source="),
+                        DisplayName = itemConnection.DisplayName,
+                        Id = itemConnection.Id,
+                        Type = itemConnection.Type,
+                    });
+                }
+                _connectionFactory.AddOrUpdateConnections(_connectionsStation);
+                CargarConexiones();
+                ConfigurarTopPanel();
+                ConfigurarGrupoParametros();
+
+                // --- Pestaña de informes predefinidos ---
+                _tabPredefinidos.Controls.Add(_grid);
+                _tabPredefinidos.Controls.Add(_chkConnections);
+                _tabPredefinidos.Controls.Add(_grpParametros);
+                _tabPredefinidos.Controls.Add(_topPanel);
+
+                // --- Pestaña SQL avanzada ---
+                _chkConnectionsAdHoc.Items.AddRange(
+                    _chkConnections.Items.OfType<ConnectionInfo>().ToArray()
+                );
+                _chkConnectionsAdHoc.AutoAdjustWidth();
+
+                _topPanelAdHoc.Controls.Add(new Label
+                {
+                    Text = "Creación de Consultas Personalizadas",
+                    AutoSize = true,
+                    Padding = new Padding(8, 10, 8, 8)
+                });
+
+                var sepAdHoc = new Label
+                {
+                    AutoSize = true,
+                    Margin = new Padding(20, 10, 10, 0),
+                    Text = "|"
+                };
+                _topPanelAdHoc.Controls.Add(sepAdHoc);
+
+                _btnSelectAllAdHoc.Anchor = AnchorStyles.Left;
+                _btnSelectAllAdHoc.Margin = new Padding(0, 5, 10, 5);
+                _btnSelectAllAdHoc.Tag = ResultTabUI.TabSecundary;
+                _btnSelectAllAdHoc.Click += _btnSelectAllAdHoc_Click;
+                _topPanelAdHoc.Controls.Add(_btnSelectAllAdHoc);
+
+                _btnUnselectAllAdHoc.Anchor = AnchorStyles.Left;
+                _btnUnselectAllAdHoc.Margin = new Padding(0, 5, 10, 5);
+                _btnUnselectAllAdHoc.Tag = ResultTabUI.TabSecundary;
+                _btnUnselectAllAdHoc.Click += _btnUnselectAllAdHoc_Click;
+                _topPanelAdHoc.Controls.Add(_btnUnselectAllAdHoc);
+
+                _btnClearAdHoc.Anchor = AnchorStyles.Left;
+                _btnClearAdHoc.Margin = new Padding(0, 5, 10, 5);
+                _btnClearAdHoc.Tag = ResultTabUI.TabSecundary;
+                _btnClearAdHoc.Click += _btnClearAdHoc_Click;
+                _topPanelAdHoc.Controls.Add(_btnClearAdHoc);
+
+                ButtonAdHoc.Anchor = AnchorStyles.Left;
+                ButtonAdHoc.Margin = new Padding(0, 5, 10, 5);
+                ButtonAdHoc.Click += ButtonAdHoc_Click;
+                _topPanelAdHoc.Controls.Add(ButtonAdHoc);
+
+                var rightPanelAdHoc = new Panel
+                {
+                    Dock = DockStyle.Fill
+                };
+
+                layoutAdHoc = new TableLayoutPanel
+                {
+                    Dock = DockStyle.Fill,
+                    ColumnCount = 1,
+                    RowCount = 4
+                };
+
+                paginationPanel = new FlowLayoutPanel
+                {
+                    FlowDirection = FlowDirection.RightToLeft,
+                    Dock = DockStyle.Fill,
+                    AutoSize = true,
+                    Padding = new Padding(5),
+                    Margin = new Padding(0),
+                    WrapContents = false
+                };
+
+                var separationPanel = new FlowLayoutPanel
+                {
+                    FlowDirection = FlowDirection.RightToLeft,
+                    Dock = DockStyle.None,
+                    Height = 20
+                };
+
+                layoutAdHoc.RowStyles.Add(new RowStyle(SizeType.Percent, 40f));   // RichTextBox
+                layoutAdHoc.RowStyles.Add(new RowStyle(SizeType.AutoSize));       // Separación
+                layoutAdHoc.RowStyles.Add(new RowStyle(SizeType.Percent, 40f));   // Grid
+                layoutAdHoc.RowStyles.Add(new RowStyle(SizeType.AutoSize));       // Paginación
+
+                _txtSqlAdHoc.Dock = DockStyle.Fill;
+                _txtSqlAdHoc.KeyDown += _txtSqlAdHoc_KeyDown;
+                var menu = new ContextMenuStrip();
+                menu.Items.Add("Copiar", null, new EventHandler((_, __) => _txtSqlAdHoc.Copy()));
+                menu.Items.Add("Pegar", null, new EventHandler((_, __) => _txtSqlAdHoc.Paste()));
+                menu.Items.Add("Cortar", null, new EventHandler((_, __) => _txtSqlAdHoc.Cut()));
+                menu.Items.Add("Seleccionar todo", null, new EventHandler((_, __) => _txtSqlAdHoc.SelectAll()));
+                _txtSqlAdHoc.ContextMenuStrip = menu;
+                _txtSqlAdHoc.Enter += _txtSqlAdHoc_Enter;
+                _txtSqlAdHoc.Leave += _txtSqlAdHoc_Leave;
+
+                layoutAdHoc.Controls.Add(_txtSqlAdHoc, 0, 0);
+
+                _gridAdHoc.Dock = DockStyle.Fill;
+                layoutAdHoc.Controls.Add(_gridAdHoc, 0, 2);
+
+                layoutAdHoc.Controls.Add(separationPanel, 0, 1);
+
+                _btnPrevPageAdHoc.Click += _btnPrevPageAdHoc_Click;
+                _btnNextPageAdHoc.Click += _btnNextPageAdHoc_Click;
+
+                paginationPanel.Controls.Add(_btnNextPageAdHoc);
+                paginationPanel.Controls.Add(_btnPrevPageAdHoc);
+
+                layoutAdHoc.Controls.Add(paginationPanel, 0, 3);
+
+                InitializeAdHocTab();
+
+                rightPanelAdHoc.Controls.Add(layoutAdHoc);
+
+                _tabAdHoc.Controls.Add(rightPanelAdHoc);
+                _tabAdHoc.Controls.Add(_chkConnectionsAdHoc);
+                _tabAdHoc.Controls.Add(_topPanelAdHoc);
+
+                _tabControl.TabPages.Add(_tabPredefinidos);
+                //no lo agrego a la coleccion de controles hasta no cargar los informes
+                // _tabControl.TabPages.Add(_tabAdHoc);
+
+
+                Controls.Add(_tabControl);
+
+                // OwnerDraw para colorear pestaña activa
+                _tabControl.DrawMode = TabDrawMode.OwnerDrawFixed;
+                _tabControl.DrawItem += TabControl_DrawItem;
+                _tabControl.SelectedIndexChanged += TabControl_SelectedIndexChanged;
+
+                // Botón por defecto inicial: informes predefinidos
+                this.AcceptButton = _btnRunReport;
+
+                // Aplicar tema visual
+                ApplyTheme();
+
+                ApplyCorporateStyle();   // <--- AÑADE ESTA LÍNEA
+
+
+
+
+
+
                 await LoadReportsAsync();
             }
             catch (Exception)
@@ -1243,6 +1291,8 @@ namespace OracleReportExport.Presentation.Desktop
 
         private void CargarConexiones()
         {
+
+           // _connectionCatalog._connections.Add()
             var conexiones = _connectionCatalog
                 .GetAllConnections()
                 .OrderBy(c => c.Type)

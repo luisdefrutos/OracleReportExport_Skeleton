@@ -1,58 +1,122 @@
-﻿using System;
+﻿using Oracle.ManagedDataAccess.Client;
+using OracleReportExport.Application.Models;
+using OracleReportExport.Infrastructure.Configuration;
+using OracleReportExport.Infrastructure.Interfaces;
+using OracleReportExport.Infrastructure.Services;
+using System;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
-using Oracle.ManagedDataAccess.Client;
-using OracleReportExport.Infrastructure.Configuration;
-using OracleReportExport.Infrastructure.Interfaces;
 
 namespace OracleReportExport.Infrastructure.Data
 {
     public sealed class OracleConnectionFactory : IOracleConnectionFactory
     {
         private readonly Dictionary<string, ConnectionConfig> _connections;
+        private readonly ConnectionCatalogService _connectionCatalog;
+        private readonly object _syncLock = new();
 
-        public OracleConnectionFactory()
+        // Propiedades/operaciones para añadir entradas de forma segura.
+        // Uso preferible: métodos públicos en lugar de propiedades write-only.
+        public void AddOrUpdateConnection(string key, ConnectionConfig cfg)
         {
-            // Ruta del JSON en la carpeta del ejecutable:
-            // <carpeta exe>\Configuration\Connections.json
-            var basePath = AppContext.BaseDirectory;
-            var configPath = Path.Combine(basePath, "Configuration", "Connections.json");
+            if (string.IsNullOrWhiteSpace(key) || cfg == null)
+                return;
 
+            lock (_syncLock)
+            {
+                _connections[key] = cfg;
+            }
+        }
 
+        public void AddOrUpdateConnection(ConnectionInfo info)
+        {
+            if (info == null)
+                return;
 
-            if (!File.Exists(configPath))
-                throw new FileNotFoundException($"No se encontró el fichero de conexiones: {configPath}");
+            var key = string.Concat(info.Id, "_", info.DisplayName);
+            var cfg = new ConnectionConfig
+            {
+                Id = info.Id,
+                DisplayName = info.DisplayName,
+                ConnectionString = info.ConnectionString,
+                Type = info.Type
+            };
 
-            var json = File.ReadAllText(configPath);
-            
-            
+            AddOrUpdateConnection(key, cfg);
+        }
 
-            var root = JsonSerializer.Deserialize<ConnectionConfigRoot>(json)
-                       ?? new ConnectionConfigRoot();
+        public void AddOrUpdateConnections(IEnumerable<KeyValuePair<string, ConnectionConfig>> items)
+        {
+            if (items == null)
+                return;
 
-            // Diccionario: Id  -> conexión
-            _connections = root.Connections
-                               .ToDictionary(c => String.Concat(c.Id,"_",c.DisplayName),
-                                             c => c,
-                                             StringComparer.OrdinalIgnoreCase);
+            lock (_syncLock)
+            {
+                foreach (var kv in items)
+                {
+                    if (string.IsNullOrWhiteSpace(kv.Key) || kv.Value == null)
+                        continue;
 
-            ////if(File.Exists(configPath))
-            ////    File.Delete(configPath);
+                    _connections[kv.Key] = kv.Value;
+                }
+            }
+        }
+
+        public void AddOrUpdateConnections(IEnumerable<ConnectionInfo> infos)
+        {
+            if (infos == null)
+                return;
+
+            lock (_syncLock)
+            {
+                foreach (var info in infos)
+                {
+                    if (info == null)
+                        continue;
+
+                    var key = string.Concat(info.Id, "_", info.DisplayName);
+                    _connections[key] = new ConnectionConfig
+                    {
+                        Id = info.Id,
+                        DisplayName = info.DisplayName,
+                        ConnectionString = info.ConnectionString,
+                        Type = info.Type
+                    };
+                }
+            }
+        }
+
+        public OracleConnectionFactory(ConnectionCatalogService connectionCatalog)
+        {
+            _connectionCatalog = connectionCatalog;
+            _connections = new Dictionary<string, ConnectionConfig>();
+
+            foreach (ConnectionInfo itemConnection in _connectionCatalog.GetAllConnections())
+            {
+                _connections.Add(String.Concat(itemConnection.Id, "_", itemConnection.DisplayName), new ConnectionConfig()
+                {
+                    ConnectionString = itemConnection.ConnectionString,
+                    DisplayName = itemConnection.DisplayName,
+                    Id = itemConnection.Id,
+                    Type = itemConnection.Type,
+                });
+            }
+           
         }
 
         public DbConnection CreateConnection(string connectionId)
         {
             if (!_connections.TryGetValue(connectionId, out var cfg))
                 throw new ArgumentException(
-                    $"No existe la conexión '{connectionId}' en Connections.json",
+                    $"No existe la conexión '{connectionId}' ",
                     nameof(connectionId));
 
             // Creamos la conexión Oracle pero NO la abrimos.
-            var conectionçactive= new OracleConnection(cfg.ConnectionString);
-            return conectionçactive;
+            var conectionactive = new OracleConnection(cfg.ConnectionString);
+            return conectionactive;
         }
     }
 }
